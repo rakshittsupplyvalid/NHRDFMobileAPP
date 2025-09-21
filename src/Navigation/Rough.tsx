@@ -1,0 +1,173 @@
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
+import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
+import { useNavigation } from '@react-navigation/native';
+import Dhasboard from '../Dhasboard/Dhasboard';
+import Signature from '../Signature/Signature';
+
+// import Icon from 'react-native-vector-icons/MaterialIcons';
+// import SignatureScreen from '../Signature/SignatureScreen';
+// import pdf from '../Component/Reviewformcomp/Rough';
+const Drawer = createDrawerNavigator();
+
+// ===== Custom Drawer Content =====
+function CustomDrawerContent(props: any) {
+  const navigation = useNavigation<any>();
+
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          onPress: () => {
+            // Add your logout logic here
+            // For example: navigation.navigate('Login');
+            console.log('User logged out');
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  };
+
+  return (
+    <DrawerContentScrollView {...props} contentContainerStyle={styles.drawerContainer}>
+   
+
+      <View style={styles.drawerContent}>
+        <DrawerItemList {...props} />
+      </View>
+
+      <View style={styles.bottomSection}>
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          {/* You can add an icon here if needed */}
+          {/* <Icon name="logout" size={20} color="#333" /> */}
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+    </DrawerContentScrollView>
+  );
+}
+
+export default function DrawerNavigator() {
+  return (
+    <Drawer.Navigator
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: '#70B04F',
+          height: 80,
+        },
+        headerTintColor: '#fff',
+        headerTitleStyle: {
+          fontFamily: 'Poppins-SemiBold',
+        },
+        drawerStyle: {
+          backgroundColor: '#FFFFFF',
+          width: 290,
+        },
+        drawerActiveTintColor: '#818589',
+        drawerInactiveTintColor: 'black',
+        drawerLabelStyle: {
+          fontFamily: 'Poppins-Regular',
+          fontSize: 16,
+        },
+      }}
+    >
+      {/* Dashboard (Bottom Item) */}
+      <Drawer.Screen
+        name="Inspection Form"
+        component={Dhasboard}
+        options={{
+          drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
+        }}
+      />
+
+      <Drawer.Screen
+        name="Signature"
+        component={Signature}
+        options={{
+          drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
+        }}
+      />
+    </Drawer.Navigator>
+  );
+}
+
+// = = = = = S t y l e s = = = = =
+const styles = StyleSheet.create({
+  drawerContainer: {
+    flex: 1,
+  },
+  profileContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 10,
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
+  profileName: {
+    fontSize: 18,
+    marginBottom: 5,
+    color: '#333',
+  },
+  profileEmail: {
+    fontSize: 14,
+    color: '#666',
+  },
+  drawerContent: {
+    flex: 1,
+    paddingTop: 10,
+  },
+  bottomSection: {
+    padding: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#ccc',
+    position: 'relative',
+    top: -40
+  },
+  logoutButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    borderRadius: 5,
+  },
+  logoutText: {
+    marginLeft: 10,
+    fontSize: 16,
+    color: '#333',
+  },
+  dashboardButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 25,
+    // fallback solid color, replace with LinearGradient if needed
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '500',
+    fontFamily: 'Poppins-Regular',
+    padding: 2,
+    width: 80,
+    marginRight: 6,
+  },
+  buttonIcon: {
+    marginLeft: 2,
+  },
+});
