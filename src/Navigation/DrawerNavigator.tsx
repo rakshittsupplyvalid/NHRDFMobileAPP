@@ -108,14 +108,14 @@ export default function DrawerNavigator() {
         }}
       />
 
-       <Drawer.Screen
+       {/* <Drawer.Screen
         name="TextInput"
         component={TextInput}
         options={{
          
           drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
         }}
-      />
+      /> */}
 
 
       {/* <Drawer.Screen
