@@ -1,14 +1,14 @@
-// // Learn more https://docs.expo.io/guides/customizing-metro
-// const { getDefaultConfig } = require('expo/metro-config');
+// Learn more https://docs.expo.io/guides/customizing-metro
+const { getDefaultConfig } = require('expo/metro-config');
 
-// /** @type {import('expo/metro-config').MetroConfig} */
-// const config = getDefaultConfig(__dirname);
+/** @type {import('expo/metro-config').MetroConfig} */
+const config = getDefaultConfig(__dirname);
 
-// module.exports = config;
+module.exports = config;
 
 
 
-// metro.config.js
-const { getDefaultConfig } = require('@react-native/metro-config');
+// // metro.config.js
+// const { getDefaultConfig } = require('@react-native/metro-config');
 
-module.exports = getDefaultConfig(__dirname);
+// module.exports = getDefaultConfig(__dirname);
