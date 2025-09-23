@@ -17,12 +17,7 @@ export const InspectionNo = [
 
 
 
-export const Onion  = [
-  { label: 'Onion', value: '1' }, 
-  { label: 'Garlic', value: '2' },
-  { label: 'Potato', value: '3' },
 
-];
 
 
 
@@ -79,9 +74,36 @@ export const  produceseeds = [
 
 
 export const  commodity = [
-  { label: 'onion', value: '1' }, 
-  { label: 'Garlic', value: '2' },
-    { label: 'Potato', value: '2' },
+  { label: 'onion', value: 'onion' }, 
+  { label: 'Garlic', value: 'Garlic' },
+    { label: 'Potato', value: 'Potato' },
+
+];
+
+
+
+export const  Onion = [
+  { label: 'onion one', value: '1' }, 
+  { label: 'onion Two', value: '2' },
+    { label: 'onion Three', value: '3' },
+
+];
+
+
+
+export const  Garlic = [
+  { label: 'Garlic one', value: '1' }, 
+  { label: 'Garlic Two', value: '2' },
+    { label: 'Garlic Three', value: '3' },
+
+];
+
+
+
+export const  Potato = [
+  { label: 'Potato one', value: '1' }, 
+  { label: 'Potato Two', value: '2' },
+    { label: 'Potato Three', value: '3' },
 
 ];
 
@@ -108,6 +130,39 @@ export const  Seeds = [
       { label: 'Truthful Seeds', value: '4' },
 
 ];
+
+
+// Constants/constants.ts
+export const relations = [
+    { label: "Son of", value: "son" },
+    { label: "Daughter of", value: "daughter" },
+    { label: "Wife of", value: "wife" },
+];
+
+export const years = [
+    { label: "2024", value: "2024" },
+    { label: "2023", value: "2023" },
+    { label: "2022", value: "2022" },
+    { label: "2021", value: "2021" },
+    { label: "2020", value: "2020" },
+];
+
+export const states = [
+    { label: "Maharashtra", value: "maharashtra" },
+    { label: "Gujarat", value: "gujarat" },
+    { label: "Karnataka", value: "karnataka" },
+    { label: "Tamil Nadu", value: "tamilnadu" },
+    // Add more states as needed
+];
+
+export const districts = [
+    { label: "Pune", value: "pune" },
+    { label: "Mumbai", value: "mumbai" },
+    { label: "Nashik", value: "nashik" },
+    { label: "Nagpur", value: "nagpur" },
+    // Add more districts as needed
+];
+
 
 
 

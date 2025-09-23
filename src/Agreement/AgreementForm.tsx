@@ -392,10 +392,10 @@ const AgreementForm: React.FC = () => {
                 
                 style={styles.submitButton}
                 contentStyle={styles.submitButtonContent}
-                icon="check"
-                 onPress={() => navigation.navigate("AgreementSecond" as never)}        
+             
+                 onPress={() => navigation.navigate("Agreement" as never)}        
             >
-                Submit Agreement
+              Next
             </Button>
         </KeyboardAwareScrollView>
     );
@@ -467,15 +467,16 @@ const styles = StyleSheet.create({
     halfInput: {
         width: "48%",
     },
-    submitButton: {
-        marginTop: 8,
-        marginBottom: 30,
-        paddingVertical: 8,
-        backgroundColor: "#2196F3",
-        borderRadius: 8,
-        elevation: 4,
-    },
-    submitButtonContent: {
-        paddingVertical: 6,
-    },
+   submitButton: {
+    marginTop: 8,
+    marginBottom: 30,
+    paddingVertical: 4,  // kam kar diya
+    backgroundColor: "#4CAF50",
+    borderRadius: 8,
+    elevation: 4,
+},
+submitButtonContent: {
+    paddingVertical: 2, // aur bhi kam
+},
+
 });

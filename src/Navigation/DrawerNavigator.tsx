@@ -113,7 +113,7 @@ export default function DrawerNavigator() {
 
 
       <Drawer.Screen
-  name="AgreementSecond"
+  name="Agreement"
   component={AgreementSecond}
   options={{    headerShown: false,   drawerItemStyle: { display: 'none' }}}
 />
