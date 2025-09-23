@@ -17,6 +17,25 @@ export const InspectionNo = [
 
 
 
+export const Onion  = [
+  { label: 'Onion', value: '1' }, 
+  { label: 'Garlic', value: '2' },
+  { label: 'Potato', value: '3' },
+
+];
+
+
+
+
+export const FarmerName = [
+  { label: 'FarmerName1', value: 'FarmerName1' }, 
+  { label: 'FarmerName2', value: 'FarmerName2' },
+  { label: 'FarmerName3', value: 'FarmerName3' },
+  { label: 'FarmerName4', value: 'FarmerName4' },
+];
+
+
+
 export const Season = [
   { label: 'kharif', value: 'khari' }, 
   { label: 'Sec', value: '2' },
@@ -39,6 +58,58 @@ export const variety = [
   { label: 'variety 3', value: '3' },
   { label: 'variety 4', value: '4' },
 ];
+
+
+
+export const  seedType = [
+  { label: ' seedType 1', value: '1' }, 
+  { label: ' seedType 2', value: '2' },
+  { label: ' seedType 3', value: '3' },
+  { label: ' seedType 4', value: '4' },
+];
+
+
+
+export const  produceseeds = [
+  { label: ' seed blubs', value: '1' }, 
+  { label: ' Seed Tuber of Variety', value: '2' },
+
+];
+
+
+
+export const  commodity = [
+  { label: 'onion', value: '1' }, 
+  { label: 'Garlic', value: '2' },
+    { label: 'Potato', value: '2' },
+
+];
+
+
+
+export const  District = [
+  { label: 'dummy District', value: '1' }, 
+  { label: 'dummy District two', value: '2' },
+
+];
+
+
+export const  State = [
+  { label: 'dummy state', value: '1' }, 
+  { label: 'dummy state two', value: '2' },
+
+];
+
+
+export const  Seeds = [
+  { label: 'Breader', value: '1' }, 
+  { label: 'Foundation', value: '2' },
+    { label: 'Certified', value: '3' },
+      { label: 'Truthful Seeds', value: '4' },
+
+];
+
+
 
 
 // Define the State type if not already defined or import it from the correct module

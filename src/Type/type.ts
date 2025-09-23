@@ -3,9 +3,11 @@ export type FormData = {
   email: string;
   password: string;
   country: string | null;
+  seedType: string | null;
   InspectionNo: string | null;
   crop: string | null;
   Variety: string | null;
+  FarmerName: string | null;
   bio: string;
 };
 

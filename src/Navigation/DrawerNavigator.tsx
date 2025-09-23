@@ -4,7 +4,9 @@ import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '
 import { useNavigation } from '@react-navigation/native';
 import Dhasboard from '../Dhasboard/Dhasboard';
 import Signature from '../Signature/Signature';
-import TextInput from '../TextInput/TextInput';
+import DashboardScreen from '../DhasboadScreen/DhasboardScreen';
+import AgreementForm from '../Agreement/AgreementForm';
+import AgreementSecond from '../Agreement/AgreementSecond';
 
 const Drawer = createDrawerNavigator();1
 
@@ -88,6 +90,36 @@ export default function DrawerNavigator() {
         },
       }}
     >
+
+         <Drawer.Screen
+        name="DashboardScreen"
+        component={DashboardScreen}
+        options={{
+         
+          drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
+        }}
+      />
+
+
+      
+       <Drawer.Screen
+        name="AgreementForm"
+        component={AgreementForm}
+        options={{
+         
+          drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
+        }}
+      />
+
+
+      <Drawer.Screen
+  name="AgreementSecond"
+  component={AgreementSecond}
+  options={{    headerShown: false,   drawerItemStyle: { display: 'none' }}}
+/>
+
+
+
       {/* Dashboard (Bottom Item) */}
       <Drawer.Screen
         name="Inspection Form"
@@ -107,6 +139,9 @@ export default function DrawerNavigator() {
           drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
         }}
       />
+
+
+   
 
        {/* <Drawer.Screen
         name="TextInput"

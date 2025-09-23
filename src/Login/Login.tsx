@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, ScrollView, Dimensions } from 'react-native';
+import { View, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, ScrollView, Dimensions, StyleSheet , Image } from 'react-native';
+import { TextInput, Text, Button, Checkbox, useTheme } from 'react-native-paper';
 
 const Login = ({ navigation }: any) => {
-  const [mobileNumber, setMobileNumber] = useState('');
-  const [password, setPassword] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('123456789');
+  const [password, setPassword] = useState('..........');
   const [rememberDevice, setRememberDevice] = useState(false);
-  const [isFocusedMobile, setIsFocusedMobile] = useState(false);
-  const [isFocusedPassword, setIsFocusedPassword] = useState(false);
+  const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
+  
+  const theme = useTheme();
+  const primaryColor = '#70B04F';
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -38,7 +41,7 @@ const Login = ({ navigation }: any) => {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
+        style={[styles.container]}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
       >
         <ScrollView
@@ -52,67 +55,95 @@ const Login = ({ navigation }: any) => {
             {/* Logo at the top */}
             <View style={styles.logoContainer}>
               <Image
-                source={require('../../assets/nhrdf.png')} // Adjust the path to your logo image
+                source={require('../../assets/nhrdf.png')}
                 style={styles.logo}
                 resizeMode="contain"
               />
             </View>
             
             {/* Mobile Number Input */}
-            <Text style={styles.label}>Mobile Number</Text>
             <TextInput
-              style={[styles.input, isFocusedMobile && styles.inputFocused]}
+              label="Mobile Number"
+              mode="outlined"
+              style={styles.input}
               placeholder="Enter your mobile number"
-              placeholderTextColor={styles.placeholder.color}
               keyboardType="phone-pad"
               value={mobileNumber}
               onChangeText={setMobileNumber}
-              onFocus={() => setIsFocusedMobile(true)}
-              onBlur={() => setIsFocusedMobile(false)}
+              left={<TextInput.Icon icon="phone" />}
+              outlineColor="#E0E0E0"
+              activeOutlineColor={primaryColor}
+              theme={{
+                colors: {
+                  primary: primaryColor,
+                  placeholder: '#9E9E9E',
+                  text: '#333333',
+                  background: '#FFFFFF'
+                },
+                   roundness: 50, // Border radius
+              }}
             />
             
             {/* Password Input */}
-            <Text style={styles.label}>Password</Text>
             <TextInput
-              style={[styles.input, isFocusedPassword && styles.inputFocused]}
+              label="Password"
+              mode="outlined"
+              style={styles.input}
               placeholder="Enter your password"
-              placeholderTextColor={styles.placeholder.color}
-              secureTextEntry={true}
+              secureTextEntry={secureTextEntry}
               value={password}
               onChangeText={setPassword}
-              onFocus={() => setIsFocusedPassword(true)}
-              onBlur={() => setIsFocusedPassword(false)}
+              left={<TextInput.Icon icon="lock" />}
+              right={
+                <TextInput.Icon 
+                  icon={secureTextEntry ? "eye-off" : "eye"} 
+                  onPress={() => setSecureTextEntry(!secureTextEntry)}
+                />
+              }
+              outlineColor="#E0E0E0"
+              activeOutlineColor={primaryColor}
+              theme={{
+                colors: {
+                  primary: primaryColor,
+                  placeholder: '#9E9E9E',
+                  text: '#333333',
+                  background: '#FFFFFF'
+                },
+                 roundness: 50, // Border radius
+              }}
             />
             
             {/* Remember Device and Forgot Password Row */}
             <View style={styles.bottomRow}>
               <View style={styles.rememberContainer}>
-                <TouchableOpacity 
-                  style={[styles.checkbox, rememberDevice && styles.checkboxChecked]} 
+                <Checkbox.Android
+                  status={rememberDevice ? 'checked' : 'unchecked'}
                   onPress={() => setRememberDevice(!rememberDevice)}
-                >
-                  {rememberDevice && <View style={styles.checkboxInner} />}
-                </TouchableOpacity>
+                  color={primaryColor}
+                />
                 <Text style={styles.rememberText}>Remember this Device</Text>
               </View>
               
-              <TouchableOpacity>
-                <Text style={styles.forgotPassword}>Forgot Password?</Text>
-              </TouchableOpacity>
+              <Button 
+                mode="text" 
+                onPress={() => console.log('Forgot password pressed')}
+                labelStyle={{ color: primaryColor }}
+                compact
+              >
+                Forgot Password?
+              </Button>
             </View>
             
-            <TouchableOpacity
-  style={styles.signInButton}
-  activeOpacity={0.7}
-  onPress={() => navigation.navigate('DrawerNavigator')}
- 
- 
->
-  <Text style={styles.signInButtonText}>LogIn</Text>
-</TouchableOpacity>
-
+            <Button
+              mode="contained"
+              onPress={() => navigation.navigate('DrawerNavigator')}
+              style={[styles.signInButton, { backgroundColor: primaryColor }]}
+              labelStyle={styles.signInButtonText}
+              contentStyle={styles.buttonContent}
+            >
+              Login
+            </Button>
           </View>
-       
         </ScrollView>
       </KeyboardAvoidingView>
     </TouchableWithoutFeedback>
@@ -122,11 +153,13 @@ const Login = ({ navigation }: any) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor : '#ffffff'
+   
   },
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
+      backgroundColor : '#ffffff'
   },
   contentContainer: {
     paddingHorizontal: 24,
@@ -142,31 +175,10 @@ const styles = StyleSheet.create({
   logo: {
     width: 260,
     height: 150,
-
-  },
-  label: {
-    fontSize: 14,
-    color: '#333333',
-    marginBottom: 8,
-    fontWeight: '500',
   },
   input: {
-    height: 56,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 12,
-    paddingHorizontal: 16,
     marginBottom: 20,
-    fontSize: 16,
     backgroundColor: '#FFFFFF',
-    color: '#333333',
-  },
-  inputFocused: {
-    borderColor: '#70B04F',
-    borderWidth: 2,
-  },
-  placeholder: {
-    color: '#9E9E9E',
   },
   bottomRow: {
     flexDirection: 'row',
@@ -178,41 +190,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
-    borderRadius: 4,
-    marginRight: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxChecked: {
-    borderColor: '#70B04F',
-    backgroundColor: '#70B04F',
-  },
-  checkboxInner: {
-    width: 12,
-    height: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 2,
-  },
   rememberText: {
     fontSize: 14,
     color: '#333333',
-  },
-  forgotPassword: {
-    color: '#70B04F',
-    fontSize: 14,
-    fontWeight: '500',
+    marginLeft: 8,
   },
   signInButton: {
-    backgroundColor: '#70B04F',
-    height: 56,
     borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -224,20 +208,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 24,
-    marginBottom: 24,
-  },
-  footerText: {
-    color: '#666666',
-    fontSize: 14,
-  },
-  signUpText: {
-    color: '#70B04F',
-    fontSize: 14,
-    fontWeight: '500',
+  buttonContent: {
+    height: 44,
   },
 });
 
