@@ -14,28 +14,28 @@ const Stack = createNativeStackNavigator();
 
 const App = () => {
   return (
-        <PaperProvider> 
-    <NavigationContainer>
-      <Stack.Navigator id={undefined} initialRouteName="Login" screenOptions={{ headerShown: true }}>
+    <PaperProvider>
+      <NavigationContainer>
+        <Stack.Navigator id={undefined} initialRouteName="Login" screenOptions={{ headerShown: true }}>
 
-        <Stack.Screen name="Login"
-          component={Login}
-          options={{ headerShown: false }}
+          <Stack.Screen name="Login"
+            component={Login}
+            options={{ headerShown: false }}
 
-        />
-
-
+          />
 
 
-        <Stack.Screen name="DrawerNavigator"
-          component={DrawerNavigator}
-          options={{ headerShown: false }}
-
-        />
 
 
-      </Stack.Navigator>
-    </NavigationContainer>
+          <Stack.Screen name="DrawerNavigator"
+            component={DrawerNavigator}
+            options={{ headerShown: false }}
+
+          />
+
+
+        </Stack.Navigator>
+      </NavigationContainer>
     </PaperProvider>
   );
 };
