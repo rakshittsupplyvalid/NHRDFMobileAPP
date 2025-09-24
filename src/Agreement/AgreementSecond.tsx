@@ -1,6 +1,6 @@
-import React from "react";
-import { StyleSheet, View, TouchableOpacity } from "react-native";
-import { Button, Text, Card, TextInput } from "react-native-paper";
+import React, { useState } from "react";
+import { StyleSheet, View, TouchableOpacity, ScrollView } from "react-native";
+import { Button, Text, Card, TextInput, Checkbox } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import CommonPicker from "../CommonComponent/CommonDropdown";
 import { commodity, Onion, Garlic, Potato, relations, states, districts, years } from "../Constants/constants";
@@ -11,9 +11,15 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 const AgreementSecond: React.FC = () => {
     const { state, updateState } = useForm();
     const navigation = useNavigation<any>();
+    const [isAgreementAccepted, setIsAgreementAccepted] = useState(false);
 
     const handleSubmit = () => {
+        if (!isAgreementAccepted) {
+            alert("Please read and accept the agreement terms before submitting.");
+            return;
+        }
         console.log("Form Data:", state.form);
+        // Add your submission logic here
     };
 
     // Function to render commodity-specific dropdown
@@ -37,7 +43,7 @@ const AgreementSecond: React.FC = () => {
                     </Card>
                 );
             
-            case "garlic":
+            case "Garlic":
                 return (
                     <Card style={styles.sectionCard}>
                         <Card.Content>
@@ -53,7 +59,7 @@ const AgreementSecond: React.FC = () => {
                     </Card>
                 );
             
-            case "potato":
+            case "Potato":
                 return (
                     <Card style={styles.sectionCard}>
                         <Card.Content>
@@ -77,7 +83,7 @@ const AgreementSecond: React.FC = () => {
             <View style={styles.headerContainer}>
                 <TouchableOpacity
                     style={styles.backButton}
-                    onPress={() => navigation.navigate("Agreement Form" as never)}
+                    onPress={() => navigation.navigate("AgreementForm" as never)}
                     activeOpacity={0.7}
                 >
                     <MaterialIcons name="arrow-back" size={24} color="#fff" />
@@ -220,6 +226,18 @@ const AgreementSecond: React.FC = () => {
                             keyboardType="numeric"
                             maxLength={6}
                         />
+
+                        {/* Mobile Number */}
+                        <Text style={styles.label}>Mobile Number</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.mobileNumber || ""}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, mobileNumber: text } })}
+                            style={styles.input}
+                            placeholder="Enter mobile number"
+                            keyboardType="phone-pad"
+                            maxLength={10}
+                        />
                     </Card.Content>
                 </Card>
 
@@ -251,13 +269,161 @@ const AgreementSecond: React.FC = () => {
                 {/* Dynamic Commodity-Specific Dropdown */}
                 {renderCommodityDropdown()}
 
+                {/* NHRDF Authorized Signatory Section */}
+                <Card style={styles.sectionCard}>
+                    <Card.Content>
+                        <Text style={styles.sectionTitle}>NHRDF Authorized Signatory</Text>
+                        
+                        {/* Authorized Signatory Name */}
+                        <Text style={styles.label}>Authorized Signatory Name</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.authorizedSignatory || ""}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, authorizedSignatory: text } })}
+                            style={styles.input}
+                            placeholder="Enter authorized signatory name"
+                        />
+
+                        {/* NHRDF Address */}
+                        <Text style={styles.label}>NHRDF Address</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.nhrdfAddress || "NATIONAL HORTICULTURAL RESEARCH AND DEVELOPMENT FOUNDATION, JANAKPURI, NEW DELHI"}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfAddress: text } })}
+                            style={styles.input}
+                            placeholder="Enter NHRDF address"
+                            multiline={true}
+                            numberOfLines={2}
+                        />
+
+                        {/* Plot Number */}
+                        <Text style={styles.label}>Plot Number</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.plotNumber || ""}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, plotNumber: text } })}
+                            style={styles.input}
+                            placeholder="Enter plot number"
+                        />
+
+                        {/* Location Details */}
+                        <Text style={styles.label}>Location Details</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.locationDetails || ""}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, locationDetails: text } })}
+                            style={styles.input}
+                            placeholder="Enter location details (e.g., Behind Hotel Murkishari)"
+                            multiline={true}
+                            numberOfLines={2}
+                        />
+
+                        {/* Village/Town */}
+                        <Text style={styles.label}>Village/Town</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.nhrdfVillage || ""}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfVillage: text } })}
+                            style={styles.input}
+                            placeholder="Enter village/town"
+                        />
+
+                        {/* Post Office */}
+                        <Text style={styles.label}>Post Office</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.nhrdfPostOffice || ""}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfPostOffice: text } })}
+                            style={styles.input}
+                            placeholder="Enter post office"
+                        />
+
+                        {/* Taluka */}
+                        <Text style={styles.label}>Taluka</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.nhrdfTaluka || ""}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfTaluka: text } })}
+                            style={styles.input}
+                            placeholder="Enter taluka"
+                        />
+
+                        {/* District */}
+                        <Text style={styles.label}>District</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.nhrdfDistrict || ""}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfDistrict: text } })}
+                            style={styles.input}
+                            placeholder="Enter district"
+                        />
+
+                        {/* Pincode */}
+                        <Text style={styles.label}>Pincode</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.nhrdfPincode || ""}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfPincode: text } })}
+                            style={styles.input}
+                            placeholder="Enter pincode"
+                            keyboardType="numeric"
+                            maxLength={6}
+                        />
+                    </Card.Content>
+                </Card>
+
+                {/* Agreement Terms and Conditions Section */}
+                <Card style={styles.sectionCard}>
+                    <Card.Content>
+                        <Text style={styles.sectionTitle}>Agreement Terms & Conditions</Text>
+                        
+                        <ScrollView style={styles.agreementContainer} nestedScrollEnabled={true}>
+                            <Text style={styles.agreementText}>
+                                <Text style={styles.agreementHeading}>Important Terms:{'\n\n'}</Text>
+                                
+                                • The NHRDF reserves the right to terminate this Contract Agreement without giving any notice under circumstances beyond their control.{'\n\n'}
+                                
+                                • In case of termination, the Grower will be fully responsible for disposal of seeds/bulbs/tubers produced.{'\n\n'}
+                                
+                                • This Agreement has been read & explained to the Grower in his/her own mother tongue.{'\n\n'}
+                                
+                                • The Grower hereby declares that he/she has understood fully the contents thereof.{'\n\n'}
+                                
+                                • This Agreement is signed and implemented as it is mutually understood and agreed by Grower and the NHRDF.{'\n\n'}
+                                
+                                • If any dispute arises in this matter as per this Agreement, jurisdiction will be Delhi Court, Delhi, India only.{'\n\n'}
+                                
+                                <Text style={styles.agreementNote}>
+                                    Note: The Grower is not allowed to sell the produce other than those approved under the programmes or from the fields not inspected by the NHRDF.
+                                </Text>
+                            </Text>
+                        </ScrollView>
+
+                        {/* Agreement Acceptance Checkbox */}
+                        <View style={styles.checkboxContainer}>
+                            <Checkbox.Android
+                                status={isAgreementAccepted ? 'checked' : 'unchecked'}
+                                onPress={() => setIsAgreementAccepted(!isAgreementAccepted)}
+                                color="#70B04F"
+                            />
+                            <Text style={styles.checkboxLabel}>
+                                I have read and understood all the terms and conditions of this agreement and hereby accept them.
+                            </Text>
+                        </View>
+                    </Card.Content>
+                </Card>
+
                 {/* Submit Button */}
                 <Button
                     mode="contained"
                     onPress={handleSubmit}
-                    style={styles.submitButton}
+                    style={[
+                        styles.submitButton,
+                        !isAgreementAccepted && styles.submitButtonDisabled
+                    ]}
                     contentStyle={styles.submitButtonContent}
                     icon="check"
+                    disabled={!isAgreementAccepted}
                 >
                     Submit Agreement
                 </Button>
@@ -337,7 +503,45 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         elevation: 4,
     },
+    submitButtonDisabled: {
+        backgroundColor: "#BDBDBD",
+    },
     submitButtonContent: {
         paddingVertical: 6,
+    },
+    agreementContainer: {
+        maxHeight: 300,
+        borderWidth: 1,
+        borderColor: "#E0E0E0",
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 16,
+        backgroundColor: "#FAFAFA",
+    },
+    agreementText: {
+        fontSize: 12,
+        lineHeight: 18,
+        color: "#455A64",
+    },
+    agreementHeading: {
+        fontSize: 14,
+        fontWeight: "bold",
+        color: "#D32F2F",
+    },
+    agreementNote: {
+        fontStyle: "italic",
+        color: "#FF9800",
+        fontWeight: "600",
+    },
+    checkboxContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginTop: 8,
+    },
+    checkboxLabel: {
+        flex: 1,
+        marginLeft: 8,
+        fontSize: 14,
+        color: "#455A64",
     },
 });

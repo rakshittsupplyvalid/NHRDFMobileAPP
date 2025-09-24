@@ -3,44 +3,44 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from 'react-na
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import Dhasboard from '../Dhasboard/Dhasboard';
-import Signature from '../Signature/Signature';
-import DashboardScreen from '../DhasboadScreen/DhasboardScreen';
+// import Signature from '../Signature/Signature';
+// import DashboardScreen from '../DhasboadScreen/DhasboardScreen';
 import AgreementForm from '../Agreement/AgreementForm';
 import AgreementSecond from '../Agreement/AgreementSecond';
 
-const Drawer = createDrawerNavigator();1
+const Drawer = createDrawerNavigator(); 1
 
 // ===== Custom Drawer Content =====
 function CustomDrawerContent(props: any) {
   const navigation = useNavigation<any>();
 
-    const handleLogout = () => {
-      Alert.alert(
-        'Logout',
-        'Are you sure you want to logout?',
-        [
-          {
-            text: 'Cancel',
-            style: 'cancel',
+  const handleLogout = () => {
+    Alert.alert(
+      'Logout',
+      'Are you sure you want to logout?',
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Logout',
+          onPress: () => {
+            // Add your logout logic here
+            // For example: navigation.navigate('Login');
+            navigation.navigate('Login' as never);
           },
-          {
-            text: 'Logout',
-            onPress: () => {
-              // Add your logout logic here
-              // For example: navigation.navigate('Login');
-               navigation.navigate('Login' as never);
-            },
-          },
-        ],
-        { cancelable: false }
-      );
-    };
+        },
+      ],
+      { cancelable: false }
+    );
+  };
 
-      return (
+  return (
     <View style={styles.drawerContainer}>
       <DrawerContentScrollView {...props}>
         {/* Profile Section */}
-        
+
 
         {/* Main Drawer Items */}
         <View style={styles.drawerContent}>
@@ -51,7 +51,7 @@ function CustomDrawerContent(props: any) {
       {/* Logout Button */}
       <View style={styles.bottomSection}>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-      
+
           <Text style={[styles.logoutText, { fontFamily: 'Poppins-Regular' }]}>Logout</Text>
         </TouchableOpacity>
       </View>
@@ -65,7 +65,7 @@ function CustomDrawerContent(props: any) {
 export default function DrawerNavigator() {
   return (
     <Drawer.Navigator
-    id={undefined}
+      id={undefined}
       drawerContent={(props) => <CustomDrawerContent {...props} />}
 
       screenOptions={{
@@ -90,33 +90,33 @@ export default function DrawerNavigator() {
         },
       }}
     >
-
-         <Drawer.Screen
+{/* 
+      <Drawer.Screen
         name="DashboardScreen"
         component={DashboardScreen}
         options={{
-         
+
           drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
         }}
-      />
+      /> */}
 
 
-      
-       <Drawer.Screen
+
+      <Drawer.Screen
         name="AgreementForm"
         component={AgreementForm}
         options={{
-         
+
           drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
         }}
       />
 
 
       <Drawer.Screen
-  name="Agreement"
-  component={AgreementSecond}
-  options={{    headerShown: false,   drawerItemStyle: { display: 'none' }}}
-/>
+        name="Agreement"
+        component={AgreementSecond}
+        options={{ headerShown: false, drawerItemStyle: { display: 'none' } }}
+      />
 
 
 
@@ -125,25 +125,25 @@ export default function DrawerNavigator() {
         name="Inspection Form"
         component={Dhasboard}
         options={{
-         
+
           drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
         }}
       />
 
-
-       <Drawer.Screen
+{/* 
+      <Drawer.Screen
         name="Signature"
         component={Signature}
         options={{
-         
+
           drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
         }}
-      />
+      /> */}
 
 
-   
 
-       {/* <Drawer.Screen
+
+      {/* <Drawer.Screen
         name="TextInput"
         component={TextInput}
         options={{
