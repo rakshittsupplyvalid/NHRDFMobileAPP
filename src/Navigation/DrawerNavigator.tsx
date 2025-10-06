@@ -3,37 +3,39 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from 'react-na
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import Dhasboard from '../Dhasboard/Dhasboard';
+import { MMKV } from 'react-native-mmkv';
 // import Signature from '../Signature/Signature';
 // import DashboardScreen from '../DhasboadScreen/DhasboardScreen';
 import AgreementForm from '../Agreement/AgreementForm';
 import AgreementSecond from '../Agreement/AgreementSecond';
 
-const Drawer = createDrawerNavigator(); 1
+const Drawer = createDrawerNavigator(); 
+
+const storage = new MMKV();
 
 // ===== Custom Drawer Content =====
 function CustomDrawerContent(props: any) {
   const navigation = useNavigation<any>();
 
+
+
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        {
-          text: 'Cancel',
-          style: 'cancel',
-        },
-        {
-          text: 'Logout',
-          onPress: () => {
-            // Add your logout logic here
-            // For example: navigation.navigate('Login');
-            navigation.navigate('Login' as never);
-          },
-        },
-      ],
-      { cancelable: false }
-    );
+    Alert.alert('Confirm Logout', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Log Out', style: 'destructive', onPress: processLogout },
+    ]);
+  };
+
+  const processLogout = () => {
+    try {
+      storage.delete('userToken');
+      console.log('User logged out successfully');
+      if (navigation) {
+        navigation.reset({ routes: [{ name: 'Login' }] });
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
   };
 
   return (

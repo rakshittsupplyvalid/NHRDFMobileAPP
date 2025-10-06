@@ -1,0 +1,94 @@
+// utils/fetchCommodity.ts
+import apiClient from "../Service/apiInterceptors";
+
+// Fetch all commodity types (first dropdown)
+export const fetchCommodityTypes = async () => {
+  try {
+    const res = await apiClient.get(
+      "/api/mobile/commoditytype/get/list?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED"
+    );
+
+
+
+    return res.data.map((item: any) => ({
+      label: item.name,
+      value: item.id, // this will be used in next API
+    }));
+  } catch (error: any) {
+    
+    return [];
+  }
+};
+
+// Fetch commodities based on selected Commodity Type
+export const fetchCommoditiesByType = async (commodityTypeId: string) => {
+  try {
+    const res = await apiClient.get(
+      `/api/mobile/commodity/get/list?CommodityTypesId=${commodityTypeId}&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`
+    );
+
+
+    console.log("response" , res)
+
+
+
+    return res.data.map((item: any) => ({
+      label: item.name,
+      value: item.id,
+    }));
+  } catch (error: any) {
+  
+    return [];
+  }
+};
+
+
+
+
+// Fetch all farmers (for dropdown)
+// Fetch all farmers (for dropdown)
+export const farmer = async (selectedCommodity: string) => {
+  if (!selectedCommodity) return [];
+
+  try {
+    const url = `/api/mobile/farmer/distribution${selectedCommodity}`;
+    const res = await apiClient.get(url);
+
+    console.log("Farmer List:", res.data);
+
+    // Map the API data to { label, value } format for dropdown
+    const dropdownData = res.data.map((farmer: any) => ({
+      label: farmer.targetassignfarmername || "N/A", // fallback if null
+      value: farmer.farmerid,
+    }));
+
+    return dropdownData;
+
+  } catch (error: any) {
+    console.log("Error fetching farmers:", error);
+    return [];
+  }
+};
+
+
+// Fetch farmer details by farmerId
+export const farmerDetails = async (farmerId: string) => {
+  try {
+    const res = await apiClient.get(
+      `/api/mobile/farmer/${farmerId}`
+    );
+
+    console.log("Farmer Details:", res.data);
+
+    // Agar API single object return kare, to usko array me wrap karke map karo
+    const data = [res.data];
+
+    return data.map((item: any) => ({
+      label: item.name,
+      value: item.id,
+      ...item, // baki details bhi rakh sakte ho
+    }));
+  } catch (error: any) {
+    return [];
+  }
+};

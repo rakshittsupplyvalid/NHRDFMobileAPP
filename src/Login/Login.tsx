@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, ScrollView, Dimensions, StyleSheet, Image, Alert } from 'react-native';
 import { TextInput, Text, Button, Checkbox, useTheme } from 'react-native-paper';
 import apiClient from '../Service/apiInterceptors';
+import { storeToken } from '../utils/authUtils';
 
 const Login = ({ navigation }: any) => {
-  const [mobileNumber, setMobileNumber] = useState('123456789');
-  const [password, setPassword] = useState('..........');
+  const [mobileNumber, setMobileNumber] = useState('8976865879');
+  const [password, setPassword] = useState('Password@123');
   const [rememberDevice, setRememberDevice] = useState(false);
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
@@ -46,21 +47,23 @@ const handleLogin = async () => {
   try {
     setLoading(true);
 
+    const requestData = {
+      mobilenumber: mobileNumber,
+      assayerpassword: password,
+    };
+    console.log("Request data:", requestData);
+
     const response = await apiClient.post(
       "/api/mobile/assayer/login",
-      {
-        mobilenumber: mobileNumber,
-        assayerpassword: password,
-      }
+      requestData
     );
 
     console.log("Login response:", response.data);
 
-    if (response.data && response.data.success) {
-      Alert.alert("Success", "Login successful!");
-
-      // agar token milta hai toh yaha save karna hai
-      // await AsyncStorage.setItem("token", response.data.token);
+    if (response.data?.token) {
+      // ✅ Token save karna zaroori hai
+      storeToken(response.data.token);
+      console.log("✅ Token saved:", response.data.token);
 
       navigation.navigate("DrawerNavigator");
     } else {
@@ -76,6 +79,7 @@ const handleLogin = async () => {
     setLoading(false);
   }
 };
+
 
 
   return (

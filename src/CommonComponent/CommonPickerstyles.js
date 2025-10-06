@@ -12,10 +12,10 @@ export default StyleSheet.create({
     marginBottom: 8,
   },
   picker: {
-    height: 48,
+    height: 38,
     borderWidth: 1,
     borderColor: '#D1D5DB',
-    borderRadius: 50,
+  
     paddingHorizontal: 17,
     backgroundColor: '#FFFFFF',
   },

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
+import { useState, useEffect } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { TextInput, Button, Text, Card } from "react-native-paper";
 import CommonPicker from "../CommonComponent/CommonDropdown";
@@ -7,12 +8,24 @@ import useForm from "../Form/UseForm";
 import CustomDateTimePicker from '../CommonComponent/DateTimePicker';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useNavigation } from "@react-navigation/native";
+import { fetchCommodityTypes, fetchCommoditiesByType, farmer, farmerDetails } from "../Service/fetchCommodity";
+import axios from 'axios';
 
 const AgreementForm: React.FC = () => {
     const { state, updateState } = useForm();
+    const [statesList, setStatesList] = useState([]);
+    const [districtsList, setDistrictsList] = useState([]);
     const [selectedDate, setSelectedDate] = useState(new Date());
-     const navigation = useNavigation<any>();
-    
+    const [commodityTypes, setCommodityTypes] = useState([]);
+    const [commodities, setCommodities] = useState([]);
+    const [selectedCommodityType, setSelectedCommodityType] = useState('');
+    const [selectedCommodity, setSelectedCommodity] = useState('');
+    const [farmersList, setFarmersList] = useState([]);
+    const [selectedFarmer, setSelectedFarmer] = useState('');
+
+
+    const navigation = useNavigation<any>();
+
 
     const [isFocused, setIsFocused] = useState({
         produceseeds: false,
@@ -20,6 +33,117 @@ const AgreementForm: React.FC = () => {
         duration: false,
         FarmerName: false,
     });
+
+
+    useEffect(() => {
+        (async () => {
+            const data = await fetchCommodityTypes();
+
+            setCommodityTypes(data);
+            console.log("Fetched Commodity Types:", data);
+        })();
+    }, []);
+
+
+    useEffect(() => {
+        if (!selectedCommodityType) return;
+
+        (async () => {
+            const items = await fetchCommoditiesByType(selectedCommodityType);
+            setCommodities(items);
+            console.log("comiddites", items);
+        })();
+    }, [selectedCommodityType]);
+
+
+  useEffect(() => {
+  if (!selectedCommodity) {
+    setFarmersList([]);
+    setSelectedFarmer(null);
+    return;
+  }
+
+  (async () => {
+    const items = await farmer(selectedCommodity);
+    setFarmersList(items);
+
+  })();
+}, [selectedCommodity]);
+
+
+    useEffect(() => {
+    if (!selectedFarmer) return;
+
+    (async () => {
+        const details = await farmerDetails(selectedFarmer);
+        if (details.length > 0) {
+            const info = details[0]; // API single object return
+
+            // Populate form fields
+            updateState({
+                ...state,
+                form: {
+                    ...state.form,
+                    name: info.name || "",
+                    age: info.age?.toString() || "",
+                    occupation: info.occupation || "",
+                    relation : info.relation || "",
+                    relativename : info.relativename || "",
+                    statename : info.statename || "",
+                    villagename : info.villagename || "",
+                    village: info.village || "",
+                    post: info.post || "",
+                    taluka: info.taluka || "",
+                    dist: info.district || "",
+                     gender: info.gender || "",
+                    state: info.state || "",
+                    pincode: info.pincode?.toString() || "",
+                    phone: info.phone || "",
+                    mobile: info.mobile || "",
+                },
+            });
+        }
+    })();
+}, [selectedFarmer]);
+
+
+
+
+
+    useEffect(() => {
+        axios
+            .get('https://stage-master-backend.epravaha.com/api/State/GetAllStates')
+            .then(res => {
+                const mappedStates = res.data.map(item => ({
+                    label: item.name,
+                    value: item.stateCode, // integer
+                }));
+                setStatesList(mappedStates);
+            })
+            .catch(err => console.error(err));
+    }, []);
+
+    // Fetch districts when state changes
+    useEffect(() => {
+        if (state.form.state) {
+            axios
+                .get(
+                    `https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${state.form.state}`
+                )
+                .then(res => {
+                    const mappedDistricts = res.data.map(item => ({
+                        label: item.name,
+                        value: item.districtCode, // store districtCode
+                    }));
+                    setDistrictsList(mappedDistricts);
+                })
+                .catch(err => console.error(err));
+        } else {
+            setDistrictsList([]);
+        }
+    }, [state.form.state]);
+
+
 
     const isFarmerSelected = state.form.duration === "FarmerName1" || state.form.duration === "FarmerName2" || state.form.duration === "FarmerName3" || state.form.duration === "FarmerName4";
 
@@ -56,41 +180,52 @@ const AgreementForm: React.FC = () => {
             {/* Agreement Details Section */}
             <Card style={styles.sectionCard}>
                 <Card.Content>
-                    <Text style={styles.sectionTitle}>Agreement Details</Text>
 
-                    <Text style={styles.label}>Seeds Type</Text>
-                    <CommonPicker
-                        selectedValue={state.form.agreementType || ""}
-                        onValueChange={value =>
-                            updateState({ ...state, form: { ...state.form, agreementType: value } })
-                        }
-                        items={seedType}
-                        isFocused={isFocused.agreementType}
-                        onFocus={() => handleFocus("agreementType")}
-                        onBlur={() => handleBlur("agreementType")}
-                    />
 
-                    <Text style={styles.label}>Farmer Name</Text>
+
                     <CommonPicker
-                        selectedValue={state.form.duration || ""}
-                        onValueChange={value => {
-                            updateState({ ...state, form: { ...state.form, duration: value } });
+                        label="Commodity Type"
+                        selectedValue={selectedCommodityType}
+                        onValueChange={(value) => {
+                            setSelectedCommodityType(value);
+                           
+                            setSelectedCommodity(''); // reset commodity
                         }}
-                        items={FarmerName}
-                        isFocused={isFocused.FarmerName}
-                        onFocus={() => handleFocus("FarmerName")}
-                        onBlur={() => handleBlur("FarmerName")}
+                        items={commodityTypes}
                     />
+
+
+
+                    <CommonPicker
+                        label="Commodity"
+                        selectedValue={selectedCommodity}
+                        onValueChange={(value) => {setSelectedCommodity(value)
+                           console.log("Selected Commodity first value:", value);
+                        }}
+                        items={commodities}
+                    />
+
+
+                    <CommonPicker
+                        label="Farmer"
+                        selectedValue={selectedFarmer}
+                        onValueChange={(value) => {setSelectedFarmer(value)
+                               console.log("Farmer Value", value);
+
+                        }}
+                        items={farmersList}
+                    />
+
+
                 </Card.Content>
             </Card>
 
-            {/* Farmer Information Section */}
+        
             <Card style={styles.sectionCard}>
                 <Card.Content>
                     <Text style={styles.sectionTitle}>Farmer Information</Text>
 
-                    <View style={styles.row}>
-                        <View style={styles.halfInput}>
+                    
                             <TextInput
                                 label="Full Name"
                                 value={state.form.name || ""}
@@ -102,8 +237,8 @@ const AgreementForm: React.FC = () => {
                                 style={styles.input}
                                 disabled={!isFarmerSelected}
                             />
-                        </View>
-                        <View style={styles.halfInput}>
+                      
+                   
                             <TextInput
                                 label="Age"
                                 value={state.form.age || ""}
@@ -116,8 +251,47 @@ const AgreementForm: React.FC = () => {
                                 style={styles.input}
                                 disabled={!isFarmerSelected}
                             />
-                        </View>
-                    </View>
+                    
+
+
+                      <TextInput
+                        label="Gender"
+                        value={state.form.gender || ""}
+                        mode="outlined"
+                        left={<TextInput.Icon icon="briefcase" />}
+                        onChangeText={value =>
+                            updateState({ ...state, form: { ...state.form, gender: value } })
+                        }
+                        style={styles.input}
+                        disabled={!isFarmerSelected}
+                    />
+
+
+                          <TextInput
+                        label="Relation"
+                        value={state.form.relation || ""}
+                        mode="outlined"
+                        left={<TextInput.Icon icon="briefcase" />}
+                        onChangeText={value =>
+                            updateState({ ...state, form: { ...state.form, relation: value } })
+                        }
+                        style={styles.input}
+                        disabled={!isFarmerSelected}
+                    />
+
+
+
+                     <TextInput
+                        label="Relative name"
+                        value={state.form.relativename || ""}
+                        mode="outlined"
+                        left={<TextInput.Icon icon="briefcase" />}
+                        onChangeText={value =>
+                            updateState({ ...state, form: { ...state.form,  relativename: value } })
+                        }
+                        style={styles.input}
+                        disabled={!isFarmerSelected}
+                    />
 
                     <TextInput
                         label="Occupation"
@@ -135,11 +309,11 @@ const AgreementForm: React.FC = () => {
                         <View style={styles.halfInput}>
                             <TextInput
                                 label="Village"
-                                value={state.form.village || ""}
+                                value={state.form.villagename|| ""}
                                 mode="outlined"
                                 left={<TextInput.Icon icon="home" />}
                                 onChangeText={value =>
-                                    updateState({ ...state, form: { ...state.form, village: value } })
+                                    updateState({ ...state, form: { ...state.form, villagename: value } })
                                 }
                                 style={styles.input}
                                 disabled={!isFarmerSelected}
@@ -193,11 +367,11 @@ const AgreementForm: React.FC = () => {
                         <View style={styles.halfInput}>
                             <TextInput
                                 label="State"
-                                value={state.form.state || ""}
+                                value={state.form.statename || ""}
                                 mode="outlined"
                                 left={<TextInput.Icon icon="earth" />}
                                 onChangeText={value =>
-                                    updateState({ ...state, form: { ...state.form, state: value } })
+                                    updateState({ ...state, form: { ...state.form, statename: value } })
                                 }
                                 style={styles.input}
                                 disabled={!isFarmerSelected}
@@ -252,37 +426,8 @@ const AgreementForm: React.FC = () => {
                 </Card.Content>
             </Card>
 
-            {/* Seed Production Section */}
-            <Card style={styles.sectionCard}>
-                <Card.Content>
-                    <Text style={styles.sectionTitle}>Seed Production Details</Text>
 
-                    <Text style={styles.label}>Produce Seeds</Text>
-                    <CommonPicker
-                        selectedValue={state.form.produceseeds || ""}
-                        onValueChange={value =>
-                            updateState({ ...state, form: { ...state.form, produceseeds: value } })
-                        }
-                        items={produceseeds}
-                        isFocused={isFocused.produceseeds}
-                        onFocus={() => handleFocus("produceseeds")}
-                        onBlur={() => handleBlur("produceseeds")}
-                    />
-
-                  
-
-                    <Text style={styles.label}>Seeds</Text>
-                    <CommonPicker
-                        selectedValue={state.form.seeds || ""}
-                        onValueChange={value =>
-                            updateState({ ...state, form: { ...state.form, seeds: value } })
-                        }
-                        items={Seeds}
-                    />
-                </Card.Content>
-            </Card>
-
-            {/* Location Details Section */}
+             {/* Location Details Section */}
             <Card style={styles.sectionCard}>
                 <Card.Content>
                     <Text style={styles.sectionTitle}>Production Location</Text>
@@ -291,11 +436,11 @@ const AgreementForm: React.FC = () => {
                         <View style={styles.halfInput}>
                             <TextInput
                                 label="Village"
-                                value={state.form.village || ""}
+                                value={state.form.villagename || ""}
                                 mode="outlined"
                                 left={<TextInput.Icon icon="home" />}
                                 onChangeText={value =>
-                                    updateState({ ...state, form: { ...state.form, village: value } })
+                                    updateState({ ...state, form: { ...state.form,   villagename: value } })
                                 }
                                 style={styles.input}
                             />
@@ -325,27 +470,31 @@ const AgreementForm: React.FC = () => {
                         style={styles.input}
                     />
 
-
-                    <Text style={styles.label}>District</Text>
                     <CommonPicker
-                        selectedValue={state.form.District || ""}
+                        label="State"
+                        selectedValue={state.form.state || ''}
+                        items={statesList}
                         onValueChange={value =>
-                            updateState({ ...state, form: { ...state.form, District: value } })
+                            updateState({
+                                ...state,
+                                form: { ...state.form, state: value, district: '' }, // reset district
+                            })
                         }
-                        items={District}
+
                     />
 
-
-                    <Text style={styles.label}>State</Text>
                     <CommonPicker
-                        selectedValue={state.form.State || ""}
+                        label="District"
+                        selectedValue={state.form.district || ''}
+                        items={districtsList}
                         onValueChange={value =>
-                            updateState({ ...state, form: { ...state.form, State: value } })
+                            updateState({
+                                ...state,
+                                form: { ...state.form, district: value },
+                            })
                         }
-                        items={State}
+
                     />
-
-
                     <TextInput
                         label="Pincode"
                         value={state.form.Pincode || ""}
@@ -359,6 +508,38 @@ const AgreementForm: React.FC = () => {
                     />
                 </Card.Content>
             </Card>
+
+            {/* Seed Production Section */}
+            <Card style={styles.sectionCard}>
+                <Card.Content>
+                    <Text style={styles.sectionTitle}>Seed Production Details</Text>
+
+                    <Text style={styles.label}>Produce Seeds</Text>
+                    <CommonPicker
+                        selectedValue={state.form.produceseeds || ""}
+                        onValueChange={value =>
+                            updateState({ ...state, form: { ...state.form, produceseeds: value } })
+                        }
+                        items={produceseeds}
+                        isFocused={isFocused.produceseeds}
+                        onFocus={() => handleFocus("produceseeds")}
+                        onBlur={() => handleBlur("produceseeds")}
+                    />
+
+
+
+                    <Text style={styles.label}>Seeds</Text>
+                    <CommonPicker
+                        selectedValue={state.form.seeds || ""}
+                        onValueChange={value =>
+                            updateState({ ...state, form: { ...state.form, seeds: value } })
+                        }
+                        items={Seeds}
+                    />
+                </Card.Content>
+            </Card>
+
+           
 
             {/* Contract Terms Section */}
             <Card style={styles.sectionCard}>
@@ -389,13 +570,13 @@ const AgreementForm: React.FC = () => {
             {/* Submit Button */}
             <Button
                 mode="contained"
-                
+
                 style={styles.submitButton}
                 contentStyle={styles.submitButtonContent}
-             
-                 onPress={() => navigation.navigate("Agreement" as never)}        
+
+                onPress={() => navigation.navigate("Agreement" as never)}
             >
-              Next
+                Next
             </Button>
         </KeyboardAwareScrollView>
     );
@@ -455,9 +636,9 @@ const styles = StyleSheet.create({
     input: {
         marginBottom: 12,
         backgroundColor: "white",
-        height: 38,       // TextInput ki height
-        fontSize: 14,     // Text ka size
-        paddingHorizontal: 10, // thoda padding left/right
+        height: 38,       
+        fontSize: 14,     
+        paddingHorizontal: 10, 
     },
     row: {
         flexDirection: "row",
@@ -467,16 +648,16 @@ const styles = StyleSheet.create({
     halfInput: {
         width: "48%",
     },
-   submitButton: {
-    marginTop: 8,
-    marginBottom: 30,
-    paddingVertical: 4,  // kam kar diya
-    backgroundColor: "#4CAF50",
-    borderRadius: 8,
-    elevation: 4,
-},
-submitButtonContent: {
-    paddingVertical: 2, // aur bhi kam
-},
+    submitButton: {
+        marginTop: 8,
+        marginBottom: 30,
+        paddingVertical: 4,  // kam kar diya
+        backgroundColor: "#4CAF50",
+        borderRadius: 8,
+        elevation: 4,
+    },
+    submitButtonContent: {
+        paddingVertical: 2, // aur bhi kam
+    },
 
 });

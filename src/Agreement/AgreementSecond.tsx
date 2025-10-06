@@ -88,7 +88,7 @@ const AgreementSecond: React.FC = () => {
                 >
                     <MaterialIcons name="arrow-back" size={24} color="#fff" />
                 </TouchableOpacity>
-                <Text style={styles.headerText}>Agreement Second</Text>
+                <Text style={styles.headerText}>Nominee details</Text>
                 <View style={{ width: 24 }} />
             </View>
 
@@ -105,7 +105,7 @@ const AgreementSecond: React.FC = () => {
                 {/* Personal Information Section */}
                 <Card style={styles.sectionCard}>
                     <Card.Content>
-                        <Text style={styles.sectionTitle}>Personal Information</Text>
+                        <Text style={styles.sectionTitle}>Nominee details</Text>
                         
                         {/* Name */}
                         <Text style={styles.label}>Full Name</Text>
@@ -481,11 +481,16 @@ const styles = StyleSheet.create({
         color: "#455A64",
         marginBottom: 8,
         marginTop: 4,
+       
     },
     input: {
         marginBottom: 12,
-        backgroundColor: "white",
-        fontSize: 14,
+       
+         
+        height: 38,       
+        fontSize: 14,     
+        paddingHorizontal: 10, 
+       
     },
     row: {
         flexDirection: "row",
