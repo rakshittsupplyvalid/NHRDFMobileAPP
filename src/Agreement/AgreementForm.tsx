@@ -1,15 +1,16 @@
 import React from "react";
 import { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { TextInput, Button, Text, Card } from "react-native-paper";
 import CommonPicker from "../CommonComponent/CommonDropdown";
-import { FarmerName, seedType, produceseeds, District, State, Seeds } from "../Constants/constants";
+import { produceseeds, Seeds } from "../Constants/constants";
 import useForm from "../Form/UseForm";
 import CustomDateTimePicker from '../CommonComponent/DateTimePicker';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useNavigation } from "@react-navigation/native";
 import { fetchCommodityTypes, fetchCommoditiesByType, farmer, farmerDetails } from "../Service/fetchCommodity";
 import axios from 'axios';
+
 
 const AgreementForm: React.FC = () => {
     const { state, updateState } = useForm();
@@ -22,6 +23,7 @@ const AgreementForm: React.FC = () => {
     const [selectedCommodity, setSelectedCommodity] = useState('');
     const [farmersList, setFarmersList] = useState([]);
     const [selectedFarmer, setSelectedFarmer] = useState('');
+    
 
 
     const navigation = useNavigation<any>();
@@ -573,8 +575,8 @@ const AgreementForm: React.FC = () => {
 
                 style={styles.submitButton}
                 contentStyle={styles.submitButtonContent}
+                    onPress={() => navigation.navigate("Agreement" as never, { formData: state.form })}
 
-                onPress={() => navigation.navigate("Agreement" as never)}
             >
                 Next
             </Button>

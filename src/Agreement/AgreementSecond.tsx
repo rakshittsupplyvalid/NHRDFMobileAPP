@@ -7,9 +7,13 @@ import { commodity, Onion, Garlic, Potato, relations, states, districts, years }
 import { useNavigation } from "@react-navigation/native";
 import useForm from "../Form/UseForm";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import { useRoute } from "@react-navigation/native";
+import * as FileSystem from 'expo-file-system';
 
 const AgreementSecond: React.FC = () => {
     const { state, updateState } = useForm();
+       const route = useRoute();
+    const { formData } = route.params as { formData: any };
     const navigation = useNavigation<any>();
     const [isAgreementAccepted, setIsAgreementAccepted] = useState(false);
 
@@ -103,6 +107,17 @@ const AgreementSecond: React.FC = () => {
                 showsVerticalScrollIndicator={false}
             >
                 {/* Personal Information Section */}
+
+
+                   <View style={styles.container}>
+            <Text >Agreement Data</Text>
+            <Text>Name: {formData.name}</Text>
+            <Text>Age: {formData.age}</Text>
+            <Text>Village: {formData.villagename}</Text>
+            <Text>State: {formData.statename}</Text>
+            {/* Aur baaki fields bhi display kar sakte ho */}
+        </View>
+
                 <Card style={styles.sectionCard}>
                     <Card.Content>
                         <Text style={styles.sectionTitle}>Nominee details</Text>
@@ -485,7 +500,7 @@ const styles = StyleSheet.create({
     },
     input: {
         marginBottom: 12,
-       
+        backgroundColor: "white",
          
         height: 38,       
         fontSize: 14,     
