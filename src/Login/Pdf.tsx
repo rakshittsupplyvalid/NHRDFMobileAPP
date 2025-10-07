@@ -1,69 +1,40 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Button, Alert, Platform, StyleSheet } from "react-native";
-import { PermissionsAndroid } from "react-native";
-import * as RNHTMLtoPDF from 'react-native-html-to-pdf';
-
-
-
-// TypeScript-friendly require syntax
-
+import { View, Text, TextInput, Button, Alert, StyleSheet } from "react-native";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
 
 export default function Pdff() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
-  // Request Android storage permission
-  const requestStoragePermission = async (): Promise<boolean> => {
-    if (Platform.OS === "android") {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
-          {
-            title: "Storage Permission",
-            message: "App needs access to save PDF",
-            buttonNeutral: "Ask Me Later",
-            buttonNegative: "Cancel",
-            buttonPositive: "OK",
-          }
-        );
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
-      } catch (err) {
-        console.warn(err);
-        return false;
+  const generatePDF = async () => {
+    try {
+      const htmlContent = `
+        <h1>Form Details</h1>
+        <p><b>Name:</b> ${name}</p>
+        <p><b>Email:</b> ${email}</p>
+      `;
+
+      const { uri } = await Print.printToFileAsync({ html: htmlContent });
+      console.log("PDF Path:", uri);
+
+      Alert.alert("PDF Generated", `Saved to: ${uri}`);
+
+      // Share the PDF
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri);
+      } else {
+        Alert.alert("Sharing not available on this device");
       }
+    } catch (error) {
+      console.log("PDF generation error:", error);
+      Alert.alert("Error", error.message);
     }
-    return true; // iOS permission not required
   };
-
-const generatePDF = async () => {
-  const hasPermission = await requestStoragePermission();
-  if (!hasPermission) {
-    Alert.alert("Permission Denied", "Cannot generate PDF without permission");
-    return;
-  }
-
-  const htmlContent = `
-    <p>Name: ${name}</p>
-    <p>Email: ${email}</p>
-  `;
-
-  try {
-    const file = await (RNHTMLtoPDF as any).convert({
-      html: htmlContent,
-      fileName: "form_pdf",
-      directory: "Documents",
-    });
-
-    Alert.alert("PDF Generated", `PDF saved at: ${file.filePath}`);
-    console.log("PDF file path:", file.filePath);
-  } catch (error) {
-    console.log("PDF generation error:", error);
-  }
-};
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Name</Text>
+      <Text style={styles.label}>Names</Text>
       <TextInput
         style={styles.input}
         value={name}
