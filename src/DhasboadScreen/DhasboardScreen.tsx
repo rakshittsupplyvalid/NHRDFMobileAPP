@@ -1,60 +1,65 @@
 import React from 'react';
-import { StyleSheet, ScrollView , View} from 'react-native';
-import { Card, Text, TextInput, Button } from 'react-native-paper';
+import { View, ScrollView, StyleSheet } from 'react-native';
+import { Card, Text } from 'react-native-paper';
 
-const DashboardScreen: React.FC = () => {
-
+const DashboardScreen = () => {
+  const cards = [
+    { title: 'Total Inspections', value: 24, icon: 'clipboard-list' },
+    { title: 'Pending Approvals', value: 5, icon: 'timer-sand' },
+    { title: 'Completed', value: 19, icon: 'check-circle' },
+    { title: 'Farmers Registered', value: 12, icon: 'account-group' },
+  ];
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-     
-
-     <View>
-      <Text>
-        Dashboard Screen
-      </Text>
-     </View>
+      <View style={styles.cardRow}>
+        {cards.map((item, index) => (
+          <Card key={index} style={styles.infoCard}>
+            <Card.Content style={styles.infoCardContent}>
+              <Text style={styles.cardTitle}>{item.title}</Text>
+              <Text style={styles.cardValue}>{item.value}</Text>
+            </Card.Content>
+          </Card>
+        ))}
+      </View>
     </ScrollView>
   );
 };
 
-export default DashboardScreen;
-
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#f2f2f2',
   },
-  headerCard: {
-    marginBottom: 16,
+  cardRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  infoCard: {
+    width: '48%',
+    marginVertical: 8,
+    borderRadius: 10,
     backgroundColor: '#70B04F',
-    borderRadius: 12,
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 20,
-    fontWeight: '600',
-  },
-  input: {
-    marginBottom: 16,
-    backgroundColor: '#fff',
-  },
-  card: {
-    marginBottom: 12,
-    borderRadius: 12,
     elevation: 4,
-    backgroundColor: '#fff',
+  },
+  infoCardContent: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  cardTitle: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   cardValue: {
-    fontSize: 18,
+    color: '#fff',
+    fontSize: 22,
     fontWeight: 'bold',
-    marginTop: 4,
-    color: '#000',
-  },
-  button: {
-    marginTop: 20,
-    backgroundColor: '#70B04F',
-    paddingVertical: 6,
-    borderRadius: 8,
+    marginTop: 8,
+    textAlign: 'center',
   },
 });
+
+export default DashboardScreen;

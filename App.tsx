@@ -1,71 +1,43 @@
-import React, { useState } from "react";
-import { View, Text, TextInput, Button, Alert, StyleSheet } from "react-native";
-import * as Print from "expo-print";
-import * as Sharing from "expo-sharing";
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Login from './src/Login/Login';
+import { Provider as PaperProvider } from 'react-native-paper';
 
-export default function Pdff() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+import DrawerNavigator from './src/Navigation/DrawerNavigator';
 
-  const generatePDF = async () => {
-    try {
-      const htmlContent = `
-        <h1>Form Details</h1>
-        <p><b>Name:</b> ${name}</p>
-        <p><b>Email:</b> ${email}</p>
-      `;
 
-      const { uri } = await Print.printToFileAsync({ html: htmlContent });
-      console.log("PDF Path:", uri);
 
-      Alert.alert("PDF Generated", `Saved to: ${uri}`);
 
-      // Share the PDF
-      if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri);
-      } else {
-        Alert.alert("Sharing not available on this device");
-      }
-    } catch (error) {
-      console.log("PDF generation error:", error);
-      Alert.alert("Error", error.message);
-    }
-  };
 
+const Stack = createNativeStackNavigator();
+
+const App = () => {
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>Names</Text>
-      <TextInput
-        style={styles.input}
-        value={name}
-        onChangeText={setName}
-        placeholder="Enter your name"
-      />
+        <PaperProvider> 
+    <NavigationContainer>
+      <Stack.Navigator id={undefined} initialRouteName="Login" screenOptions={{ headerShown: true }}>
 
-      <Text style={styles.label}>Email</Text>
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Enter your email"
-        keyboardType="email-address"
-      />
+        <Stack.Screen name="Login"
+          component={Login}
+          options={{ headerShown: false }}
 
-      <View style={{ marginTop: 20 }}>
-        <Button title="Generate PDF" onPress={generatePDF} />
-      </View>
-    </View>
+        />
+
+
+
+
+        <Stack.Screen name="DrawerNavigator"
+          component={DrawerNavigator}
+          options={{ headerShown: false }}
+
+        />
+
+
+      </Stack.Navigator>
+    </NavigationContainer>
+    </PaperProvider>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: "#fff" },
-  label: { fontWeight: "bold", marginTop: 15 },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    padding: 10,
-    marginTop: 5,
-  },
-});
+export default App;

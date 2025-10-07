@@ -3,15 +3,16 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from 'react-na
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
 import { useNavigation } from '@react-navigation/native';
 import Dhasboard from '../Dhasboard/Dhasboard';
-import { MMKV } from 'react-native-mmkv';
-// import Signature from '../Signature/Signature';
 // import DashboardScreen from '../DhasboadScreen/DhasboardScreen';
+
+// import Signature from '../Signature/Signature';
+
 import AgreementForm from '../Agreement/AgreementForm';
 import AgreementSecond from '../Agreement/AgreementSecond';
 
 const Drawer = createDrawerNavigator(); 
 
-const storage = new MMKV();
+
 
 // ===== Custom Drawer Content =====
 function CustomDrawerContent(props: any) {
@@ -28,7 +29,7 @@ function CustomDrawerContent(props: any) {
 
   const processLogout = () => {
     try {
-      storage.delete('userToken');
+  
       console.log('User logged out successfully');
       if (navigation) {
         navigation.reset({ routes: [{ name: 'Login' }] });
@@ -92,8 +93,8 @@ export default function DrawerNavigator() {
         },
       }}
     >
-{/* 
-      <Drawer.Screen
+
+      {/* <Drawer.Screen
         name="DashboardScreen"
         component={DashboardScreen}
         options={{

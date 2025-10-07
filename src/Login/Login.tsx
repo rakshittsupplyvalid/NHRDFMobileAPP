@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard, ScrollView, Dimensions, StyleSheet, Image, Alert } from 'react-native';
 import { TextInput, Text, Button, Checkbox, useTheme } from 'react-native-paper';
 import apiClient from '../Service/apiInterceptors';
-import { storeToken } from '../utils/authUtils';
+import { storeToken } from '../Service/apiInterceptors';
+
 
 const Login = ({ navigation }: any) => {
   const [mobileNumber, setMobileNumber] = useState('8976865879');
