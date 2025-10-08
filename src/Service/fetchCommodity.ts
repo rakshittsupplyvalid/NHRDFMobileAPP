@@ -45,30 +45,62 @@ export const fetchCommoditiesByType = async (commodityTypeId: string) => {
 
 
 
+
+
+
 // Fetch all farmers (for dropdown)
 // Fetch all farmers (for dropdown)
+
 export const farmer = async (selectedCommodity: string) => {
   if (!selectedCommodity) return [];
 
   try {
-    const url = `/api/mobile/farmer/distribution${selectedCommodity}`;
+    const url = `/api/mobile/targetwies/farmer/list?CommodityId=${selectedCommodity}&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`;
     const res = await apiClient.get(url);
 
-    console.log("Farmer List:", res.data);
+    console.log("API Farmer List Response:", res.data);
 
-    // Map the API data to { label, value } format for dropdown
-    const dropdownData = res.data.map((farmer: any) => ({
-      label: farmer.targetassignfarmername || "N/A", // fallback if null
-      value: farmer.farmerid,
+    // 👇 selectedfarmer se label & value banana
+    const selectedFarmers = res.data[0]?.selectedfarmer || [];
+    const dropdownData = selectedFarmers.map((item: any) => ({
+      label: item.farmername,   // 👈 yeh dropdown me dikhayega
+      value: item.farmerid      // 👈 yeh select hone par milega
     }));
 
-    return dropdownData;
+    console.log("Dropdown Farmer List:", dropdownData);
 
+    return dropdownData;
   } catch (error: any) {
     console.log("Error fetching farmers:", error);
     return [];
   }
 };
+
+
+
+// export const farmer = async (selectedCommodity: string) => {
+//   if (!selectedCommodity) return [];
+
+//   try {
+    
+//     const url = `/api/mobile/farmer/distribution${selectedCommodity}`;
+//     const res = await apiClient.get(url);
+
+//     console.log("Farmer List:", res.data);
+
+//     // Map the API data to { label, value } format for dropdown
+//     const dropdownData = res.data.map((farmer: any) => ({
+//       label: farmer.targetassignfarmername || "N/A", // fallback if null
+//       value: farmer.farmerid,
+//     }));
+
+//     return dropdownData;
+
+//   } catch (error: any) {
+//     console.log("Error fetching farmers:", error);
+//     return [];
+//   }
+// };
 
 
 

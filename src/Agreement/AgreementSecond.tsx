@@ -256,31 +256,8 @@ const AgreementSecond: React.FC = () => {
                     </Card.Content>
                 </Card>
 
-                {/* Commodity Selection Section */}
-                <Card style={styles.sectionCard}>
-                    <Card.Content>
-                        <Text style={styles.sectionTitle}>Commodity Information</Text>
-                        <Text style={styles.label}>Select Commodity</Text>
-                        <CommonPicker
-                            selectedValue={state.form.commodity || ""}
-                            onValueChange={(value) =>
-                                updateState({ 
-                                    ...state, 
-                                    form: { 
-                                        ...state.form, 
-                                        commodity: value,
-                                        // Clear previous selection when commodity changes
-                                        onionVariety: "",
-                                        garlicVariety: "",
-                                        potatoVariety: ""
-                                    } 
-                                })
-                            }
-                            items={commodity}
-                        />
-                    </Card.Content>
-                </Card>
-
+              
+ 
                 {/* Dynamic Commodity-Specific Dropdown */}
                 {renderCommodityDropdown()}
 
@@ -483,6 +460,29 @@ const styles = StyleSheet.create({
         elevation: 2,
         backgroundColor: "white",
     },
+
+     infoContainer: {
+    marginTop: 12,
+    backgroundColor: "#F8F9FA",
+    borderRadius: 10,
+    padding: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: "#70B04F",
+  },
+
+  subTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#007BFF",
+    marginBottom: 6,
+  },
+
+  description: {
+    fontSize: 14,
+    color: "#333",
+    lineHeight: 20,
+    textAlign: "justify",
+  },
     sectionTitle: {
         fontSize: 16,
         fontWeight: "bold",
