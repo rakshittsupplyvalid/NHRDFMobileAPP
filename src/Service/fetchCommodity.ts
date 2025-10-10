@@ -55,23 +55,22 @@ export const farmer = async (selectedCommodity: string) => {
   if (!selectedCommodity) return [];
 
   try {
-    const url = `/api/mobile/targetwies/farmer/list?CommodityId=${selectedCommodity}&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`;
+   
+    const url = `/api/mobile/farmer/distribution${selectedCommodity}`;
+
     const res = await apiClient.get(url);
-
-    console.log("API Farmer List Response:", res.data);
-
-    // 👇 selectedfarmer se label & value banana
-    const selectedFarmers = res.data[0]?.selectedfarmer || [];
-    const dropdownData = selectedFarmers.map((item: any) => ({
-      label: item.farmername,   // 👈 yeh dropdown me dikhayega
-      value: item.farmerid      // 👈 yeh select hone par milega
+ // ✅ Directly map res.data
+    const dropdownData = res.data.map((item: any) => ({
+      label: item.targetassignfarmername,  // dropdown me dikhayega
+      value: item.farmerid                 // select hone par milega
     }));
 
+   
     console.log("Dropdown Farmer List:", dropdownData);
 
     return dropdownData;
   } catch (error: any) {
-    console.log("Error fetching farmers:", error);
+    console.log("Error fetching farmers:", error.response?.data || error.message);
     return [];
   }
 };

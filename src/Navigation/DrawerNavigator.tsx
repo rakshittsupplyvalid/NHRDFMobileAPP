@@ -1,25 +1,16 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert, Image } from 'react-native';
-import { createDrawerNavigator, DrawerContentScrollView, DrawerItemList } from '@react-navigation/drawer';
-import { useNavigation } from '@react-navigation/native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Dhasboard from '../Dhasboard/Dhasboard';
-// import DashboardScreen from '../DhasboadScreen/DhasboardScreen';
-
-// import Signature from '../Signature/Signature';
-
 import AgreementForm from '../Agreement/AgreementForm';
 import AgreementSecond from '../Agreement/AgreementSecond';
+import  DashboardScreen from '../DhasboadScreen/DhasboardScreen'
 
-const Drawer = createDrawerNavigator(); 
-
-
+const Drawer = createDrawerNavigator();
 
 // ===== Custom Drawer Content =====
 function CustomDrawerContent(props: any) {
-  const navigation = useNavigation<any>();
-
-
-
   const handleLogout = () => {
     Alert.alert('Confirm Logout', 'Are you sure you want to log out?', [
       { text: 'Cancel', style: 'cancel' },
@@ -28,51 +19,73 @@ function CustomDrawerContent(props: any) {
   };
 
   const processLogout = () => {
-    try {
-  
-      console.log('User logged out successfully');
-      if (navigation) {
-        navigation.reset({ routes: [{ name: 'Login' }] });
-      }
-    } catch (error) {
-      console.error('Error during logout:', error);
-    }
+    console.log('User logged out successfully');
+    props.navigation.reset({ routes: [{ name: 'Login' }] });
   };
 
   return (
     <View style={styles.drawerContainer}>
-      <DrawerContentScrollView {...props}>
-        {/* Profile Section */}
+      {/* Sidebar Header */}
+      <View style={styles.headerContainer}>
+        <Image
+          source={require('../../assets/nhrdf_logo.jpg')} // replace with dynamic profile
+          style={styles.profileImage}
+        />
+  
+       
+      </View>
+
+      <DrawerContentScrollView {...props} style={{ marginTop: 10 }}>
+        {/* Drawer Items */}
+
+         <DrawerItem
+          label="Dhasboard"
+          icon={({ color, size }) => <MaterialCommunityIcons name="view-dashboard" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('DashboardScreen')}
+          labelStyle={styles.drawerLabel}
+        />
 
 
-        {/* Main Drawer Items */}
-        <View style={styles.drawerContent}>
-          <DrawerItemList {...props} />
-        </View>
+        <DrawerItem
+          label="Inspection Form"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('Inspection Form')}
+          labelStyle={styles.drawerLabel}
+        />
+
+        <DrawerItem
+          label="Agreement Form"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('AgreementForm')}
+          labelStyle={styles.drawerLabel}
+        />
+
+        {/* Hidden Screen */}
+        <DrawerItem
+          label="Agreement"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document-outline" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('Agreement')}
+          style={{ display: 'none' }}
+        />
       </DrawerContentScrollView>
 
       {/* Logout Button */}
       <View style={styles.bottomSection}>
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-
-          <Text style={[styles.logoutText, { fontFamily: 'Poppins-Regular' }]}>Logout</Text>
+          <MaterialCommunityIcons name="logout" size={22} color="#fff" />
+          <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
-
-
 }
-
 
 export default function DrawerNavigator() {
   return (
     <Drawer.Navigator
-      id={undefined}
+    id={undefined}
       drawerContent={(props) => <CustomDrawerContent {...props} />}
-
       screenOptions={{
-
         headerStyle: {
           backgroundColor: '#70B04F',
           height: 80,
@@ -80,172 +93,88 @@ export default function DrawerNavigator() {
         headerTintColor: '#fff',
         headerTitleStyle: {
           fontFamily: 'Poppins-SemiBold',
+          fontSize: 20,
         },
         drawerStyle: {
-          backgroundColor: '#FFFFFF',
-          width: 290,
+          backgroundColor: '#f2f2f2',
+          width: 280,
         },
-        drawerActiveTintColor: '#818589',
-        drawerInactiveTintColor: 'black',
+        drawerActiveTintColor: '#70B04F',
+        drawerInactiveTintColor: '#333',
         drawerLabelStyle: {
           fontFamily: 'Poppins-Regular',
           fontSize: 16,
         },
       }}
     >
-
-      {/* <Drawer.Screen
-        name="DashboardScreen"
-        component={DashboardScreen}
-        options={{
-
-          drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
-        }}
-      /> */}
-
-
-
-      <Drawer.Screen
-        name="AgreementForm"
-        component={AgreementForm}
-        options={{
-
-          drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
-        }}
-      />
-
-
-      <Drawer.Screen
-        name="Agreement"
-        component={AgreementSecond}
-        options={{ headerShown: false, drawerItemStyle: { display: 'none' } }}
-      />
-
-
-
-      {/* Dashboard (Bottom Item) */}
-      <Drawer.Screen
-        name="Inspection Form"
-        component={Dhasboard}
-        options={{
-
-          drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
-        }}
-      />
-
-{/* 
-      <Drawer.Screen
-        name="Signature"
-        component={Signature}
-        options={{
-
-          drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
-        }}
-      /> */}
-
-
-
-
-      {/* <Drawer.Screen
-        name="TextInput"
-        component={TextInput}
-        options={{
-         
-          drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
-        }}
-      /> */}
-
-
-      {/* <Drawer.Screen
-        name="SignatureScreen"
-        component={SignatureScreen}
-        options={{
-          drawerIcon: ({ color, size }) => (
-            <Icon name="dashboard" size={size} color={color} />
-          ),
-          drawerItemStyle: { marginTop: 'auto' }, // Push to bottom
-        }}
-      /> */}
-
-
-
-
-
-
-
+      <Drawer.Screen name="Inspection Form" component={Dhasboard} />
+      <Drawer.Screen name="AgreementForm" component={AgreementForm} />
+       <Drawer.Screen name="DashboardScreen" component={DashboardScreen} />
+      <Drawer.Screen name="Agreement" component={AgreementSecond} options={{ drawerItemStyle: { display: 'none' } }} />
     </Drawer.Navigator>
   );
 }
 
-// = = = = = S t y l e s = = = = =
+// = = = = = Styles = = = =
 const styles = StyleSheet.create({
   drawerContainer: {
     flex: 1,
+    backgroundColor: '#fff',
   },
-  profileContainer: {
+  headerContainer: {
+    backgroundColor: '#70B04F',
+    paddingVertical: 40,
     alignItems: 'center',
-    paddingVertical: 20,
+    justifyContent: 'center',
+
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+
+
   },
   profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    marginBottom: 10,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     borderWidth: 2,
     borderColor: '#fff',
+    marginBottom: 25,
+   
   },
   profileName: {
     fontSize: 18,
-    marginBottom: 5,
-    color: '#333',
+    fontFamily: 'Poppins-SemiBold',
+    color: '#fff',
   },
   profileEmail: {
     fontSize: 14,
-    color: '#666',
+    fontFamily: 'Poppins-Regular',
+    color: '#fff',
   },
-  drawerContent: {
-    flex: 1,
-    paddingTop: 10,
+  drawerLabel: {
+    fontSize: 16,
+    fontFamily: 'Poppins-Regular',
   },
   bottomSection: {
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: '#ccc',
-
+    backgroundColor: '#fff',
   },
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    borderRadius: 5,
+    justifyContent: 'center',
+    backgroundColor: '#70B04F',
+    paddingVertical: 12,
+    borderRadius: 10,
   },
   logoutText: {
-    marginLeft: 10,
+    color: '#fff',
     fontSize: 16,
-    color: '#333',
-  },
-  dashboardButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 25,
-    // fallback solid color, replace with LinearGradient if needed
-  },
-  buttonText: {
-    color: '#FFF',
-    fontSize: 13,
-    fontWeight: '500',
-    fontFamily: 'Poppins-Regular',
-
-    padding: 2,
-    width: 80,
-
-    marginRight: 6,
-  },
-  buttonIcon: {
-    marginLeft: 2,
+    fontFamily: 'Poppins-SemiBold',
+    marginLeft: 8,
   },
 });

@@ -1,7 +1,10 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import { View, StyleSheet } from "react-native";
-import { TextInput, Button, Text, Card, Checkbox } from "react-native-paper";
+
+import { TextInput, Button, Text, Card, Checkbox, Divider } from "react-native-paper";
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
 import CommonPicker from "../CommonComponent/CommonDropdown";
 import { produceseeds, Seeds } from "../Constants/constants";
 import useForm from "../Form/UseForm";
@@ -10,7 +13,6 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { useNavigation } from "@react-navigation/native";
 import { fetchCommodityTypes, fetchCommoditiesByType, farmer, farmerDetails, getFarmerLandDetail } from "../Service/fetchCommodity";
 import axios from 'axios';
-
 
 const AgreementForm: React.FC = () => {
   const { state, updateState } = useForm();
@@ -25,10 +27,40 @@ const AgreementForm: React.FC = () => {
   const [selectedFarmer, setSelectedFarmer] = useState('');
   const [checked, setChecked] = useState(false);
 
-
-
   const navigation = useNavigation<any>();
 
+  const fields = [
+    { label: 'Full Name', value: state.form.name, icon: 'account' },
+    { label: 'Age', value: '25', icon: 'calendar' },
+    { label: 'Gender', value: state.form.gender, icon: 'gender-male-female' },
+    { label: 'Relation', value: state.form.relation, icon: 'account-group' },
+    { label: 'Relative Name', value: state.form.relativename, icon: 'account' },
+    { label: 'Village', value: state.form.villagename, icon: 'home-city' },
+    { label: 'District', value: state.form.districtname, icon: 'map-marker' },
+    { label: 'State', value: state.form.statename, icon: 'map' },
+    { label: 'Pincode', value: state.form.pincode, icon: 'numeric' },
+    { label: 'Mobile Number', value: state.form.mobile, icon: 'phone' },
+  ];
+
+  const landdetails = [
+    { label: 'Land Number', value: state.form.landNumber, icon: 'numeric' },
+    { label: 'Sub Number', value: state.form.landSubNumber, icon: 'numeric' },
+    { label: 'Total Area', value: `${state.form.landTotalArea} ${state.form.landUnit}`, icon: 'square-outline' },
+    { label: 'Sowing Area', value: state.form.landSowingArea, icon: 'nature' },
+    { label: 'Village', value: state.form.landVillage, icon: 'home-city' },
+    { label: 'State', value: state.form.landState, icon: 'map-marker' },
+    { label: 'District', value: state.form.landDistrict, icon: 'map-marker-radius' },
+    { label: 'Sub-District', value: state.form.landSubDistrict, icon: 'map-outline' },
+    {
+      label: 'Approval Status',
+      value: state.form.landApprovalStatus,
+      icon: state.form.landApprovalStatus === 'PENDING'
+        ? 'hourglass-empty'
+        : state.form.landApprovalStatus === 'APPROVED'
+          ? 'check-circle'
+          : 'cancel'
+    },
+  ];
 
   const [isFocused, setIsFocused] = useState({
     produceseeds: false,
@@ -37,105 +69,54 @@ const AgreementForm: React.FC = () => {
     FarmerName: false,
   });
 
-
   useEffect(() => {
     (async () => {
       const data = await fetchCommodityTypes();
-
       setCommodityTypes(data);
       console.log("Fetched Commodity Types:", data);
     })();
   }, []);
 
-
   useEffect(() => {
     if (!selectedCommodityType) return;
-
     (async () => {
       const items = await fetchCommoditiesByType(selectedCommodityType);
       setCommodities(items);
-      console.log("comiddites", items);
+      console.log("commodities", items);
     })();
   }, [selectedCommodityType]);
-
 
   useEffect(() => {
     if (!selectedCommodity) {
       setFarmersList([]);
-      setSelectedFarmer(null);
+      setSelectedFarmer('');
       return;
     }
-
     (async () => {
       const items = await farmer(selectedCommodity);
       setFarmersList(items);
-
     })();
   }, [selectedCommodity]);
-
-
-  //     useEffect(() => {
-  //     if (!selectedFarmer) return;
-
-  //     (async () => {
-  //         const details = await farmerDetails(selectedFarmer);
-  //         if (details.length > 0) {
-  //             const info = details[0]; // API single object return
-
-  //             // Populate form fields
-  //             updateState({
-  //                 ...state,
-  //                 form: {
-  //                     ...state.form,
-  //                     name: info.name || "",
-  //                     age: info.age?.toString() || "",
-  //                     occupation: info.occupation || "",
-  //                     relation : info.relation || "",
-  //                     relativename : info.relativename || "",
-  //                     statename : info.statename || "",
-  //                     villagename : info.villagename || "",
-  //                     village: info.village || "",
-  //                     post: info.post || "",
-  //                     taluka: info.taluka || "",
-  //                     dist: info.district || "",
-  //                      gender: info.gender || "",
-  //                     state: info.state || "",
-  //                     pincode: info.pincode?.toString() || "",
-  //                     phone: info.phone || "",
-  //                     mobile: info.mobile || "",
-  //                 },
-  //             });
-  //         }
-  //     })();
-  // }, [selectedFarmer]);
-
-
-
 
   useEffect(() => {
     if (!selectedFarmer) return;
 
     (async () => {
-      // Farmer personal details
       const details = await farmerDetails(selectedFarmer);
       const info = details.length > 0 ? details[0] : null;
 
-      // Farmer land details
       const landDetails = await getFarmerLandDetail(selectedFarmer);
       const land = landDetails && landDetails.length > 0 ? landDetails[0] : null;
 
       console.log("Selected Farmer:", selectedFarmer);
       console.log("Farmer Details:", info);
-      console.log("Land Details:", land); // ✅ yahan land ka data milega
+      console.log("Land Details:", land);
 
-      // Update form state
       updateState({
         ...state,
         form: {
           ...state.form,
-          // Farmer Info
           name: info?.name || "",
-          // age: info?.age?.dateofbirth || "",
           age: "25",
           occupation: info?.occupation || "",
           relation: info?.relation || "",
@@ -152,13 +133,11 @@ const AgreementForm: React.FC = () => {
           pincode: info?.pincode?.toString() || "",
           phone: info?.phone || "",
           mobile: info?.mobile || "",
-
-          // Land Info
-          landTotalArea: land?.totalarea || "",
+          landTotalArea: land?.totalarea?.toString() || "",
           landUnit: land?.unit || "",
           landSowingArea: land?.sowingarea?.toString() || "",
-          landNumber: land?.number || "",
-          landSubNumber: land?.subnumber || "",
+          landNumber: land?.number?.toString() || "",
+          landSubNumber: land?.subnumber?.toString() || "",
           landDocument: land?.document || "",
           landVillage: land?.village || "",
           landState: land?.statename || "",
@@ -170,25 +149,19 @@ const AgreementForm: React.FC = () => {
     })();
   }, [selectedFarmer]);
 
-
-
-
-
-
   useEffect(() => {
     axios
       .get('https://stage-master-backend.epravaha.com/api/State/GetAllStates')
       .then(res => {
         const mappedStates = res.data.map(item => ({
           label: item.name,
-          value: item.stateCode, // integer
+          value: item.stateCode?.toString(),
         }));
         setStatesList(mappedStates);
       })
       .catch(err => console.error(err));
   }, []);
 
-  // Fetch districts when state changes
   useEffect(() => {
     if (state.form.state) {
       axios
@@ -198,7 +171,7 @@ const AgreementForm: React.FC = () => {
         .then(res => {
           const mappedDistricts = res.data.map(item => ({
             label: item.name,
-            value: item.districtCode, // store districtCode
+            value: item.districtCode?.toString(),
           }));
           setDistrictsList(mappedDistricts);
         })
@@ -208,11 +181,7 @@ const AgreementForm: React.FC = () => {
     }
   }, [state.form.state]);
 
-
-
-  // const isFarmerSelected = state.form.duration === "FarmerName1" || state.form.duration === "FarmerName2" || state.form.duration === "FarmerName3" || state.form.duration === "FarmerName4";
   const isFarmerSelected = !!selectedFarmer;
-
 
   const handleFocus = (field: string) => {
     setIsFocused(prev => ({ ...prev, [field]: true }));
@@ -236,78 +205,83 @@ const AgreementForm: React.FC = () => {
       enableAutomaticScroll={true}
       showsVerticalScrollIndicator={false}
     >
-      {/* Header Section */}
-      <Card style={styles.headerCard}>
-        <Card.Content>
-          <Text style={styles.title}>Seed Production Agreement Form</Text>
-          <Text style={styles.subtitle}>Fill in the details to create a new agreement</Text>
-        </Card.Content>
-      </Card>
+     
 
-      {/* Agreement Details Section */}
+
       <Card style={styles.sectionCard}>
         <Card.Content>
-
-
-
           <CommonPicker
             label="Commodity Type"
             selectedValue={selectedCommodityType}
             onValueChange={(value) => {
               setSelectedCommodityType(value);
-
-              setSelectedCommodity(''); // reset commodity
+              setSelectedCommodity('');
             }}
             items={commodityTypes}
           />
 
-
-
           <CommonPicker
             label="Commodity"
             selectedValue={selectedCommodity}
-            onValueChange={(value) => {
-              setSelectedCommodity(value)
-              console.log("Selected Commodity first value:", value);
-            }}
+            onValueChange={(value) => setSelectedCommodity(value)}
             items={commodities}
           />
-
-
 
           {selectedCommodity === "CMM2025091506361750433849034" && (
             <View style={styles.infoContainer}>
               <Text style={styles.subTitle}>Onion Information</Text>
               <Text style={styles.description}>
-                • Onion is one of the most important commercial vegetable crops grown in India.{"\n"}
-                • It is rich in vitamins and antioxidants.{"\n"}
-                • Well-drained, fertile soils are ideal for good bulb formation.{"\n"}
-                • Major onion producing states include Maharashtra, Karnataka, and Gujarat.
+                • Onion is one of the most important commercial vegetable crops grown in Indias.
               </Text>
             </View>
           )}
 
-        <CommonPicker
-  label="Farmer"
-  selectedValue={selectedFarmer}
-  onValueChange={(value) => {
-    setSelectedFarmer(value);
-    console.log("Selected Farmer ID:", value);
-  }}
-  items={farmersList}   // 👈 yahan API se aaya hua dropdownData pass hoga
-/>
-
-
-
+          <CommonPicker
+            label="Farmer"
+            selectedValue={selectedFarmer}
+            onValueChange={(value) => setSelectedFarmer(value)}
+            items={farmersList}
+          />
         </Card.Content>
       </Card>
 
-
-
-      <Card style={styles.landCard}>
+      <Card style={styles.farmerCard}>
         <Card.Content>
           <Text style={styles.sectionTitle}>Farmer Information</Text>
+          <Divider style={styles.headerDivider} />
 
+          {selectedFarmer ? (
+            <View style={styles.detailsContainer}>
+              {fields.map((item, index) => (
+                <View key={index}>
+                  <View style={styles.detailRow}>
+                    <View style={styles.labelContainer}>
+                      <MaterialCommunityIcons
+                        name={item.icon as any}
+                        size={20}
+                        color="#4CAF50"
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text variant="bodyMedium" style={styles.detailLabel}>{item.label}:</Text>
+                    </View>
+                    <Text variant="bodyMedium" style={styles.detailValue}>
+                      {item.value?.toString() || '-'}
+                    </Text>
+                  </View>
+                  {index < fields.length - 1 && <Divider style={styles.rowDivider} />}
+                </View>
+              ))}
+            </View>
+          ) : (
+            <Text variant="bodySmall" style={styles.noFarmerSelected}>No farmer selected</Text>
+          )}
+        </Card.Content>
+      </Card>
+
+      <Card style={styles.farmerCard}>
+        <Card.Content>
+          <Text  style={styles.sectionTitle}>Farmer Land Details</Text>
+          <Divider style={styles.headerDivider} />
 
           <View style={styles.rowone}>
             <Checkbox
@@ -317,246 +291,40 @@ const AgreementForm: React.FC = () => {
             <Text style={styles.labelone}>Select Farmerlist</Text>
           </View>
 
-
-          {selectedFarmer ? (
-            <View style={styles.landContainer}>
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Full Name:</Text>
-                <Text style={styles.landValue}>{state.form.name || '-'}</Text>
-              </View>
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Age:</Text>
-                <Text style={styles.landValue}>25</Text>
-              </View>
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Gender:</Text>
-                <Text style={styles.landValue}>{state.form.gender || '-'}</Text>
-              </View>
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Relation:</Text>
-                <Text style={styles.landValue}>{state.form.relation || '-'}</Text>
-              </View>
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Relative Name:</Text>
-                <Text style={styles.landValue}>{state.form.relativename || '-'}</Text>
-              </View>
-
-              {/* <View style={styles.landRow}>
-          <Text style={styles.landLabel}>Occupation:</Text>
-          <Text style={styles.landValue}>{state.form.occupation || '-'}</Text>
-        </View> */}
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Village:</Text>
-                <Text style={styles.landValue}>{state.form.villagename || '-'}</Text>
-              </View>
-
-              {/* <View style={styles.landRow}>
-          <Text style={styles.landLabel}>Post:</Text>
-          <Text style={styles.landValue}>{state.form.post || '-'}</Text>
-        </View> */}
-
-              {/* <View style={styles.landRow}>
-          <Text style={styles.landLabel}>Taluka:</Text>
-          <Text style={styles.landValue}>{state.form.taluka || '-'}</Text>
-        </View> */}
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>District:</Text>
-                <Text style={styles.landValue}>{state.form.districtname || '-'}</Text>
-              </View>
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>State:</Text>
-                <Text style={styles.landValue}>{state.form.statename || '-'}</Text>
-              </View>
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Pincode:</Text>
-                <Text style={styles.landValue}>{state.form.pincode || '-'}</Text>
-              </View>
-
-              {/* <View style={styles.landRow}>
-          <Text style={styles.landLabel}>Phone (with STD code):</Text>
-          <Text style={styles.landValue}>{state.form.phone || '-'}</Text>
-        </View> */}
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Mobile Number:</Text>
-                <Text style={styles.landValue}>{state.form.mobile || '-'}</Text>
-              </View>
-            </View>
-          ) : (
-            <Text style={styles.noLandText}>No farmer selected</Text>
-          )}
-        </Card.Content>
-      </Card>
-
-
-
-      {/* Location Details Section */}
-      {/* <Card style={styles.sectionCard}>
-                <Card.Content>
-                    <Text style={styles.sectionTitle}>Production Location</Text>
-
-                    <View style={styles.row}>
-                        <View style={styles.halfInput}>
-                            <TextInput
-                                label="Village"
-                                value={state.form.villagename || ""}
-                                mode="outlined"
-                                left={<TextInput.Icon icon="home" />}
-                                onChangeText={value =>
-                                    updateState({ ...state, form: { ...state.form,   villagename: value } })
-                                }
-                                style={styles.input}
-                            />
-                        </View>
-                        <View style={styles.halfInput}>
-                            <TextInput
-                                label="Post Office"
-                                value={state.form.PostOffice || ""}
-                                mode="outlined"
-                                left={<TextInput.Icon icon="office-building" />}
-                                onChangeText={value =>
-                                    updateState({ ...state, form: { ...state.form, PostOffice: value } })
-                                }
-                                style={styles.input}
-                            />
-                        </View>
-
-                        </View>
-
-
-
-
-                    <TextInput
-                        label="Taluka"
-                        value={state.form.Taluka || ""}
-                        mode="outlined"
-                        left={<TextInput.Icon icon="map-marker" />}
-                        onChangeText={value =>
-                            updateState({ ...state, form: { ...state.form, Taluka: value } })
-                        }
-                        style={styles.input}
-                    />
-
-                    <CommonPicker
-                        label="State"
-                        selectedValue={state.form.state || ''}
-                        items={statesList}
-                        onValueChange={value =>
-                            updateState({
-                                ...state,
-                                form: { ...state.form, state: value, district: '' }, // reset district
-                            })
-                        }
-
-                    />
-
-                    <CommonPicker
-                        label="District"
-                        selectedValue={state.form.district || ''}
-                        items={districtsList}
-                        onValueChange={value =>
-                            updateState({
-                                ...state,
-                                form: { ...state.form, district: value },
-                            })
-                        }
-
-                    />
-                    <TextInput
-                        label="Pincode"
-                        value={state.form.Pincode || ""}
-                        keyboardType="numeric"
-                        mode="outlined"
-                        left={<TextInput.Icon icon="pin" />}
-                        onChangeText={value =>
-                            updateState({ ...state, form: { ...state.form, Pincode: value } })
-                        }
-                        style={styles.input}
-                    />
-                </Card.Content>
-            </Card> */}
-
-
-
-
-      <Card style={styles.landCard}>
-
-
-        <Card.Content>
-          <Text style={styles.sectionTitle}>Farmer Land Details</Text>
-
           {state.form.landNumber ? (
-            <View style={styles.landContainer}>
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Land Number:</Text>
-                <Text style={styles.landValue}>{state.form.landNumber}</Text>
-              </View>
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Sub Number:</Text>
-                <Text style={styles.landValue}>{state.form.landSubNumber}</Text>
-              </View>
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Total Area:</Text>
-                <Text style={styles.landValue}>{state.form.landTotalArea} {state.form.landUnit}</Text>
-              </View>
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Sowing Area:</Text>
-                <Text style={styles.landValue}>{state.form.landSowingArea}</Text>
-              </View>
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Village:</Text>
-                <Text style={styles.landValue}>{state.form.landVillage}</Text>
-              </View>
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>State:</Text>
-                <Text style={styles.landValue}>{state.form.landState}</Text>
-              </View>
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>District:</Text>
-                <Text style={styles.landValue}>{state.form.landDistrict}</Text>
-              </View>
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Sub-District:</Text>
-                <Text style={styles.landValue}>{state.form.landSubDistrict}</Text>
-              </View>
-
-              <View style={styles.landRow}>
-                <Text style={styles.landLabel}>Approval Status:</Text>
-                <Text style={[styles.landValue, state.form.landApprovalStatus === 'PENDING' ? styles.pending :
-                  state.form.landApprovalStatus === 'APPROVED' ? styles.approved : styles.rejected]}>
-                  {state.form.landApprovalStatus}
-                </Text>
-              </View>
-
-
+            <View style={styles.detailsContainer}>
+              {landdetails.map((item, index) => (
+                <View key={index}>
+                  <View style={styles.detailRow}>
+                    <View style={styles.labelContainer}>
+                      <MaterialCommunityIcons
+                        name={item.icon as any}
+                        size={20}
+                        color={item.label === 'Approval Status' ? (
+                          item.value === 'PENDING' ? '#FFC107' :
+                          item.value === 'APPROVED' ? '#4CAF50' : '#F44336'
+                        ) : '#4CAF50'}
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text variant="bodyMedium" style={styles.detailLabel}>{item.label}:</Text>
+                    </View>
+                    <Text variant="bodyMedium" style={styles.detailValue}>
+                      {item.value?.toString() || '-'}
+                    </Text>
+                  </View>
+                  {index < landdetails.length - 1 && <Divider style={styles.rowDivider} />}
+                </View>
+              ))}
             </View>
           ) : (
-            <Text style={styles.noLandText}>No land details available</Text>
+            <Text variant="bodySmall" style={styles.noFarmerSelected}>No land details available</Text>
           )}
         </Card.Content>
       </Card>
 
-
-      {/* Seed Production Section */}
       <Card style={styles.sectionCard}>
         <Card.Content>
           <Text style={styles.sectionTitle}>Seed Production Details</Text>
-
           <Text style={styles.label}>Produce Seeds</Text>
           <CommonPicker
             selectedValue={state.form.produceseeds || ""}
@@ -569,8 +337,6 @@ const AgreementForm: React.FC = () => {
             onBlur={() => handleBlur("produceseeds")}
           />
 
-
-
           <Text style={styles.label}>Seeds</Text>
           <CommonPicker
             selectedValue={state.form.seeds || ""}
@@ -582,13 +348,9 @@ const AgreementForm: React.FC = () => {
         </Card.Content>
       </Card>
 
-
-
-      {/* Contract Terms Section */}
       <Card style={styles.sectionCard}>
         <Card.Content>
           <Text style={styles.sectionTitle}>Contract Terms</Text>
-
           <Text style={styles.label}>Duration From</Text>
           <CustomDateTimePicker
             value={selectedDate}
@@ -610,14 +372,11 @@ const AgreementForm: React.FC = () => {
         </Card.Content>
       </Card>
 
-      {/* Submit Button */}
       <Button
         mode="contained"
-
         style={styles.submitButton}
         contentStyle={styles.submitButtonContent}
         onPress={() => navigation.navigate("Agreement" as never, { formData: state.form })}
-
       >
         Next
       </Button>
@@ -626,6 +385,8 @@ const AgreementForm: React.FC = () => {
 };
 
 export default AgreementForm;
+
+// styles remain the same as your original code
 
 const styles = StyleSheet.create({
   container: {
@@ -637,43 +398,34 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   headerCard: {
+   margin: 16,
+    borderRadius: 16,
     backgroundColor: "#4CAF50",
-    marginBottom: 16,
-    elevation: 4,
+    elevation: 6, // Android shadow
+    shadowColor: "#000", // iOS shadow
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    overflow: "hidden",
+  },
+    headerContent: {
+    paddingVertical: 24,
+    paddingHorizontal: 20,
   },
   title: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "bold",
-    color: "white",
-    textAlign: "center",
-    marginBottom: 4,
+    color: "#fff",
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: "white",
-    textAlign: "center",
-    opacity: 0.9,
+    color: "#E0F2F1",
+    lineHeight: 20,
   },
-  landCard: {
-    marginBottom: 16,
-    borderRadius: 12,
-    backgroundColor: "#fff",
-    elevation: 3,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-  },
-  landContainer: {
-    marginTop: 10,
-  },
-  landRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginVertical: 4,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    backgroundColor: "#F1F8E9",
-    borderRadius: 8,
-  },
+ 
+
+
   rowone: {
     flexDirection: "row",
     alignItems: "center",
@@ -690,17 +442,7 @@ const styles = StyleSheet.create({
     color: "#2E7D32",
     fontSize: 14,
   },
-  landValue: {
-    fontWeight: "500",
-    color: "#455A64",
-    fontSize: 14,
-  },
-  landImage: {
-    width: "100%",
-    height: 200,
-    borderRadius: 10,
-    marginTop: 12,
-  },
+ 
   pending: {
     color: "#FFA000",
     fontWeight: "700",
@@ -788,6 +530,79 @@ const styles = StyleSheet.create({
     color: "#333",
     lineHeight: 20,
     textAlign: "justify",
-  }
+  },
+  // farmerCard: {
+  //   margin: 16,
+  //   borderRadius: 16,
+  //   elevation: 6,
+  //   backgroundColor: 'red',
+  //   shadowColor: '#000',
+  //   shadowOpacity: 0.1,
+  //   shadowRadius: 10,
+  // },
+
+
+  farmerCard: {
+    marginBottom: 16,
+    borderRadius: 12,
+    backgroundColor: "#fff",
+    elevation: 3,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  cardHeader: {
+    fontWeight: '700',
+    marginBottom: 10,
+    color: '#70B04',
+  },
+  headerDivider: {
+    marginVertical: 8,
+    height: 1,
+    backgroundColor: '#E0E0E0',
+  },
+  detailsContainer: {
+    marginTop: 8,
+  },
+  detailRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#F9F9F9',
+    marginVertical: 4,
+  },
+  labelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconStyle: {
+    fontFamily: 'MaterialIcons', // Paper icons
+    fontSize: 20,
+    color: '#F79B00',
+    marginRight: 6,
+  },
+  detailLabel: {
+    fontSize: 16,
+    color: '#555',
+    fontWeight: '500',
+  },
+  detailValue: {
+    fontSize: 16,
+    color: '#1F2937',
+    fontWeight: '600',
+  },
+  rowDivider: {
+    backgroundColor: '#E0E0E0',
+    height: 1,
+    marginVertical: 2,
+  },
+  noFarmerSelected: {
+    marginTop: 16,
+    textAlign: 'center',
+    color: '#999',
+    fontStyle: 'italic',
+  },
 
 });

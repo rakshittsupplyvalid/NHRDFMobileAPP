@@ -8,6 +8,7 @@ import { storeToken } from '../Service/apiInterceptors';
 const Login = ({ navigation }: any) => {
   const [mobileNumber, setMobileNumber] = useState('8976865879');
   const [password, setPassword] = useState('Password@123');
+    const [userToken, setUserToken] = useState(null);
   const [rememberDevice, setRememberDevice] = useState(false);
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
@@ -16,6 +17,9 @@ const Login = ({ navigation }: any) => {
 
   const theme = useTheme();
   const primaryColor = '#70B04F';
+
+
+  
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(

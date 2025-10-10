@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 50,
+
     padding: 12,
     backgroundColor: '#fff',
     justifyContent: 'center',
