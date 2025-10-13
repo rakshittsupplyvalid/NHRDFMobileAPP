@@ -1,4 +1,4 @@
-import React, { useState , useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { StyleSheet, View, TouchableOpacity, ScrollView, Modal } from "react-native";
 import { Button, Text, Card, TextInput, Checkbox } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -8,32 +8,40 @@ import { useNavigation } from "@react-navigation/native";
 import { Image } from "react-native";
 import useForm from "../Form/UseForm";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useRoute } from "@react-navigation/native";
+import { useFocusEffect, useRoute } from '@react-navigation/native';
+import { retrieveToken } from '../Service/apiInterceptors'
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Alert } from "react-native";
 import apiClient from "../Service/apiInterceptors";
+import { CommonActions } from "@react-navigation/native";
 import * as FileSystem from 'expo-file-system';
 
 const AgreementSecond: React.FC = () => {
     const { state, updateState } = useForm();
 
     const route = useRoute();
-     const [signatureUri, setSignatureUri] = useState<string | null>(null);
-    const { formData } = route.params as { formData: any };
+    const [signatureUri, setSignatureUri] = useState<string | null>(null);
+    const { formData, selectedCommodityType, selectedFarmer , selectedVariety  ,  Farmerdistribution , selectedCenterTarget} = route.params as { formData: any, selectedCommodityType: any, selectedFarmer: any  , selectedVariety : any ,  Farmerdistribution : any , selectedCenterTarget : any};
     const navigation = useNavigation<any>();
+    const [nomineeSignatureUri, setNomineeSignatureUri] = useState<string | null>(null);
+    const [witnessSignatureUri, setWitnessSignatureUri] = useState<string | null>(null);
+
     const [isAgreementAccepted, setIsAgreementAccepted] = useState(false);
 
 
-     useEffect(() => {
-    console.log("📦 Received Form Data:", formData);
-  }, []);
+    useEffect(() => {
+        console.log("📦 Received Form Data:", formData);
+        console.log("📦 commidity id", selectedCommodityType);
+         console.log("📦 variety id ", selectedVariety);
+           console.log("📦 selectedCenterTarget id ", selectedCenterTarget);
+    }, []);
 
 
 
 
- 
 
-    const handleSubmit = async () => {
+
+ const handleSubmit = async () => {
   if (!isAgreementAccepted) {
     Alert.alert(
       "Agreement",
@@ -42,86 +50,101 @@ const AgreementSecond: React.FC = () => {
     return;
   }
 
-  // ---------------- FormData payload ----------------
-  const formData = new FormData();
-
-  formData.append("CenterTargetId", state.form.CenterTargetId || "");
-  formData.append("FarmerDistributionId", state.form.FarmerDistributionId || "");
-  formData.append("TagNumber", state.form.TagNumber || "");
-  formData.append("VarietyId", state.form.VarietyId || "");
-  formData.append("AuthorizedName", state.form.AuthorizedName || "");
-  formData.append("SeedClass", state.form.SeedClass || "");
-  formData.append("CommodityId", state.form.commodity || "");
-  formData.append("Area", state.form.Area?.toString() ?? "0");
-  formData.append("BillNumber", state.form.BillNumber || "");
-
-  // Nominee object
-  const nomineeObj = {
-    gender: state.form.gender || "",
-    pincode: state.form.pincode || "",
-    mobileno: state.form.mobileNumber || "",
-    addrline: state.form.addrline || "",
-    villageid: state.form.villageid || 0,
-    districtid: state.form.districtid || 0,
-    subdistrictid: state.form.subdistrictid || 0,
-    stateid: state.form.stateid || 0,
-    profdocument: state.form.profdocument || "",
-    dob: state.form.dob || new Date().toISOString(),
-    villagename: state.form.villagename || "",
-    signature: state.form.witnessSignature || "",
-    subdistrictname: state.form.subdistrictname || "",
-    districtname: state.form.districtname || "",
-    relation: state.form.relation || "",
-    statename: state.form.statename || "",
-    nomineename: state.form.nomineename || "",
-    email: state.form.email || "",
-    year: state.form.year || 0,
-    age: state.form.age || 0,
-  };
-  formData.append("NomiNee", JSON.stringify(nomineeObj));
-
-  // Witness object
-  const witnessObj = {
-    pincode: state.form.witnessPincode || "",
-    witnessemail: state.form.witnessEmail || "",
-    witnessname: state.form.witnessname || "",
-    addrline: state.form.witnessaddress || "",
-    villageid: state.form.witnessVillageId || 0,
-    districtid: state.form.witnessDistrictId || 0,
-    subdistrictid: state.form.witnessSubdistrictId || 0,
-    stateid: state.form.witnessStateId || 0,
-    profdocument: state.form.witnessProfdocument || "",
-    villagename: state.form.witnessVillagename || "",
-    signature: state.form.witnessSignature || "",
-    subdistrictname: state.form.witnessSubdistrictName || "",
-    districtname: state.form.witnessDistrictName || "",
-    witnessmobileno: state.form.witnessMobileno || "",
-    statename: state.form.witnessStateName || "",
-  };
-  formData.append("Witness", JSON.stringify(witnessObj));
-
-  formData.append("LotNumber", state.form.LotNumber || "");
-  formData.append("DuringYear", state.form.DuringYear || "");
-  formData.append("PlantingMaterial", state.form.PlantingMaterial || "SEED");
-  formData.append("FarmerId", state.form.FarmerId || "");
-
   try {
-    // ---------------- API call using Axios interceptor ----------------
-    const response = await apiClient.post(
-      "/api/mobile/agreement",
-      formData
-    );
+    const formData = new FormData();
 
-    console.log("Submit response:", response.data);
+    formData.append("CenterTargetId", selectedCenterTarget || "");
+    formData.append("FarmerDistributionId", Farmerdistribution);
+    formData.append("FarmerId", selectedFarmer);
+    formData.append("VarietyId", selectedVariety);
+    formData.append("PlantingMaterial", "SEED");
+    formData.append("TagNumber", state.form.TagNumber || "");
+    formData.append("AuthorizedName", state.form.AuthorizedName || "");
+    formData.append("SeedClass", state.form.SeedClass || "");
+    formData.append("CommodityId", selectedCommodityType);
+    formData.append("Area", state.form.Area?.toString() ?? "0");
+    formData.append("BillNumber", state.form.BillNumber || "");
 
-    if (response.status === 200 || response.status === 201) {
-      Alert.alert("Success", "Agreement submitted successfully.");
-      navigation.navigate("SomeNextScreen");
-    } else {
-      Alert.alert("Error", "Submission failed.");
+    // 🧑‍🤝‍🧑 Nominee dynamic object
+    const nomineeObj = {
+      gender: state.form.gender || "",
+      pincode: state.form.pincode || "",
+      mobileno: state.form.mobileNumber || "",
+      addrline: state.form.address || "",
+      villageid: state.form.village || "",
+      districtid: state.form.district || "",
+      subdistrictid: state.form.taluka || "",
+      stateid: state.form.state || "",
+      profdocument: state.form.profdocument || "",
+      dob: state.form.dob || "",
+      villagename: state.form.village || "",
+      signature: nomineeSignatureUri || "",
+      subdistrictname: state.form.taluka || "",
+      districtname: state.form.district || "",
+      relation: state.form.relation || "",
+      statename: state.form.state || "",
+      nomineename: state.form.name || "",
+      email: state.form.email || "",
+      year: state.form.year || "",
+      age: state.form.age || "",
+    };
+    formData.append("NomiNee", JSON.stringify(nomineeObj));
+
+    // 🧑 Witness dynamic object
+    const witnessObj = {
+      pincode: state.form.pincode || "",
+      witnessemail: state.form.witnessemail || "",
+      witnessname: state.form.witnessname || "",
+      addrline: state.form.witnessaddress || "",
+      villageid: state.form.village || "",
+      districtid: state.form.district || "",
+      subdistrictid: state.form.taluka || "",
+      stateid: state.form.state || "",
+      profdocument: state.form.profdocument || "",
+      villagename: state.form.village || "",
+      signature: witnessSignatureUri || "",
+      subdistrictname: state.form.taluka || "",
+      districtname: state.form.district || "",
+      witnessmobileno: state.form.witnessmobileno || "",
+      statename: state.form.state || "",
+    };
+    formData.append("Witness", JSON.stringify(witnessObj));
+
+    formData.append("LotNumber", state.form.LotNumber || "");
+    formData.append("DuringYear", state.form.DuringYear || "");
+
+    // ✅ Debugging
+    for (let [key, value] of (formData as any).entries()) {
+      console.log(`📦 ${key}:`, value);
     }
-  } catch (error) {
-    console.error("Submit error:", error);
+
+    const token = await retrieveToken();
+    console.log("📜 Token before submit:", token);
+
+    const response = await apiClient.post("/api/mobile/agreement", formData);
+
+    console.log("✅ Submit response:", response.data);
+
+  if (response.status === 200 || response.status === 201) {
+  Alert.alert("Success", "Agreement submitted successfully.", [
+    {
+      text: "OK",
+      onPress: () => {
+        navigation.dispatch(
+          CommonActions.reset({
+            index: 0,
+            routes: [{ name: "DashboardScreen" }],
+          })
+        );
+      },
+    },
+  ]);
+} else {
+  Alert.alert("Error", "Submission failed.");
+}
+
+  } catch (error: any) {
+    console.error("❌ Submit error:", error);
     Alert.alert(
       "Error",
       error.response?.data?.message || "Something went wrong."
@@ -129,11 +152,23 @@ const AgreementSecond: React.FC = () => {
   }
 };
 
-        useEffect(() => {
-        if (route.params && (route.params as any).signature) {
-            setSignatureUri((route.params as any).signature);
-        }
-    }, [route.params]);
+
+
+
+
+    useFocusEffect(
+        React.useCallback(() => {
+            const params = route.params as { signature?: string; type?: string } | undefined;
+            if (params?.signature && params?.type) {
+                if (params.type === "nominee") {
+                    setNomineeSignatureUri(params.signature);
+                } else if (params.type === "witness") {
+                    setWitnessSignatureUri(params.signature);
+                }
+            }
+        }, [route.params])
+    );
+
 
     // Function to render commodity-specific dropdown
     const renderCommodityDropdown = () => {
@@ -275,36 +310,30 @@ const AgreementSecond: React.FC = () => {
                         />
 
 
-                           <TouchableOpacity
+                        <TouchableOpacity
                             style={styles.iconButton}
-                            onPress={() => navigation.navigate("Signature")}
+                            onPress={() => navigation.navigate("Signature", { type: "nominee" })}
                         >
-                            <MaterialCommunityIcons
-                                name="signature-freehand"
-                                size={26}
-                                color="#2C5EFF"
-                            />
+                            <MaterialCommunityIcons name="signature-freehand" size={26} color="#2C5EFF" />
                             <Text style={styles.iconText}>Add Nominee Signature</Text>
                         </TouchableOpacity>
 
 
-                             {/* 👉 yahan signature show hoga agar aya hai */}
-                    {signatureUri && (
-                        <View style={{ marginTop: 12 }}>
-                            <Text style={styles.label}>Captured Nominee Signature:</Text>
-                            <Image
-                                source={{ uri: signatureUri }}
-                                style={{
-                                    width: "100%",
-                                    height: 100,
-                                    borderWidth: 1,
-                                    borderColor: "#ccc",
-                                    resizeMode: "contain"
-                                }}
-                            />
-                        </View>
-                    )}
-
+                        {nomineeSignatureUri && (
+                            <View style={{ marginTop: 12 }}>
+                                <Text style={styles.label}>Captured Nominee Signature:</Text>
+                                <Image
+                                    source={{ uri: nomineeSignatureUri }}
+                                    style={{
+                                        width: "100%",
+                                        height: 100,
+                                        borderWidth: 1,
+                                        borderColor: "#ccc",
+                                        resizeMode: "contain"
+                                    }}
+                                />
+                            </View>
+                        )}
 
 
                     </Card.Content>
@@ -342,36 +371,32 @@ const AgreementSecond: React.FC = () => {
 
                         <TouchableOpacity
                             style={styles.iconButton}
-                            onPress={() => navigation.navigate("Signature")}
+                            onPress={() => navigation.navigate("Signature", { type: "witness" })}
                         >
-                            <MaterialCommunityIcons
-                                name="signature-freehand"
-                                size={26}
-                                color="#2C5EFF"
-                            />
+                            <MaterialCommunityIcons name="signature-freehand" size={26} color="#2C5EFF" />
                             <Text style={styles.iconText}>Add Signature</Text>
                         </TouchableOpacity>
 
-
-                             {/* 👉 yahan signature show hoga agar aya hai */}
-                    {signatureUri && (
-                        <View style={{ marginTop: 12 }}>
-                            <Text style={styles.label}>Captured Signature:</Text>
-                            <Image
-                                source={{ uri: signatureUri }}
-                                style={{
-                                    width: "100%",
-                                    height: 100,
-                                    borderWidth: 1,
-                                    borderColor: "#ccc",
-                                    resizeMode: "contain"
-                                }}
-                            />
-                        </View>
-                    )}
+                        {witnessSignatureUri && (
+                            <View style={{ marginTop: 12 }}>
+                                <Text style={styles.label}>Captured Witness Signature:</Text>
+                                <Image
+                                    source={{ uri: witnessSignatureUri }}
+                                    style={{
+                                        width: "100%",
+                                        height: 100,
+                                        borderWidth: 1,
+                                        borderColor: "#ccc",
+                                        resizeMode: "contain"
+                                    }}
+                                />
+                            </View>
+                        )}
 
                     </Card.Content>
                 </Card>
+
+
 
 
                 {/* Address Information Section */}

@@ -2,20 +2,22 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Image, Text, Button } from 'react-native';
 import SignatureView from './SignatureScreen';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation  ,  useRoute} from '@react-navigation/native';
 
 const Signature: React.FC = () => {
   const [signature, setSignature] = useState<string | null>(null);
   const navigation = useNavigation<any>();
+    const route = useRoute();
+
+  const { type } = route.params as { type: string };
 
   const handleSave = (signatureData: string) => {
     setSignature(signatureData);
-    // 👉 Signature capture hone ke baad AgreementSecond ko wapas bhej do
-    navigation.navigate('Agreement', { signature: signatureData });
+    navigation.navigate('Agreement', { signature: signatureData, type });
   };
 
   return (
-    <View style={styles.container}>
+     <View style={styles.container}>
       <Text style={styles.title}>Digital Signature</Text>
       {signature ? (
         <View style={styles.signaturePreviewContainer}>
@@ -25,10 +27,7 @@ const Signature: React.FC = () => {
             style={styles.signatureImage} 
             resizeMode="contain"
           />
-          <Button 
-            title="Sign Again" 
-            onPress={() => setSignature(null)} 
-          />
+          <Button title="Sign Again" onPress={() => setSignature(null)} />
         </View>
       ) : (
         <SignatureView onSave={handleSave} />

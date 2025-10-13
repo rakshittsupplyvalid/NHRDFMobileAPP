@@ -18,11 +18,14 @@ const AgreementForm: React.FC = () => {
   const { state, updateState } = useForm();
   const [statesList, setStatesList] = useState([]);
   const [districtsList, setDistrictsList] = useState([]);
+  const [selectedVariety, setSelectedVariety] = useState("");  // varietyId
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [commodityTypes, setCommodityTypes] = useState([]);
   const [commodities, setCommodities] = useState([]);
   const [selectedCommodityType, setSelectedCommodityType] = useState('');
   const [selectedCommodity, setSelectedCommodity] = useState('');
+  const [selectedFarmerId, setSelectedFarmerId] = useState(""); // 👈 ye new state hai
+   const [selectedCenterTarget, setSelectedCenterTargetId] = useState(""); // 👈 ye new state hai
   const [farmersList, setFarmersList] = useState([]);
   const [selectedFarmer, setSelectedFarmer] = useState('');
 const [seedOptions, setSeedOptions] = useState([]);
@@ -232,6 +235,7 @@ useEffect(() => {
             selectedValue={selectedCommodityType}
             onValueChange={(value) => {
               setSelectedCommodityType(value);
+              console.log("commodity id" , value);
               setSelectedCommodity('');
             }}
             items={commodityTypes}
@@ -253,12 +257,22 @@ useEffect(() => {
             </View>
           )}
 
-          <CommonPicker
-            label="Farmer"
-            selectedValue={selectedFarmer}
-            onValueChange={(value) => setSelectedFarmer(value)}
-            items={farmersList}
-          />
+           <CommonPicker
+  label="Farmer"
+  selectedValue={selectedFarmer}
+  onValueChange={(value) => {
+    setSelectedFarmer(value); // ✅ farmerId store ho gaya
+    const selectedItem = farmersList.find(item => item.value === value);
+    if (selectedItem) {
+      setSelectedVariety(selectedItem.varietyId); // ✅ varietyId store
+      setSelectedFarmerId(selectedItem.Id);       // ✅ id bhi store ho gaya
+      setSelectedCenterTargetId(selectedItem.centertargetid);
+    }
+  }}
+  items={farmersList}
+/>
+
+
         </Card.Content>
       </Card>
 
@@ -345,9 +359,10 @@ useEffect(() => {
           <Text style={styles.label}>Produce Seeds</Text>
           <CommonPicker
             selectedValue={state.form.produceseeds || ""}
-            onValueChange={value =>
-              updateState({ ...state, form: { ...state.form, produceseeds: value } })
-            }
+             onValueChange={value => {
+    console.log("✅ Selected Produce Seeds:", value); // 👈 yeh aapko selected value dikhayega
+    updateState({ ...state, form: { ...state.form, produceseeds: value } });
+  }}
             items={produceseeds}
             isFocused={isFocused.produceseeds}
             onFocus={() => handleFocus("produceseeds")}
@@ -394,7 +409,14 @@ useEffect(() => {
         mode="contained"
         style={styles.submitButton}
         contentStyle={styles.submitButtonContent}
-        onPress={() => navigation.navigate("Agreement" as never, { formData: state.form })}
+        onPress={() => navigation.navigate("Agreement" as never, { 
+          formData: state.form,
+            selectedCommodityType: selectedCommodity,
+            selectedFarmer : selectedFarmer,
+            Farmerdistribution : selectedFarmerId,
+            selectedVariety : selectedVariety,
+            selectedCenterTarget : selectedCenterTarget
+         })}
       >
         Next
       </Button>
