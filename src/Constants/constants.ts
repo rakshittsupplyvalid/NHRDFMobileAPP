@@ -66,8 +66,9 @@ export const  seedType = [
 
 
 export const  produceseeds = [
-  { label: ' seed blubs', value: '1' }, 
-  { label: ' Seed Tuber of Variety', value: '2' },
+  { label: 'Seeds', value: '1' }, 
+  { label: 'Mother_Bulb', value: '2' },
+    { label: 'TUBER', value: '3' },
 
 ];
 

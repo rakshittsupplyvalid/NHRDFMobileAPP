@@ -146,3 +146,24 @@ export const farmerDetails = async (farmerId: string) => {
     return [];
   }
 };
+
+
+
+export const fetchSeedOptions = async () => {
+  try {
+    const res = await apiClient.get(
+      `/api/class/seed?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`
+    );
+
+    const data = Array.isArray(res.data) ? res.data : [res.data];
+
+    return data.map((item: any) => ({
+      label: item.name,
+      value: item.id,
+      ...item,
+    }));
+  } catch (error: any) {
+    console.error("Seed fetch error:", error);
+    return [];
+  }
+};

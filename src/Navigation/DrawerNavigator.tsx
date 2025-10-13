@@ -1,13 +1,18 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Alert ,  Dimensions  , Platform} from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Dhasboard from '../Dhasboard/Dhasboard';
 import AgreementForm from '../Agreement/AgreementForm';
 import AgreementSecond from '../Agreement/AgreementSecond';
 import  DashboardScreen from '../DhasboadScreen/DhasboardScreen'
+import Signature from '../Signature/Signature';
 
 const Drawer = createDrawerNavigator();
+
+
+const { width } = Dimensions.get('window');
+
 
 // ===== Custom Drawer Content =====
 function CustomDrawerContent(props: any) {
@@ -31,6 +36,10 @@ function CustomDrawerContent(props: any) {
           source={require('../../assets/nhrdf_logo.jpg')} // replace with dynamic profile
           style={styles.profileImage}
         />
+
+        <Text style={styles. profileName}>
+          NHRDF
+        </Text>
   
        
       </View>
@@ -66,6 +75,15 @@ function CustomDrawerContent(props: any) {
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document-outline" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Agreement')}
           style={{ display: 'none' }}
+        />
+
+
+
+           <DrawerItem
+          label="Signature"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('Signature')}
+          labelStyle={styles.drawerLabel}
         />
       </DrawerContentScrollView>
 
@@ -108,9 +126,22 @@ export default function DrawerNavigator() {
       }}
     >
       <Drawer.Screen name="Inspection Form" component={Dhasboard} />
+
+
+    <Drawer.Screen
+  name="Signature"
+  component={Signature}
+  options={{
+    headerShown: false,
+    drawerItemStyle: { display: 'none' } // optional if you want to hide from drawer
+  }}
+/>
+
+
+
       <Drawer.Screen name="AgreementForm" component={AgreementForm} />
        <Drawer.Screen name="DashboardScreen" component={DashboardScreen} />
-      <Drawer.Screen name="Agreement" component={AgreementSecond} options={{ drawerItemStyle: { display: 'none' } }} />
+      <Drawer.Screen name="Agreement" component={AgreementSecond} options={{ drawerItemStyle: { display: 'none' } ,     headerShown: false, }} />
     </Drawer.Navigator>
   );
 }
@@ -121,48 +152,59 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
   },
+
   headerContainer: {
     backgroundColor: '#70B04F',
-    paddingVertical: 40,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 20,
     alignItems: 'center',
     justifyContent: 'center',
-
+    elevation: 4,
     shadowColor: '#000',
     shadowOpacity: 0.1,
     shadowRadius: 10,
-    elevation: 5,
-
-
   },
+
   profileImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: width * 0.25,         // 25% of screen width
+    height: width * 0.25,
+    borderRadius: (width * 0.25) / 2,
     borderWidth: 2,
     borderColor: '#fff',
-    marginBottom: 25,
-   
+    marginTop: 10,
+    backgroundColor: '#fff',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
   },
+
   profileName: {
-    fontSize: 18,
+    fontSize: width < 360 ? 16 : 18,
     fontFamily: 'Poppins-SemiBold',
     color: '#fff',
+    marginTop: 10,
   },
+
   profileEmail: {
     fontSize: 14,
     fontFamily: 'Poppins-Regular',
     color: '#fff',
   },
+
   drawerLabel: {
     fontSize: 16,
     fontFamily: 'Poppins-Regular',
   },
+
   bottomSection: {
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: '#ccc',
     backgroundColor: '#fff',
   },
+
   logoutButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -171,6 +213,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 10,
   },
+
   logoutText: {
     color: '#fff',
     fontSize: 16,
@@ -178,3 +221,4 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 });
+

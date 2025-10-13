@@ -11,7 +11,7 @@ import useForm from "../Form/UseForm";
 import CustomDateTimePicker from '../CommonComponent/DateTimePicker';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useNavigation } from "@react-navigation/native";
-import { fetchCommodityTypes, fetchCommoditiesByType, farmer, farmerDetails, getFarmerLandDetail } from "../Service/fetchCommodity";
+import { fetchCommodityTypes, fetchCommoditiesByType, farmer, farmerDetails, getFarmerLandDetail , fetchSeedOptions } from "../Service/fetchCommodity";
 import axios from 'axios';
 
 const AgreementForm: React.FC = () => {
@@ -25,6 +25,8 @@ const AgreementForm: React.FC = () => {
   const [selectedCommodity, setSelectedCommodity] = useState('');
   const [farmersList, setFarmersList] = useState([]);
   const [selectedFarmer, setSelectedFarmer] = useState('');
+const [seedOptions, setSeedOptions] = useState([]);
+
   const [checked, setChecked] = useState(false);
 
   const navigation = useNavigation<any>();
@@ -180,6 +182,21 @@ const AgreementForm: React.FC = () => {
       setDistrictsList([]);
     }
   }, [state.form.state]);
+
+
+
+useEffect(() => {
+  (async () => {
+    const data = await fetchSeedOptions();
+    setSeedOptions(data);
+    console.log("Fetched Commodity Types:", data);
+  })();
+}, []);
+
+
+
+
+  
 
   const isFarmerSelected = !!selectedFarmer;
 
@@ -338,13 +355,14 @@ const AgreementForm: React.FC = () => {
           />
 
           <Text style={styles.label}>Seeds</Text>
-          <CommonPicker
-            selectedValue={state.form.seeds || ""}
-            onValueChange={value =>
-              updateState({ ...state, form: { ...state.form, seeds: value } })
-            }
-            items={Seeds}
-          />
+        <CommonPicker
+  selectedValue={state.form.seeds || ""}
+  onValueChange={value =>
+    updateState({ ...state, form: { ...state.form, seeds: value } })
+  }
+  items={seedOptions}
+/>
+
         </Card.Content>
       </Card>
 

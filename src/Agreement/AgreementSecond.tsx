@@ -1,36 +1,145 @@
-import React, { useState } from "react";
-import { StyleSheet, View, TouchableOpacity, ScrollView } from "react-native";
+import React, { useState , useEffect } from "react";
+import { StyleSheet, View, TouchableOpacity, ScrollView, Modal } from "react-native";
 import { Button, Text, Card, TextInput, Checkbox } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import CommonPicker from "../CommonComponent/CommonDropdown";
 import { commodity, Onion, Garlic, Potato, relations, states, districts, years } from "../Constants/constants";
 import { useNavigation } from "@react-navigation/native";
+import { Image } from "react-native";
 import useForm from "../Form/UseForm";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useRoute } from "@react-navigation/native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Alert } from "react-native";
+import apiClient from "../Service/apiInterceptors";
 import * as FileSystem from 'expo-file-system';
 
 const AgreementSecond: React.FC = () => {
     const { state, updateState } = useForm();
-       const route = useRoute();
+
+    const route = useRoute();
+     const [signatureUri, setSignatureUri] = useState<string | null>(null);
     const { formData } = route.params as { formData: any };
     const navigation = useNavigation<any>();
     const [isAgreementAccepted, setIsAgreementAccepted] = useState(false);
 
-    const handleSubmit = () => {
-        if (!isAgreementAccepted) {
-            alert("Please read and accept the agreement terms before submitting.");
-            return;
+
+     useEffect(() => {
+    console.log("📦 Received Form Data:", formData);
+  }, []);
+
+
+
+
+ 
+
+    const handleSubmit = async () => {
+  if (!isAgreementAccepted) {
+    Alert.alert(
+      "Agreement",
+      "Please read and accept the agreement terms before submitting."
+    );
+    return;
+  }
+
+  // ---------------- FormData payload ----------------
+  const formData = new FormData();
+
+  formData.append("CenterTargetId", state.form.CenterTargetId || "");
+  formData.append("FarmerDistributionId", state.form.FarmerDistributionId || "");
+  formData.append("TagNumber", state.form.TagNumber || "");
+  formData.append("VarietyId", state.form.VarietyId || "");
+  formData.append("AuthorizedName", state.form.AuthorizedName || "");
+  formData.append("SeedClass", state.form.SeedClass || "");
+  formData.append("CommodityId", state.form.commodity || "");
+  formData.append("Area", state.form.Area?.toString() ?? "0");
+  formData.append("BillNumber", state.form.BillNumber || "");
+
+  // Nominee object
+  const nomineeObj = {
+    gender: state.form.gender || "",
+    pincode: state.form.pincode || "",
+    mobileno: state.form.mobileNumber || "",
+    addrline: state.form.addrline || "",
+    villageid: state.form.villageid || 0,
+    districtid: state.form.districtid || 0,
+    subdistrictid: state.form.subdistrictid || 0,
+    stateid: state.form.stateid || 0,
+    profdocument: state.form.profdocument || "",
+    dob: state.form.dob || new Date().toISOString(),
+    villagename: state.form.villagename || "",
+    signature: state.form.witnessSignature || "",
+    subdistrictname: state.form.subdistrictname || "",
+    districtname: state.form.districtname || "",
+    relation: state.form.relation || "",
+    statename: state.form.statename || "",
+    nomineename: state.form.nomineename || "",
+    email: state.form.email || "",
+    year: state.form.year || 0,
+    age: state.form.age || 0,
+  };
+  formData.append("NomiNee", JSON.stringify(nomineeObj));
+
+  // Witness object
+  const witnessObj = {
+    pincode: state.form.witnessPincode || "",
+    witnessemail: state.form.witnessEmail || "",
+    witnessname: state.form.witnessname || "",
+    addrline: state.form.witnessaddress || "",
+    villageid: state.form.witnessVillageId || 0,
+    districtid: state.form.witnessDistrictId || 0,
+    subdistrictid: state.form.witnessSubdistrictId || 0,
+    stateid: state.form.witnessStateId || 0,
+    profdocument: state.form.witnessProfdocument || "",
+    villagename: state.form.witnessVillagename || "",
+    signature: state.form.witnessSignature || "",
+    subdistrictname: state.form.witnessSubdistrictName || "",
+    districtname: state.form.witnessDistrictName || "",
+    witnessmobileno: state.form.witnessMobileno || "",
+    statename: state.form.witnessStateName || "",
+  };
+  formData.append("Witness", JSON.stringify(witnessObj));
+
+  formData.append("LotNumber", state.form.LotNumber || "");
+  formData.append("DuringYear", state.form.DuringYear || "");
+  formData.append("PlantingMaterial", state.form.PlantingMaterial || "SEED");
+  formData.append("FarmerId", state.form.FarmerId || "");
+
+  try {
+    // ---------------- API call using Axios interceptor ----------------
+    const response = await apiClient.post(
+      "/api/mobile/agreement",
+      formData
+    );
+
+    console.log("Submit response:", response.data);
+
+    if (response.status === 200 || response.status === 201) {
+      Alert.alert("Success", "Agreement submitted successfully.");
+      navigation.navigate("SomeNextScreen");
+    } else {
+      Alert.alert("Error", "Submission failed.");
+    }
+  } catch (error) {
+    console.error("Submit error:", error);
+    Alert.alert(
+      "Error",
+      error.response?.data?.message || "Something went wrong."
+    );
+  }
+};
+
+        useEffect(() => {
+        if (route.params && (route.params as any).signature) {
+            setSignatureUri((route.params as any).signature);
         }
-        console.log("Form Data:", state.form);
-        // Add your submission logic here
-    };
+    }, [route.params]);
 
     // Function to render commodity-specific dropdown
     const renderCommodityDropdown = () => {
         const selectedCommodity = state.form.commodity;
-        
-        switch(selectedCommodity) {
+
+        switch (selectedCommodity) {
             case "onion":
                 return (
                     <Card style={styles.sectionCard}>
@@ -46,7 +155,7 @@ const AgreementSecond: React.FC = () => {
                         </Card.Content>
                     </Card>
                 );
-            
+
             case "Garlic":
                 return (
                     <Card style={styles.sectionCard}>
@@ -62,7 +171,7 @@ const AgreementSecond: React.FC = () => {
                         </Card.Content>
                     </Card>
                 );
-            
+
             case "Potato":
                 return (
                     <Card style={styles.sectionCard}>
@@ -106,22 +215,14 @@ const AgreementSecond: React.FC = () => {
                 enableAutomaticScroll={true}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Personal Information Section */}
 
 
-                   <View style={styles.container}>
-            <Text >Agreement Data</Text>
-            <Text>Name: {formData.name}</Text>
-            <Text>Age: {formData.age}</Text>
-            <Text>Village: {formData.villagename}</Text>
-            <Text>State: {formData.statename}</Text>
-            {/* Aur baaki fields bhi display kar sakte ho */}
-        </View>
+
 
                 <Card style={styles.sectionCard}>
                     <Card.Content>
                         <Text style={styles.sectionTitle}>Nominee details</Text>
-                        
+
                         {/* Name */}
                         <Text style={styles.label}>Full Name</Text>
                         <TextInput
@@ -172,14 +273,112 @@ const AgreementSecond: React.FC = () => {
                             style={styles.input}
                             placeholder="Enter dependent's name"
                         />
+
+
+                           <TouchableOpacity
+                            style={styles.iconButton}
+                            onPress={() => navigation.navigate("Signature")}
+                        >
+                            <MaterialCommunityIcons
+                                name="signature-freehand"
+                                size={26}
+                                color="#2C5EFF"
+                            />
+                            <Text style={styles.iconText}>Add Nominee Signature</Text>
+                        </TouchableOpacity>
+
+
+                             {/* 👉 yahan signature show hoga agar aya hai */}
+                    {signatureUri && (
+                        <View style={{ marginTop: 12 }}>
+                            <Text style={styles.label}>Captured Nominee Signature:</Text>
+                            <Image
+                                source={{ uri: signatureUri }}
+                                style={{
+                                    width: "100%",
+                                    height: 100,
+                                    borderWidth: 1,
+                                    borderColor: "#ccc",
+                                    resizeMode: "contain"
+                                }}
+                            />
+                        </View>
+                    )}
+
+
+
                     </Card.Content>
                 </Card>
+                <Card style={styles.sectionCard}>
+                    <Card.Content>
+                        <Text style={styles.sectionTitle}>Witness Details</Text>
+
+                        {/* Name */}
+                        <Text style={styles.label}>Name</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.witnessname || ""}
+                            onChangeText={(text) =>
+                                updateState({ ...state, form: { ...state.form, witnessname: text } })
+                            }
+                            style={styles.input}
+                            placeholder="Enter Witness name"
+                        />
+
+                        {/* Address */}
+                        <Text style={styles.label}>Address</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.witnessaddress || ""}
+                            onChangeText={(text) =>
+                                updateState({ ...state, form: { ...state.form, witnessaddress: text } })
+                            }
+                            style={styles.multilineinput}
+                            placeholder="Enter Witness address"
+                            multiline
+                            numberOfLines={3}
+                        />
+
+
+                        <TouchableOpacity
+                            style={styles.iconButton}
+                            onPress={() => navigation.navigate("Signature")}
+                        >
+                            <MaterialCommunityIcons
+                                name="signature-freehand"
+                                size={26}
+                                color="#2C5EFF"
+                            />
+                            <Text style={styles.iconText}>Add Signature</Text>
+                        </TouchableOpacity>
+
+
+                             {/* 👉 yahan signature show hoga agar aya hai */}
+                    {signatureUri && (
+                        <View style={{ marginTop: 12 }}>
+                            <Text style={styles.label}>Captured Signature:</Text>
+                            <Image
+                                source={{ uri: signatureUri }}
+                                style={{
+                                    width: "100%",
+                                    height: 100,
+                                    borderWidth: 1,
+                                    borderColor: "#ccc",
+                                    resizeMode: "contain"
+                                }}
+                            />
+                        </View>
+                    )}
+
+                    </Card.Content>
+                </Card>
+
 
                 {/* Address Information Section */}
                 <Card style={styles.sectionCard}>
                     <Card.Content>
                         <Text style={styles.sectionTitle}>Address Information</Text>
-                        
+
                         {/* Village */}
                         <Text style={styles.label}>Village</Text>
                         <TextInput
@@ -256,8 +455,8 @@ const AgreementSecond: React.FC = () => {
                     </Card.Content>
                 </Card>
 
-              
- 
+
+
                 {/* Dynamic Commodity-Specific Dropdown */}
                 {renderCommodityDropdown()}
 
@@ -265,7 +464,7 @@ const AgreementSecond: React.FC = () => {
                 <Card style={styles.sectionCard}>
                     <Card.Content>
                         <Text style={styles.sectionTitle}>NHRDF Authorized Signatory</Text>
-                        
+
                         {/* Authorized Signatory Name */}
                         <Text style={styles.label}>Authorized Signatory Name</Text>
                         <TextInput
@@ -368,23 +567,23 @@ const AgreementSecond: React.FC = () => {
                 <Card style={styles.sectionCard}>
                     <Card.Content>
                         <Text style={styles.sectionTitle}>Agreement Terms & Conditions</Text>
-                        
+
                         <ScrollView style={styles.agreementContainer} nestedScrollEnabled={true}>
                             <Text style={styles.agreementText}>
                                 <Text style={styles.agreementHeading}>Important Terms:{'\n\n'}</Text>
-                                
+
                                 • The NHRDF reserves the right to terminate this Contract Agreement without giving any notice under circumstances beyond their control.{'\n\n'}
-                                
+
                                 • In case of termination, the Grower will be fully responsible for disposal of seeds/bulbs/tubers produced.{'\n\n'}
-                                
+
                                 • This Agreement has been read & explained to the Grower in his/her own mother tongue.{'\n\n'}
-                                
+
                                 • The Grower hereby declares that he/she has understood fully the contents thereof.{'\n\n'}
-                                
+
                                 • This Agreement is signed and implemented as it is mutually understood and agreed by Grower and the NHRDF.{'\n\n'}
-                                
+
                                 • If any dispute arises in this matter as per this Agreement, jurisdiction will be Delhi Court, Delhi, India only.{'\n\n'}
-                                
+
                                 <Text style={styles.agreementNote}>
                                     Note: The Grower is not allowed to sell the produce other than those approved under the programmes or from the fields not inspected by the NHRDF.
                                 </Text>
@@ -460,29 +659,45 @@ const styles = StyleSheet.create({
         elevation: 2,
         backgroundColor: "white",
     },
+    iconButton: {
+        backgroundColor: "#EAF0FF",
+        paddingVertical: 8,
+        paddingHorizontal: 10,
+        borderRadius: 10,
+        elevation: 2,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    iconText: {
+        marginTop: 4,
+        fontSize: 12,
+        color: "#2C5EFF",
+        fontWeight: "600",
+    },
 
-     infoContainer: {
-    marginTop: 12,
-    backgroundColor: "#F8F9FA",
-    borderRadius: 10,
-    padding: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: "#70B04F",
-  },
 
-  subTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#007BFF",
-    marginBottom: 6,
-  },
+    infoContainer: {
+        marginTop: 12,
+        backgroundColor: "#F8F9FA",
+        borderRadius: 10,
+        padding: 12,
+        borderLeftWidth: 4,
+        borderLeftColor: "#70B04F",
+    },
 
-  description: {
-    fontSize: 14,
-    color: "#333",
-    lineHeight: 20,
-    textAlign: "justify",
-  },
+    subTitle: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#007BFF",
+        marginBottom: 6,
+    },
+
+    description: {
+        fontSize: 14,
+        color: "#333",
+        lineHeight: 20,
+        textAlign: "justify",
+    },
     sectionTitle: {
         fontSize: 16,
         fontWeight: "bold",
@@ -496,16 +711,22 @@ const styles = StyleSheet.create({
         color: "#455A64",
         marginBottom: 8,
         marginTop: 4,
-       
+
     },
     input: {
         marginBottom: 12,
         backgroundColor: "white",
-         
-        height: 38,       
-        fontSize: 14,     
-        paddingHorizontal: 10, 
-       
+
+        height: 38,
+        fontSize: 14,
+        paddingHorizontal: 10,
+
+    },
+    multilineinput: {
+        backgroundColor: '#fff',
+        marginBottom: 12,
+        fontSize: 14,
+
     },
     row: {
         flexDirection: "row",
