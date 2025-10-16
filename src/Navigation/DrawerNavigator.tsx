@@ -6,6 +6,9 @@ import Dhasboard from '../Dhasboard/Dhasboard';
 import AgreementForm from '../Agreement/AgreementForm';
 import AgreementSecond from '../Agreement/AgreementSecond';
 import  DashboardScreen from '../DhasboadScreen/DhasboardScreen'
+import AgreementListScreen from '../AgreementList/AgreementList';
+import NomineeScreen from '../AgreementList/NomineeList';
+import WitnessScreen from '../AgreementList/WitnessList';
 import Signature from '../Signature/Signature';
 
 const Drawer = createDrawerNavigator();
@@ -68,6 +71,18 @@ function CustomDrawerContent(props: any) {
           onPress={() => props.navigation.navigate('AgreementForm')}
           labelStyle={styles.drawerLabel}
         />
+           
+
+               <DrawerItem
+          label="Agreement List"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('AgreementListScreen')}
+          labelStyle={styles.drawerLabel}
+        />
+
+
+
+
 
         {/* Hidden Screen */}
         <DrawerItem
@@ -140,8 +155,12 @@ export default function DrawerNavigator() {
 
 
       <Drawer.Screen name="AgreementForm" component={AgreementForm} />
+         <Drawer.Screen name="AgreementListScreen" component={AgreementListScreen} />
        <Drawer.Screen name="DashboardScreen" component={DashboardScreen} />
       <Drawer.Screen name="Agreement" component={AgreementSecond} options={{ drawerItemStyle: { display: 'none' } ,     headerShown: false, }} />
+            <Drawer.Screen name="NomineeScreen" component={NomineeScreen} options={{ drawerItemStyle: { display: 'none' } ,     headerShown: false, }} />
+
+            <Drawer.Screen name="WitnessScreen" component={WitnessScreen} options={{ drawerItemStyle: { display: 'none' } ,     headerShown: false, }} />
     </Drawer.Navigator>
   );
 }

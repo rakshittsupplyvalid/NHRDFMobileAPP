@@ -29,3 +29,12 @@ export type State = {
   status: Record<string, any>;
   refs: Record<string, any>;
 };
+
+
+// types.ts
+export type DrawerParamList = {
+  AgreementListScreen: undefined;
+  NomineeScreen: { agreementId: string };
+  WitnessScreen: { agreementId: string };
+  // add other screens if needed
+};

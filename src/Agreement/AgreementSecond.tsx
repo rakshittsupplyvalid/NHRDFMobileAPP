@@ -16,7 +16,6 @@ import apiClient from "../Service/apiInterceptors";
 import { CommonActions } from "@react-navigation/native";
 import CustomDateTimePicker from "../CommonComponent/DateTimePicker";
 import axios from "axios";
-
 import * as FileSystem from 'expo-file-system';
 
 
@@ -412,7 +411,7 @@ const AgreementSecond: React.FC = () => {
             formData.append("VarietyId", selectedVariety);
             formData.append("PlantingMaterial", "SEED");
             formData.append("TagNumber", state.form.TagNumber || "");
-            formData.append("AuthorizedName", state.form.AuthorizedName || "");
+            formData.append("AuthorizedName", state.form.authorizedSignatory  || "");
             formData.append("SeedClass", state.form.SeedClass || "");
             formData.append("CommodityId", selectedCommodityType);
             formData.append("Area", state.form.Area?.toString() ?? "0");
@@ -421,111 +420,7 @@ const AgreementSecond: React.FC = () => {
             formData.append("LotNumber", state.form.LotNumber || "");
             formData.append("DuringYear", state.form.DuringYear || "");
 
-            // // // ✅ Static Nominees - 2 entries
-            // const staticNominees = [
-            //   {
-            //     gender: "Male",
-            //     pincode: "123456",
-            //     mobileno: "9999999999",
-            //     addrline: "Nominee Address 1",
-            //     villageid: "1",
-            //     districtid: "1",
-            //     subdistrictid: "1",
-            //     stateid: "1",
-            //     profdocument: "",
-            //     dob: "1990-01-01",
-            //     villagename: "Nominee Village 1",
-            //     signature: "",
-            //     subdistrictname: "Nominee Subdistrict 1",
-            //     districtname: "Nominee District 1",
-            //     relation: "Brother",
-            //     statename: "Nominee State 1",
-            //     nomineename: "Nominee Name 1",
-            //     email: "nominee1@example.com",
-            //     year: "2025",
-            //     age: "35",
-            //   },
-            //   {
-            //     gender: "Female",
-            //     pincode: "654321",
-            //     mobileno: "7777777777",
-            //     addrline: "Nominee Address 2",
-            //     villageid: "2",
-            //     districtid: "2",
-            //     subdistrictid: "2",
-            //     stateid: "2",
-            //     profdocument: "",
-            //     dob: "1992-02-02",
-            //     villagename: "Nominee Village 2",
-            //     signature: "",
-            //     subdistrictname: "Nominee Subdistrict 2",
-            //     districtname: "Nominee District 2",
-            //     relation: "Sister",
-            //     statename: "Nominee State 2",
-            //     nomineename: "Nominee Name 2",
-            //     email: "nominee2@example.com",
-            //     year: "2025",
-            //     age: "32",
-            //   },
-            // ];
-
-            // staticNominees.forEach((nominee, index) => {
-            //   Object.keys(nominee).forEach((key) => {
-            //     formData.append(
-            //       `NomiNee[${index}][${key}]`,
-            //       nominee[key as keyof typeof nominee].toString()
-            //     );
-            //   });
-            // });
-
-            // // ✅ Static Witnesses - 2 entries
-            // const staticWitnesses = [
-            //   {
-            //     pincode: "111111",
-            //     witnessemail: "witness1@example.com",
-            //     witnessname: "Witness Name 1",
-            //     addrline: "Witness Address 1",
-            //     villageid: "1",
-            //     districtid: "1",
-            //     subdistrictid: "1",
-            //     stateid: "1",
-            //     profdocument: "",
-            //     villagename: "Witness Village 1",
-            //     signature: "",
-            //     subdistrictname: "Witness Subdistrict 1",
-            //     districtname: "Witness District 1",
-            //     witnessmobileno: "8888888888",
-            //     statename: "Witness State 1",
-            //   },
-            //   {
-            //     pincode: "222222",
-            //     witnessemail: "witness2@example.com",
-            //     witnessname: "Witness Name 2",
-            //     addrline: "Witness Address 2",
-            //     villageid: "2",
-            //     districtid: "2",
-            //     subdistrictid: "2",
-            //     stateid: "2",
-            //     profdocument: "",
-            //     villagename: "Witness Village 2",
-            //     signature: "",
-            //     subdistrictname: "Witness Subdistrict 2",
-            //     districtname: "Witness District 2",
-            //     witnessmobileno: "9999999999",
-            //     statename: "Witness State 2",
-            //   },
-            // ];
-
-            // staticWitnesses.forEach((witness, index) => {
-            //   Object.keys(witness).forEach((key) => {
-            //     formData.append(
-            //       `Witness[${index}][${key}]`,
-            //       witness[key as keyof typeof witness].toString()
-            //     );
-            //   });
-            // });
-
-
+           
             nominees.forEach((nominee, index) => {
                 Object.keys(nominee).forEach((key) => {
                     formData.append(`NomiNee[${index}][${key}]`, nominee[key as keyof NomineeType].toString());
@@ -541,72 +436,14 @@ const AgreementSecond: React.FC = () => {
 
 
 
-            // Append Nominees
-            // nominees.forEach((nominee, index) => {
-            //     Object.keys(nominee).forEach((key) => {
-            //         console.log("TTTTT -> Key", key);
-            //         console.log("TTTTT -> State Id", state.form.state);
-            //         console.log("TTTTT -> State Name", state.form.stateLabel);
-            //         if (key == 'statename') {
-            //             formData.append(`NomiNee[${index}][stateid]`, state.form.state || "");
-            //         }
-            //         else if (key == 'stateid') {
-            //             formData.append(`NomiNee[${index}][statename]`, state.form.stateLabel || "");
-            //         }
-            //         else if (key == 'districtid') {
-            //             formData.append(`NomiNee[${index}][districtid]`, state.form.district || "");
-            //         }
-            //         else if (key == 'districtname') {
-            //             formData.append(`NomiNee[${index}][districtname]`, state.form.districtLabel || "");
-            //         }
-            //         else if (key == 'subdistrictid') {
-            //             formData.append(`NomiNee[${index}][subdistrictid]`, state.form.city || "");
-            //         }
-            //         else if (key == 'subdistrictname') {
-            //             formData.append(`NomiNee[${index}][subdistrictname]`, state.form.cityLabel || "");
-            //         }
-            //         else {
-            //             formData.append(`NomiNee[${index}][${key}]`, nominee[key as keyof NomineeType].toString());
-            //         }
-            //     });
-            // });
+        
 
-
-            // // Append Witnesses
-            // witnesses.forEach((witness, index) => {
-            //     Object.keys(witness).forEach((key) => {
-            //         // formData.append(`Witness[${index}][${key}]`, witness[key as keyof WitnessType].toString());
-            //         if (key == 'statename') {
-            //             formData.append(`Witness[${index}][stateid]`, state.form.wState || "");
-            //         }
-            //         else if (key == 'stateid') {
-            //             formData.append(`Witness[${index}][statename]`, state.form.wStateLabel || "");
-            //         }
-            //         else if (key == 'districtid') {
-            //             formData.append(`Witness[${index}][districtid]`, state.form.wDistrict || "");
-            //         }
-            //         else if (key == 'districtname') {
-            //             formData.append(`Witness[${index}][districtname]`, state.form.wDistrictLabel || "");
-            //         }
-            //         else if (key == 'subdistrictid') {
-            //             formData.append(`Witness[${index}][subdistrictid]`, state.form.wCity || "");
-            //         }
-            //         else if (key == 'subdistrictname') {
-            //             formData.append(`Witness[${index}][subdistrictname]`, state.form.wCityLabel || "");
-            //         }
-            //         else {
-            //             formData.append(`Witness[${index}][${key}]`, witness[key as keyof WitnessType].toString());
-            //         }
-            //     });
-            // });
-
-            // ✅ Debug: show what will be sent
             for (let [key, value] of (formData as any).entries()) {
                 console.log(`📦 ${key}:`, value);
             }
 
             const token = await retrieveToken();
-            // console.log("📜 Token before submit:", token);
+
 
             const response = await apiClient.post("/api/mobile/agreement", formData);
 
