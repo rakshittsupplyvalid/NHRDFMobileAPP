@@ -14,143 +14,644 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Alert } from "react-native";
 import apiClient from "../Service/apiInterceptors";
 import { CommonActions } from "@react-navigation/native";
+import CustomDateTimePicker from "../CommonComponent/DateTimePicker";
+import axios from "axios";
+
 import * as FileSystem from 'expo-file-system';
+
+
+
+interface NomineeType {
+    nomineename: string;
+    gender: string;
+    age: string;
+    dob: string;
+    mobileno: string;
+    email: string;
+    addrline: string;
+    villageid: string;
+    villagename: string;
+    districtid: string;
+    districtname: string;
+    subdistrictid: string;
+    subdistrictname: string;
+    stateid: string;
+    statename: string;
+    relation: string;
+    profdocument: string;
+    signature: string;
+    year: string;
+    pincode: string;
+}
+
+interface WitnessType {
+    witnessname: string;
+    witnessmobileno: string;
+    witnessemail: string;
+    addrline: string;
+    villageid: string;
+    villagename: string;
+    districtid: string;
+    districtname: string;
+    subdistrictid: string;
+    subdistrictname: string;
+    stateid: string;
+    statename: string;
+    profdocument: string;
+    signature: string;
+    pincode: string;
+}
 
 const AgreementSecond: React.FC = () => {
     const { state, updateState } = useForm();
+    const [statesList, setStatesList] = useState([]);
+    const [districtsList, setDistrictsList] = useState([]);
+    const [citiesList, setCitiesList] = useState([]);
+    const [commonState, setCommonState] = useState("");
+    const [cityState, setCityState] = useState("");
+
+
 
     const route = useRoute();
     const [signatureUri, setSignatureUri] = useState<string | null>(null);
-    const { formData, selectedCommodityType, selectedFarmer , selectedVariety  ,  Farmerdistribution , selectedCenterTarget} = route.params as { formData: any, selectedCommodityType: any, selectedFarmer: any  , selectedVariety : any ,  Farmerdistribution : any , selectedCenterTarget : any};
+    const { formData, selectedCommodityType, selectedFarmer, selectedVariety, Farmerdistribution, selectedCenterTarget } = route.params as { formData: any, selectedCommodityType: any, selectedFarmer: any, selectedVariety: any, Farmerdistribution: any, selectedCenterTarget: any };
     const navigation = useNavigation<any>();
     const [nomineeSignatureUri, setNomineeSignatureUri] = useState<string | null>(null);
     const [witnessSignatureUri, setWitnessSignatureUri] = useState<string | null>(null);
+    const [nomineeDistrictsList, setNomineeDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
+    const [nomineeCitiesList, setNomineeCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
+
+    const [witnessDistrictsList, setWitnessDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
+    const [witnessCitiesList, setWitnessCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
+    const [nominees, setNominees] = useState<NomineeType[]>([
+        {
+            nomineename: "",
+            gender: "",
+            age: "",
+            dob: "",
+            mobileno: "",
+            email: "",
+            addrline: "",
+            villageid: "",
+            villagename: "",
+            districtid: "",
+            districtname: "",
+            subdistrictid: "",
+            subdistrictname: "",
+            stateid: "",
+            statename: "",
+            relation: "",
+            profdocument: "",
+            signature: "",
+            year: "",
+            pincode: "",
+        },
+    ]);
+
+    const [witnesses, setWitnesses] = useState<WitnessType[]>([
+        {
+            witnessname: "",
+            witnessmobileno: "",
+            witnessemail: "",
+            addrline: "",
+            villageid: "",
+            villagename: "",
+            districtid: "",
+            districtname: "",
+            subdistrictid: "",
+            subdistrictname: "",
+            stateid: "",
+            statename: "",
+            profdocument: "",
+            signature: "",
+            pincode: "",
+        },
+    ]);
 
     const [isAgreementAccepted, setIsAgreementAccepted] = useState(false);
 
 
     useEffect(() => {
-        console.log("📦 Received Form Data:", formData);
-        console.log("📦 commidity id", selectedCommodityType);
-         console.log("📦 variety id ", selectedVariety);
-           console.log("📦 selectedCenterTarget id ", selectedCenterTarget);
+        axios
+            .get("https://stage-master-backend.epravaha.com/api/State/GetAllStates")
+            .then((res) => {
+                console.log("📜 States API Raw Response:", res.data);
+                const mappedStates = res.data.map((item) => ({
+                    label: item.name,
+                    value: item.stateCode?.toString(),
+                }));
+                console.log("✅ Mapped States:", mappedStates);
+                setStatesList(mappedStates);
+            })
+            .catch((err) => console.error("❌ State API Error:", err));
     }, []);
 
+    // // 🏢 Get Districts when state.form.state changes
+    // useEffect(() => {
+    //     if (commonState) {
+    //         console.log("🌐 Selected State Code:", commonState);
+
+    //         axios
+    //             .get(
+    //                 `https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${commonState}`
+    //             )
+    //             .then((res) => {
+    //                 console.log("📜 Districts API Raw Response:", res.data);
+    //                 const mappedDistricts = res.data.map((item) => ({
+    //                     label: item.name,
+    //                     value: item.districtCode?.toString(),
+    //                 }));
+    //                 console.log("✅ Mapped Districts:", mappedDistricts);
+    //                 setDistrictsList(mappedDistricts);
+    //             })
+    //             .catch((err) => console.error("❌ District API Error:", err));
+    //     } else {
+    //         setDistrictsList([]);
+    //     }
+    // }, [commonState]);
 
 
 
+    // useEffect(() => {
+    //     if (cityState) {
+    //         console.log("📌 Selected District ID:", cityState);
+    //         axios
+    //             .get(
+    //                 `https://stage-master-backend.epravaha.com/api/City/GetCityBy${cityState}`
+    //             )
+    //             .then((res) => {
 
+    //                 const mappedCities = res.data.map((item) => ({
+    //                     label: item.name,
+    //                     value: item.cityCode?.toString(),
+    //                 }));
+    //                 setCitiesList(mappedCities);
+    //             })
+    //             .catch((err) => console.error("❌ Cities API Error:", err));
+    //     } else {
+    //         setCitiesList([]);
+    //     }
+    // }, [cityState]);
 
- const handleSubmit = async () => {
-  if (!isAgreementAccepted) {
-    Alert.alert(
-      "Agreement",
-      "Please read and accept the agreement terms before submitting."
-    );
-    return;
-  }
+    const handleStateChange = (value: string, type: "Nominee" | "Witness", index: number) => {
+        const selectedLabel = statesList.find((item) => item.value === value)?.label || "";
 
-  try {
-    const formData = new FormData();
+        if (type === "Nominee") {
+            const updatedNominees = [...nominees];
+            updatedNominees[index].stateid = value;
+            updatedNominees[index].statename = selectedLabel;
+            updatedNominees[index].districtid = "";
+            updatedNominees[index].districtname = "";
+            updatedNominees[index].subdistrictid = "";
+            updatedNominees[index].subdistrictname = "";
+            setNominees(updatedNominees);
 
-    formData.append("CenterTargetId", selectedCenterTarget || "");
-    formData.append("FarmerDistributionId", Farmerdistribution);
-    formData.append("FarmerId", selectedFarmer);
-    formData.append("VarietyId", selectedVariety);
-    formData.append("PlantingMaterial", "SEED");
-    formData.append("TagNumber", state.form.TagNumber || "");
-    formData.append("AuthorizedName", state.form.AuthorizedName || "");
-    formData.append("SeedClass", state.form.SeedClass || "");
-    formData.append("CommodityId", selectedCommodityType);
-    formData.append("Area", state.form.Area?.toString() ?? "0");
-    formData.append("BillNumber", state.form.BillNumber || "");
+            // Fetch districts for this nominee only
+            axios
+                .get(`https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${value}`)
+                .then((res) => {
+                    const mappedDistricts = res.data.map((item) => ({
+                        label: item.name,
+                        value: item.districtCode?.toString(),
+                    }));
+                    setNomineeDistrictsList(prev => ({ ...prev, [index]: mappedDistricts }));
+                    setNomineeCitiesList(prev => ({ ...prev, [index]: [] })); // reset cities
+                })
+                .catch(err => console.error("Nominee District API Error:", err));
+        }
 
-    // 🧑‍🤝‍🧑 Nominee dynamic object
-    const nomineeObj = {
-      gender: state.form.gender || "",
-      pincode: state.form.pincode || "",
-      mobileno: state.form.mobileNumber || "",
-      addrline: state.form.address || "",
-      villageid: state.form.village || "",
-      districtid: state.form.district || "",
-      subdistrictid: state.form.taluka || "",
-      stateid: state.form.state || "",
-      profdocument: state.form.profdocument || "",
-      dob: state.form.dob || "",
-      villagename: state.form.village || "",
-      signature: nomineeSignatureUri || "",
-      subdistrictname: state.form.taluka || "",
-      districtname: state.form.district || "",
-      relation: state.form.relation || "",
-      statename: state.form.state || "",
-      nomineename: state.form.name || "",
-      email: state.form.email || "",
-      year: state.form.year || "",
-      age: state.form.age || "",
+        if (type === "Witness") {
+            const updatedWitnesses = [...witnesses];
+            updatedWitnesses[index].stateid = value;
+            updatedWitnesses[index].statename = selectedLabel;
+            updatedWitnesses[index].districtid = "";
+            updatedWitnesses[index].districtname = "";
+            updatedWitnesses[index].subdistrictid = "";
+            updatedWitnesses[index].subdistrictname = "";
+            setWitnesses(updatedWitnesses);
+
+            // Fetch districts for this witness only
+            axios
+                .get(`https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${value}`)
+                .then((res) => {
+                    const mappedDistricts = res.data.map((item) => ({
+                        label: item.name,
+                        value: item.districtCode?.toString(),
+                    }));
+                    setWitnessDistrictsList(prev => ({ ...prev, [index]: mappedDistricts }));
+                    setWitnessCitiesList(prev => ({ ...prev, [index]: [] })); // reset cities
+                })
+                .catch(err => console.error("Witness District API Error:", err));
+        }
     };
-    formData.append("NomiNee", JSON.stringify(nomineeObj));
 
-    // 🧑 Witness dynamic object
-    const witnessObj = {
-      pincode: state.form.pincode || "",
-      witnessemail: state.form.witnessemail || "",
-      witnessname: state.form.witnessname || "",
-      addrline: state.form.witnessaddress || "",
-      villageid: state.form.village || "",
-      districtid: state.form.district || "",
-      subdistrictid: state.form.taluka || "",
-      stateid: state.form.state || "",
-      profdocument: state.form.profdocument || "",
-      villagename: state.form.village || "",
-      signature: witnessSignatureUri || "",
-      subdistrictname: state.form.taluka || "",
-      districtname: state.form.district || "",
-      witnessmobileno: state.form.witnessmobileno || "",
-      statename: state.form.state || "",
+    // ------------------ Nominee District Change ------------------
+    const handleDistrictChange = (value: string, type: "Nominee" | "Witness", index: number) => {
+        const selectedLabel = (type === "Nominee" ? nomineeDistrictsList[index] : witnessDistrictsList[index])?.find(item => item.value === value)?.label || "";
+
+        if (type === "Nominee") {
+            const updatedNominees = [...nominees];
+            updatedNominees[index].districtid = value;
+            updatedNominees[index].districtname = selectedLabel;
+            updatedNominees[index].subdistrictid = "";
+            updatedNominees[index].subdistrictname = "";
+            setNominees(updatedNominees);
+
+            // Fetch cities for this nominee only
+            axios
+                .get(`https://stage-master-backend.epravaha.com/api/City/GetCityBy${value}`)
+                .then(res => {
+                    const mappedCities = res.data.map(item => ({
+                        label: item.name,
+                        value: item.cityCode?.toString(),
+                    }));
+                    setNomineeCitiesList(prev => ({ ...prev, [index]: mappedCities }));
+                })
+                .catch(err => console.error("Nominee City API Error:", err));
+        }
+
+        if (type === "Witness") {
+            const updatedWitnesses = [...witnesses];
+            updatedWitnesses[index].districtid = value;
+            updatedWitnesses[index].districtname = selectedLabel;
+            updatedWitnesses[index].subdistrictid = "";
+            updatedWitnesses[index].subdistrictname = "";
+            setWitnesses(updatedWitnesses);
+
+            // Fetch cities for this witness only
+            axios
+                .get(`https://stage-master-backend.epravaha.com/api/City/GetCityBy${value}`)
+                .then(res => {
+                    const mappedCities = res.data.map(item => ({
+                        label: item.name,
+                        value: item.cityCode?.toString(),
+                    }));
+                    setWitnessCitiesList(prev => ({ ...prev, [index]: mappedCities }));
+                })
+                .catch(err => console.error("Witness City API Error:", err));
+        }
     };
-    formData.append("Witness", JSON.stringify(witnessObj));
 
-    formData.append("LotNumber", state.form.LotNumber || "");
-    formData.append("DuringYear", state.form.DuringYear || "");
+    const handleCityChange = (value: string, type: "Nominee" | "Witness", index: number) => {
+        const selectedLabel = citiesList.find((item) => item.value === value)?.label || "";
 
-    // ✅ Debugging
-    for (let [key, value] of (formData as any).entries()) {
-      console.log(`📦 ${key}:`, value);
-    }
 
-    const token = await retrieveToken();
-    console.log("📜 Token before submit:", token);
+        if (type === "Nominee") {
+            const updatedNominees = [...nominees];
+            updatedNominees[index].subdistrictid = value;
+            updatedNominees[index].subdistrictname = selectedLabel;
+            setNominees(updatedNominees);
+        }
 
-    const response = await apiClient.post("/api/mobile/agreement", formData);
+        if (type === "Witness") {
+            const updatedWitnesses = [...witnesses];
+            updatedWitnesses[index].subdistrictid = value;
+            updatedWitnesses[index].subdistrictname = selectedLabel;
+            setWitnesses(updatedWitnesses);
+        }
+    };
 
-    console.log("✅ Submit response:", response.data);
 
-  if (response.status === 200 || response.status === 201) {
-  Alert.alert("Success", "Agreement submitted successfully.", [
-    {
-      text: "OK",
-      onPress: () => {
-        navigation.dispatch(
-          CommonActions.reset({
-            index: 0,
-            routes: [{ name: "DashboardScreen" }],
-          })
-        );
-      },
-    },
-  ]);
-} else {
-  Alert.alert("Error", "Submission failed.");
-}
 
-  } catch (error: any) {
-    console.error("❌ Submit error:", error);
-    Alert.alert(
-      "Error",
-      error.response?.data?.message || "Something went wrong."
+
+
+
+    // ------------------ Nominee Handlers ------------------
+    const updateNominee = (index: number, key: keyof NomineeType, value: string) => {
+        const newNominees = [...nominees];
+        newNominees[index][key] = value;
+        setNominees(newNominees);
+    };
+
+    const addNominee = () => {
+        setNominees([
+            ...nominees,
+            {
+                nomineename: "",
+                gender: "",
+                age: "",
+                dob: "",
+                mobileno: "",
+                email: "",
+                addrline: "",
+                villageid: "",
+                villagename: "",
+                districtid: "",
+                districtname: "",
+                subdistrictid: "",
+                subdistrictname: "",
+                stateid: "",
+                statename: "",
+                relation: "",
+                profdocument: "",
+                signature: "",
+                year: "",
+                pincode: "",
+            },
+        ]);
+    };
+
+    // ------------------ Witness Handlers ------------------
+    const updateWitness = (index: number, key: keyof WitnessType, value: string) => {
+        const newWitnesses = [...witnesses];
+        newWitnesses[index][key] = value;
+        setWitnesses(newWitnesses);
+    };
+
+    const addWitness = () => {
+        setWitnesses([
+            ...witnesses,
+            {
+                witnessname: "",
+                witnessmobileno: "",
+                witnessemail: "",
+                addrline: "",
+                villageid: "",
+                villagename: "",
+                districtid: "",
+                districtname: "",
+                subdistrictid: "",
+                subdistrictname: "",
+                stateid: "",
+                statename: "",
+                profdocument: "",
+                signature: "",
+                pincode: "",
+            },
+        ]);
+    };
+
+
+    useFocusEffect(
+        React.useCallback(() => {
+            const params = route.params as { signature?: string; type?: string } | undefined;
+            if (params?.signature && params?.type) {
+                if (params.type === "nominee") setNomineeSignatureUri(params.signature);
+                else if (params.type === "witness") setWitnessSignatureUri(params.signature);
+            }
+        }, [route.params])
     );
-  }
-};
+
+
+    const handleSubmit = async () => {
+        if (!isAgreementAccepted) {
+            Alert.alert(
+                "Agreement",
+                "Please read and accept the agreement terms before submitting."
+            );
+            return;
+        }
+
+        try {
+            const formData = new FormData();
+
+            // ✅ Main form fields dynamically from state/selection
+            formData.append("CenterTargetId", selectedCenterTarget || "");
+            formData.append("FarmerDistributionId", Farmerdistribution);
+            formData.append("FarmerId", selectedFarmer);
+            formData.append("VarietyId", selectedVariety);
+            formData.append("PlantingMaterial", "SEED");
+            formData.append("TagNumber", state.form.TagNumber || "");
+            formData.append("AuthorizedName", state.form.AuthorizedName || "");
+            formData.append("SeedClass", state.form.SeedClass || "");
+            formData.append("CommodityId", selectedCommodityType);
+            formData.append("Area", state.form.Area?.toString() ?? "0");
+            formData.append("BillNumber", state.form.BillNumber || "");
+            formData.append("TagNumber", state.form.TagNumber || "");
+            formData.append("LotNumber", state.form.LotNumber || "");
+            formData.append("DuringYear", state.form.DuringYear || "");
+
+            // // // ✅ Static Nominees - 2 entries
+            // const staticNominees = [
+            //   {
+            //     gender: "Male",
+            //     pincode: "123456",
+            //     mobileno: "9999999999",
+            //     addrline: "Nominee Address 1",
+            //     villageid: "1",
+            //     districtid: "1",
+            //     subdistrictid: "1",
+            //     stateid: "1",
+            //     profdocument: "",
+            //     dob: "1990-01-01",
+            //     villagename: "Nominee Village 1",
+            //     signature: "",
+            //     subdistrictname: "Nominee Subdistrict 1",
+            //     districtname: "Nominee District 1",
+            //     relation: "Brother",
+            //     statename: "Nominee State 1",
+            //     nomineename: "Nominee Name 1",
+            //     email: "nominee1@example.com",
+            //     year: "2025",
+            //     age: "35",
+            //   },
+            //   {
+            //     gender: "Female",
+            //     pincode: "654321",
+            //     mobileno: "7777777777",
+            //     addrline: "Nominee Address 2",
+            //     villageid: "2",
+            //     districtid: "2",
+            //     subdistrictid: "2",
+            //     stateid: "2",
+            //     profdocument: "",
+            //     dob: "1992-02-02",
+            //     villagename: "Nominee Village 2",
+            //     signature: "",
+            //     subdistrictname: "Nominee Subdistrict 2",
+            //     districtname: "Nominee District 2",
+            //     relation: "Sister",
+            //     statename: "Nominee State 2",
+            //     nomineename: "Nominee Name 2",
+            //     email: "nominee2@example.com",
+            //     year: "2025",
+            //     age: "32",
+            //   },
+            // ];
+
+            // staticNominees.forEach((nominee, index) => {
+            //   Object.keys(nominee).forEach((key) => {
+            //     formData.append(
+            //       `NomiNee[${index}][${key}]`,
+            //       nominee[key as keyof typeof nominee].toString()
+            //     );
+            //   });
+            // });
+
+            // // ✅ Static Witnesses - 2 entries
+            // const staticWitnesses = [
+            //   {
+            //     pincode: "111111",
+            //     witnessemail: "witness1@example.com",
+            //     witnessname: "Witness Name 1",
+            //     addrline: "Witness Address 1",
+            //     villageid: "1",
+            //     districtid: "1",
+            //     subdistrictid: "1",
+            //     stateid: "1",
+            //     profdocument: "",
+            //     villagename: "Witness Village 1",
+            //     signature: "",
+            //     subdistrictname: "Witness Subdistrict 1",
+            //     districtname: "Witness District 1",
+            //     witnessmobileno: "8888888888",
+            //     statename: "Witness State 1",
+            //   },
+            //   {
+            //     pincode: "222222",
+            //     witnessemail: "witness2@example.com",
+            //     witnessname: "Witness Name 2",
+            //     addrline: "Witness Address 2",
+            //     villageid: "2",
+            //     districtid: "2",
+            //     subdistrictid: "2",
+            //     stateid: "2",
+            //     profdocument: "",
+            //     villagename: "Witness Village 2",
+            //     signature: "",
+            //     subdistrictname: "Witness Subdistrict 2",
+            //     districtname: "Witness District 2",
+            //     witnessmobileno: "9999999999",
+            //     statename: "Witness State 2",
+            //   },
+            // ];
+
+            // staticWitnesses.forEach((witness, index) => {
+            //   Object.keys(witness).forEach((key) => {
+            //     formData.append(
+            //       `Witness[${index}][${key}]`,
+            //       witness[key as keyof typeof witness].toString()
+            //     );
+            //   });
+            // });
+
+
+            nominees.forEach((nominee, index) => {
+                Object.keys(nominee).forEach((key) => {
+                    formData.append(`NomiNee[${index}][${key}]`, nominee[key as keyof NomineeType].toString());
+                });
+            });
+
+            witnesses.forEach((witness, index) => {
+                Object.keys(witness).forEach((key) => {
+                    formData.append(`Witness[${index}][${key}]`, witness[key as keyof WitnessType].toString());
+                });
+            });
+
+
+
+
+            // Append Nominees
+            // nominees.forEach((nominee, index) => {
+            //     Object.keys(nominee).forEach((key) => {
+            //         console.log("TTTTT -> Key", key);
+            //         console.log("TTTTT -> State Id", state.form.state);
+            //         console.log("TTTTT -> State Name", state.form.stateLabel);
+            //         if (key == 'statename') {
+            //             formData.append(`NomiNee[${index}][stateid]`, state.form.state || "");
+            //         }
+            //         else if (key == 'stateid') {
+            //             formData.append(`NomiNee[${index}][statename]`, state.form.stateLabel || "");
+            //         }
+            //         else if (key == 'districtid') {
+            //             formData.append(`NomiNee[${index}][districtid]`, state.form.district || "");
+            //         }
+            //         else if (key == 'districtname') {
+            //             formData.append(`NomiNee[${index}][districtname]`, state.form.districtLabel || "");
+            //         }
+            //         else if (key == 'subdistrictid') {
+            //             formData.append(`NomiNee[${index}][subdistrictid]`, state.form.city || "");
+            //         }
+            //         else if (key == 'subdistrictname') {
+            //             formData.append(`NomiNee[${index}][subdistrictname]`, state.form.cityLabel || "");
+            //         }
+            //         else {
+            //             formData.append(`NomiNee[${index}][${key}]`, nominee[key as keyof NomineeType].toString());
+            //         }
+            //     });
+            // });
+
+
+            // // Append Witnesses
+            // witnesses.forEach((witness, index) => {
+            //     Object.keys(witness).forEach((key) => {
+            //         // formData.append(`Witness[${index}][${key}]`, witness[key as keyof WitnessType].toString());
+            //         if (key == 'statename') {
+            //             formData.append(`Witness[${index}][stateid]`, state.form.wState || "");
+            //         }
+            //         else if (key == 'stateid') {
+            //             formData.append(`Witness[${index}][statename]`, state.form.wStateLabel || "");
+            //         }
+            //         else if (key == 'districtid') {
+            //             formData.append(`Witness[${index}][districtid]`, state.form.wDistrict || "");
+            //         }
+            //         else if (key == 'districtname') {
+            //             formData.append(`Witness[${index}][districtname]`, state.form.wDistrictLabel || "");
+            //         }
+            //         else if (key == 'subdistrictid') {
+            //             formData.append(`Witness[${index}][subdistrictid]`, state.form.wCity || "");
+            //         }
+            //         else if (key == 'subdistrictname') {
+            //             formData.append(`Witness[${index}][subdistrictname]`, state.form.wCityLabel || "");
+            //         }
+            //         else {
+            //             formData.append(`Witness[${index}][${key}]`, witness[key as keyof WitnessType].toString());
+            //         }
+            //     });
+            // });
+
+            // ✅ Debug: show what will be sent
+            for (let [key, value] of (formData as any).entries()) {
+                console.log(`📦 ${key}:`, value);
+            }
+
+            const token = await retrieveToken();
+            // console.log("📜 Token before submit:", token);
+
+            const response = await apiClient.post("/api/mobile/agreement", formData);
+
+            // console.log("✅ Submit response:", response.data);
+
+            if (response.status === 200 || response.status === 201) {
+                Alert.alert("Success", "Agreement submitted successfully.", [
+                    {
+                        text: "OK",
+                        onPress: () => {
+                            navigation.dispatch(
+                                CommonActions.reset({
+                                    index: 0,
+                                    routes: [{ name: "DashboardScreen" }],
+                                })
+                            );
+                        },
+                    },
+                ]);
+            } else {
+                Alert.alert("Error", "Submission failed.");
+            }
+        } catch (error: any) {
+            console.error("❌ Submit error:", error);
+            Alert.alert(
+                "Error",
+                error.response?.data?.message || "Something went wrong."
+            );
+        }
+    };
+
+
+    const calculateAge = (dob) => {
+        const birthDate = new Date(dob);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age.toString(); // TextInput ke liye string me
+    };
+
+
+
 
 
 
@@ -254,231 +755,256 @@ const AgreementSecond: React.FC = () => {
 
 
 
+                {/* Nominee Section */}
                 <Card style={styles.sectionCard}>
-                    <Card.Content>
-                        <Text style={styles.sectionTitle}>Nominee details</Text>
+                    <Text style={styles.sectionTitle}>Nominee Details</Text>
+                    {nominees.map((nominee, index) => (
+                        <Card key={index} style={styles.sectionCard}>
+                            <Card.Content>
+                                <Text style={styles.sectionSubTitle}>Nominee {index + 1}</Text>
 
-                        {/* Name */}
-                        <Text style={styles.label}>Full Name</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.name || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, name: text } })}
-                            style={styles.input}
-                            placeholder="Enter full name"
-                        />
-
-                        {/* Age */}
-                        <Text style={styles.label}>Age</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.age || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, age: text } })}
-                            style={styles.input}
-                            placeholder="Enter age"
-                            keyboardType="numeric"
-                        />
-
-                        {/* Year Dropdown */}
-                        <Text style={styles.label}>Year</Text>
-                        <CommonPicker
-                            selectedValue={state.form.year || ""}
-                            onValueChange={(value) =>
-                                updateState({ ...state, form: { ...state.form, year: value } })
-                            }
-                            items={years}
-                        />
-
-                        {/* Relation Dropdown */}
-                        <Text style={styles.label}>Relation</Text>
-                        <CommonPicker
-                            selectedValue={state.form.relation || ""}
-                            onValueChange={(value) =>
-                                updateState({ ...state, form: { ...state.form, relation: value } })
-                            }
-                            items={relations}
-                        />
-
-                        {/* Dependent Name */}
-                        <Text style={styles.label}>Dependent Name (Son/Daughter/Wife of)</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.dependentName || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, dependentName: text } })}
-                            style={styles.input}
-                            placeholder="Enter dependent's name"
-                        />
-
-
-                        <TouchableOpacity
-                            style={styles.iconButton}
-                            onPress={() => navigation.navigate("Signature", { type: "nominee" })}
-                        >
-                            <MaterialCommunityIcons name="signature-freehand" size={26} color="#2C5EFF" />
-                            <Text style={styles.iconText}>Add Nominee Signature</Text>
-                        </TouchableOpacity>
-
-
-                        {nomineeSignatureUri && (
-                            <View style={{ marginTop: 12 }}>
-                                <Text style={styles.label}>Captured Nominee Signature:</Text>
-                                <Image
-                                    source={{ uri: nomineeSignatureUri }}
-                                    style={{
-                                        width: "100%",
-                                        height: 100,
-                                        borderWidth: 1,
-                                        borderColor: "#ccc",
-                                        resizeMode: "contain"
-                                    }}
+                                <TextInput
+                                    mode="outlined"
+                                    label="Full Name"
+                                    value={nominee.nomineename}
+                                    onChangeText={(text) => updateNominee(index, "nomineename", text)}
+                                    style={styles.input}
                                 />
-                            </View>
-                        )}
-
-
-                    </Card.Content>
-                </Card>
-                <Card style={styles.sectionCard}>
-                    <Card.Content>
-                        <Text style={styles.sectionTitle}>Witness Details</Text>
-
-                        {/* Name */}
-                        <Text style={styles.label}>Name</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.witnessname || ""}
-                            onChangeText={(text) =>
-                                updateState({ ...state, form: { ...state.form, witnessname: text } })
-                            }
-                            style={styles.input}
-                            placeholder="Enter Witness name"
-                        />
-
-                        {/* Address */}
-                        <Text style={styles.label}>Address</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.witnessaddress || ""}
-                            onChangeText={(text) =>
-                                updateState({ ...state, form: { ...state.form, witnessaddress: text } })
-                            }
-                            style={styles.multilineinput}
-                            placeholder="Enter Witness address"
-                            multiline
-                            numberOfLines={3}
-                        />
-
-
-                        <TouchableOpacity
-                            style={styles.iconButton}
-                            onPress={() => navigation.navigate("Signature", { type: "witness" })}
-                        >
-                            <MaterialCommunityIcons name="signature-freehand" size={26} color="#2C5EFF" />
-                            <Text style={styles.iconText}>Add Signature</Text>
-                        </TouchableOpacity>
-
-                        {witnessSignatureUri && (
-                            <View style={{ marginTop: 12 }}>
-                                <Text style={styles.label}>Captured Witness Signature:</Text>
-                                <Image
-                                    source={{ uri: witnessSignatureUri }}
-                                    style={{
-                                        width: "100%",
-                                        height: 100,
-                                        borderWidth: 1,
-                                        borderColor: "#ccc",
-                                        resizeMode: "contain"
-                                    }}
+                                <TextInput
+                                    mode="outlined"
+                                    label="Gender"
+                                    value={nominee.gender}
+                                    onChangeText={(text) => updateNominee(index, "gender", text)}
+                                    style={styles.input}
                                 />
-                            </View>
-                        )}
+                                <TextInput
+                                    mode="outlined"
+                                    label="Age"
+                                    keyboardType="numeric"
+                                    value={nominee.age}
+                                    onChangeText={(text) => updateNominee(index, "age", text)}
+                                    style={styles.input}
+                                />
 
-                    </Card.Content>
+
+                                <Text style={styles.label}>Date of Birth</Text>
+                                <CustomDateTimePicker
+                                    value={nominee.dob ? new Date(nominee.dob) : new Date()}
+                                    onChange={(date) => {
+                                        const formattedDate = date.toISOString().split("T")[0]; // YYYY-MM-DD
+                                        updateNominee(index, "dob", formattedDate);
+
+                                        // Age calculate karke update kar do
+                                        const age = calculateAge(formattedDate);
+                                        updateNominee(index, "age", age);
+                                    }}
+                                    mode="date"
+                                />
+
+                                <TextInput
+                                    mode="outlined"
+                                    label="Mobile No"
+                                    keyboardType="phone-pad"
+                                    value={nominee.mobileno}
+                                    onChangeText={(text) => updateNominee(index, "mobileno", text)}
+                                    style={styles.input}
+                                />
+                                <TextInput
+                                    mode="outlined"
+                                    label="Email"
+                                    keyboardType="email-address"
+                                    value={nominee.email}
+                                    onChangeText={(text) => updateNominee(index, "email", text)}
+                                    style={styles.input}
+                                />
+                                <TextInput
+                                    mode="outlined"
+                                    label="Address Line"
+                                    value={nominee.addrline}
+                                    onChangeText={(text) => updateNominee(index, "addrline", text)}
+                                    style={styles.input}
+                                />
+                                <TextInput
+                                    mode="outlined"
+                                    label="Village Name"
+                                    value={nominee.villagename}
+                                    onChangeText={(text) => updateNominee(index, "villagename", text)}
+                                    style={styles.input}
+                                />
+
+                                <TextInput
+                                    mode="outlined"
+                                    label="Pincode"
+                                    keyboardType="numeric"
+                                    value={nominee.pincode}
+                                    onChangeText={(text) => updateNominee(index, "pincode", text)}
+                                    style={styles.input}
+                                />
+
+                                {/* State Dropdown */}
+                                {/* 🏙️ State Dropdown */}
+                                <Text style={styles.label}>State</Text>
+                                <CommonPicker
+                                    selectedValue={nominee.stateid || ""}
+                                    onValueChange={(value) => handleStateChange(value, "Nominee", index)}
+                                    items={statesList}
+                                />
+
+                                {/* 🏢 District Dropdown */}
+                                <Text style={styles.label}>District</Text>
+                                <CommonPicker
+                                    selectedValue={nominee.districtid || ""}
+                                    onValueChange={(value) => handleDistrictChange(value, "Nominee", index)}
+                                    items={nomineeDistrictsList[index] || []}
+                                />
+
+
+
+                                {/* ✅ City Dropdown */}
+                                <Text style={styles.label}>City</Text>
+                                <CommonPicker
+                                    selectedValue={nominee.subdistrictid || ""}
+                                    onValueChange={(value) => handleCityChange(value, "Nominee", index)}
+                                    items={nomineeCitiesList[index] || []}
+                                />
+
+
+
+
+
+                                <TextInput
+                                    mode="outlined"
+                                    label="Relation"
+                                    value={nominee.relation}
+                                    onChangeText={(text) => updateNominee(index, "relation", text)}
+                                    style={styles.input}
+                                />
+
+                                {/* Signature placeholder */}
+                                <TouchableOpacity
+                                    style={styles.signatureBtn}
+                                    onPress={() => Alert.alert("Signature", "Capture nominee signature here")}
+                                >
+                                    <MaterialCommunityIcons name="signature-freehand" size={26} color="#2C5EFF" />
+                                    <Text>Add Signature</Text>
+                                </TouchableOpacity>
+                            </Card.Content>
+                        </Card>
+                    ))}
+                    <Button mode="outlined" onPress={addNominee} style={{ marginVertical: 10 }}>
+                        Add Another Nominee
+                    </Button>
                 </Card>
 
-
-
-
-                {/* Address Information Section */}
+                {/* Witness Section */}
                 <Card style={styles.sectionCard}>
-                    <Card.Content>
-                        <Text style={styles.sectionTitle}>Address Information</Text>
+                    {/* ----------------- Witnesses ----------------- */}
+                    <Text style={styles.sectionTitle}>Witness Details</Text>
+                    {witnesses.map((witness, index) => (
+                        <Card key={index} style={styles.sectionCard}>
+                            <Card.Content>
+                                <Text style={styles.sectionSubTitle}>Witness {index + 1}</Text>
 
-                        {/* Village */}
-                        <Text style={styles.label}>Village</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.village || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, village: text } })}
-                            style={styles.input}
-                            placeholder="Enter village name"
-                        />
 
-                        {/* Post Office */}
-                        <Text style={styles.label}>Post Office</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.postOffice || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, postOffice: text } })}
-                            style={styles.input}
-                            placeholder="Enter post office"
-                        />
+                                <Text style={styles.label}>Full Name</Text>
+                                <TextInput
+                                    mode="outlined"
+                                    label="Full Name"
+                                    value={witness.witnessname}
+                                    onChangeText={(text) => updateWitness(index, "witnessname", text)}
+                                    style={styles.input}
+                                />
+                                <TextInput
+                                    mode="outlined"
+                                    label="Mobile No"
+                                    keyboardType="phone-pad"
+                                    value={witness.witnessmobileno}
+                                    onChangeText={(text) => updateWitness(index, "witnessmobileno", text)}
+                                    style={styles.input}
+                                />
+                                <TextInput
+                                    mode="outlined"
+                                    label="Email"
+                                    keyboardType="email-address"
+                                    value={witness.witnessemail}
+                                    onChangeText={(text) => updateWitness(index, "witnessemail", text)}
+                                    style={styles.input}
+                                />
+                                <TextInput
+                                    mode="outlined"
+                                    label="Address Line"
+                                    value={witness.addrline}
+                                    onChangeText={(text) => updateWitness(index, "addrline", text)}
+                                    style={styles.input}
+                                />
+                                <TextInput
+                                    mode="outlined"
+                                    label="Pincode"
+                                    keyboardType="numeric"
+                                    value={witness.pincode}
+                                    onChangeText={(text) => updateWitness(index, "pincode", text)}
+                                    style={styles.input}
+                                />
 
-                        {/* Taluka */}
-                        <Text style={styles.label}>Taluka</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.taluka || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, taluka: text } })}
-                            style={styles.input}
-                            placeholder="Enter taluka"
-                        />
 
-                        {/* District Dropdown */}
-                        <Text style={styles.label}>District</Text>
-                        <CommonPicker
-                            selectedValue={state.form.district || ""}
-                            onValueChange={(value) =>
-                                updateState({ ...state, form: { ...state.form, district: value } })
-                            }
-                            items={districts}
-                        />
+                                <Text style={styles.label}>State</Text>
+                                <CommonPicker
+                                    selectedValue={witness.stateid || ""}
 
-                        {/* State Dropdown */}
-                        <Text style={styles.label}>State</Text>
-                        <CommonPicker
-                            selectedValue={state.form.state || ""}
-                            onValueChange={(value) =>
-                                updateState({ ...state, form: { ...state.form, state: value } })
-                            }
-                            items={states}
-                        />
+                                    onValueChange={(value) => handleStateChange(value, "Witness", index)}
+                                    items={statesList}
+                                />
 
-                        {/* Pincode */}
-                        <Text style={styles.label}>Pincode</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.pincode || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, pincode: text } })}
-                            style={styles.input}
-                            placeholder="Enter pincode"
-                            keyboardType="numeric"
-                            maxLength={6}
-                        />
 
-                        {/* Mobile Number */}
-                        <Text style={styles.label}>Mobile Number</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.mobileNumber || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, mobileNumber: text } })}
-                            style={styles.input}
-                            placeholder="Enter mobile number"
-                            keyboardType="phone-pad"
-                            maxLength={10}
-                        />
-                    </Card.Content>
+
+                                {/* 🏢 District Dropdown */}
+                                <Text style={styles.label}>District</Text>
+                                <CommonPicker
+                                    selectedValue={witness.districtid || ""}
+                                    onValueChange={(value) => handleDistrictChange(value, "Witness", index)}
+                                    items={witnessDistrictsList[index] || []}
+                                />
+
+
+                                {/* ✅ City Dropdown */}
+                                <Text style={styles.label}>City</Text>
+                                <CommonPicker
+                                    selectedValue={witness.subdistrictid || ""}
+                                    onValueChange={(value) => handleCityChange(value, "Witness", index)}
+                                    items={witnessCitiesList[index] || []}
+                                />
+
+                                <TextInput
+                                    mode="outlined"
+                                    label="Village Name"
+                                    value={witness.villagename}
+                                    onChangeText={(text) => updateWitness(index, "villagename", text)}
+                                    style={styles.input}
+                                />
+
+
+                                {/* Signature placeholder */}
+                                <TouchableOpacity
+                                    style={styles.signatureBtn}
+                                    onPress={() => Alert.alert("Signature", "Capture witness signature here")}
+                                >
+                                    <MaterialCommunityIcons name="signature-freehand" size={26} color="#2C5EFF" />
+                                    <Text>Add Signature</Text>
+                                </TouchableOpacity>
+                            </Card.Content>
+                        </Card>
+                    ))}
+                    <Button mode="outlined" onPress={addWitness} style={{ marginVertical: 10 }}>
+                        Add Another Witness
+                    </Button>
                 </Card>
+
+
+
+
+
+
+             
 
 
 
@@ -501,7 +1027,7 @@ const AgreementSecond: React.FC = () => {
                         />
 
                         {/* NHRDF Address */}
-                        <Text style={styles.label}>NHRDF Address</Text>
+                        {/* <Text style={styles.label}>NHRDF Address</Text>
                         <TextInput
                             mode="outlined"
                             value={state.form.nhrdfAddress || "NATIONAL HORTICULTURAL RESEARCH AND DEVELOPMENT FOUNDATION, JANAKPURI, NEW DELHI"}
@@ -510,17 +1036,39 @@ const AgreementSecond: React.FC = () => {
                             placeholder="Enter NHRDF address"
                             multiline={true}
                             numberOfLines={2}
-                        />
+                        /> */}
 
                         {/* Plot Number */}
-                        <Text style={styles.label}>Plot Number</Text>
+                        <Text style={styles.label}>Lot Number</Text>
                         <TextInput
                             mode="outlined"
-                            value={state.form.plotNumber || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, plotNumber: text } })}
+                            value={state.form.LotNumber || ""}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, LotNumber: text } })}
                             style={styles.input}
-                            placeholder="Enter plot number"
+                            placeholder="Enter Lot number"
                         />
+
+
+
+                        <Text style={styles.label}>Tag Number</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.TagNumber || ""}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, TagNumber: text } })}
+                            style={styles.input}
+                            placeholder="Enter Tag number"
+                        />
+
+
+                        <Text style={styles.label}>Bill Number</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.BillNumber || ""}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, BillNumber: text } })}
+                            style={styles.input}
+                            placeholder="Enter Bill number"
+                        />
+
 
                         {/* Location Details */}
                         <Text style={styles.label}>Location Details</Text>
@@ -535,47 +1083,47 @@ const AgreementSecond: React.FC = () => {
                         />
 
                         {/* Village/Town */}
-                        <Text style={styles.label}>Village/Town</Text>
+                        {/* <Text style={styles.label}>Village/Town</Text>
                         <TextInput
                             mode="outlined"
                             value={state.form.nhrdfVillage || ""}
                             onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfVillage: text } })}
                             style={styles.input}
                             placeholder="Enter village/town"
-                        />
+                        /> */}
 
                         {/* Post Office */}
-                        <Text style={styles.label}>Post Office</Text>
+                        {/* <Text style={styles.label}>Post Office</Text>
                         <TextInput
                             mode="outlined"
                             value={state.form.nhrdfPostOffice || ""}
                             onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfPostOffice: text } })}
                             style={styles.input}
                             placeholder="Enter post office"
-                        />
+                        /> */}
 
                         {/* Taluka */}
-                        <Text style={styles.label}>Taluka</Text>
+                        {/* <Text style={styles.label}>Taluka</Text>
                         <TextInput
                             mode="outlined"
                             value={state.form.nhrdfTaluka || ""}
                             onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfTaluka: text } })}
                             style={styles.input}
                             placeholder="Enter taluka"
-                        />
+                        /> */}
 
                         {/* District */}
-                        <Text style={styles.label}>District</Text>
+                        {/* <Text style={styles.label}>District</Text>
                         <TextInput
                             mode="outlined"
                             value={state.form.nhrdfDistrict || ""}
                             onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfDistrict: text } })}
                             style={styles.input}
                             placeholder="Enter district"
-                        />
+                        /> */}
 
                         {/* Pincode */}
-                        <Text style={styles.label}>Pincode</Text>
+                        {/* <Text style={styles.label}>Pincode</Text>
                         <TextInput
                             mode="outlined"
                             value={state.form.nhrdfPincode || ""}
@@ -584,7 +1132,7 @@ const AgreementSecond: React.FC = () => {
                             placeholder="Enter pincode"
                             keyboardType="numeric"
                             maxLength={6}
-                        />
+                        /> */}
                     </Card.Content>
                 </Card>
 
@@ -659,6 +1207,7 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         justifyContent: "space-between",
     },
+    sectionSubTitle: { fontSize: 16, fontWeight: "600", marginBottom: 10 },
     backButton: {
         paddingHorizontal: 14,
         paddingVertical: 20,
@@ -809,5 +1358,14 @@ const styles = StyleSheet.create({
         marginLeft: 8,
         fontSize: 14,
         color: "#455A64",
+    },
+    signatureBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        padding: 10,
+        borderWidth: 1,
+        borderColor: "#2C5EFF",
+        borderRadius: 5,
+        marginTop: 10,
     },
 });

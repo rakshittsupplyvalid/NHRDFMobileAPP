@@ -6,7 +6,8 @@ import { storeToken } from '../Service/apiInterceptors';
 
 
 const Login = ({ navigation }: any) => {
-  const [mobileNumber, setMobileNumber] = useState('8976865879');
+  // const [mobileNumber, setMobileNumber] = useState('8976865879');
+    const [mobileNumber, setMobileNumber] = useState('6666667777');
   const [password, setPassword] = useState('Password@123');
 
   const [rememberDevice, setRememberDevice] = useState(false);
