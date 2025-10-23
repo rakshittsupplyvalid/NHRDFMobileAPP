@@ -1,4 +1,4 @@
-import React from 'react';
+import React ,  { useEffect, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -6,11 +6,40 @@ import {
   Image,
   TouchableOpacity,
   SafeAreaView,
+   Alert
 } from 'react-native';
 import { Card, Text, Button, Divider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import apiClient from '../Service/apiInterceptors'; 
+import { useNavigation } from "@react-navigation/native";
 
 const DashboardScreen = () => {
+   const navigation = useNavigation<any>();
+
+
+  const [countData, setCountData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchAgreementCount();
+  }, []);
+
+  const fetchAgreementCount = async () => {
+    try {
+      const response = await apiClient.get(
+        '/api/dashboard/agreement/total/count?ApprovalStatus=PENDING'
+      );
+      console.log('API Response:', response.data);
+      setCountData(response.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      Alert.alert('Error', 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -37,13 +66,15 @@ const DashboardScreen = () => {
             </View>
             <Text style={styles.cardSubtitle}>Create & View Agreements</Text>
             <View style={styles.cardFooter}>
-              <Text style={styles.cardInfo}>Total Agreements: 12</Text>
+              <Text style={styles.cardInfo}>Agreement Count :{countData ?? 'No Data'} </Text>
               <Button
                 mode="outlined"
                 compact
                 style={styles.actionBtn}
                 textColor="#fff"
-                onPress={() => {}}
+                 onPress={() => {
+    navigation.navigate('AgreementListScreen');
+  }}
               >
                 Open
               </Button>

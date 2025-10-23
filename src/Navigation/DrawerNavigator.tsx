@@ -93,13 +93,13 @@ function CustomDrawerContent(props: any) {
         />
 
 
-
+{/* 
            <DrawerItem
           label="Signature"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Signature')}
           labelStyle={styles.drawerLabel}
-        />
+        /> */}
       </DrawerContentScrollView>
 
       {/* Logout Button */}
@@ -117,6 +117,7 @@ export default function DrawerNavigator() {
   return (
     <Drawer.Navigator
     id={undefined}
+    initialRouteName="DashboardScreen" 
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerStyle: {

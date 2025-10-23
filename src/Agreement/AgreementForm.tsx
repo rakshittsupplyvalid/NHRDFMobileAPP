@@ -370,13 +370,18 @@ useEffect(() => {
           />
 
           <Text style={styles.label}>Seeds</Text>
-        <CommonPicker
+    <CommonPicker
   selectedValue={state.form.seeds || ""}
-  onValueChange={value =>
-    updateState({ ...state, form: { ...state.form, seeds: value } })
-  }
+  onValueChange={(value) => {
+    console.log("Selected seed value:", value); // 👈 Yeh print karega selected value
+    updateState({
+      ...state,
+      form: { ...state.form, seeds: value },
+    });
+  }}
   items={seedOptions}
 />
+
 
         </Card.Content>
       </Card>
@@ -415,7 +420,10 @@ useEffect(() => {
             selectedFarmer : selectedFarmer,
             Farmerdistribution : selectedFarmerId,
             selectedVariety : selectedVariety,
-            selectedCenterTarget : selectedCenterTarget
+            selectedCenterTarget : selectedCenterTarget,
+             seeds: state.form.seeds, // 👈 yahan se pass karega
+             durationFrom: selectedDate, // ✅ yeh line add karo,
+             Area : state.form.Area, // ✅ yeh line bhi add karo
          })}
       >
         Next

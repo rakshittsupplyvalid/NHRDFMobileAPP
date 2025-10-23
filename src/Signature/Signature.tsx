@@ -12,9 +12,12 @@ const Signature: React.FC = () => {
   const { type } = route.params as { type: string };
 
   const handleSave = (signatureData: string) => {
-    setSignature(signatureData);
-    navigation.navigate('Agreement', { signature: signatureData, type });
-  };
+  setSignature(signatureData);
+  navigation.navigate('Agreement', {
+    type,                // nominee / witness
+    signatureUri: signatureData, // captured image
+  });
+};
 
   return (
      <View style={styles.container}>

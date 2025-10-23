@@ -70,6 +70,12 @@ const AgreementSecond: React.FC = () => {
     const [cityState, setCityState] = useState("");
 
 
+    const [nomineeSignature, setNomineeSignature] = useState<string | null>(null);
+    const [witnessSignature, setWitnessSignature] = useState<string | null>(null);
+
+
+
+
 
     const route = useRoute();
     const [signatureUri, setSignatureUri] = useState<string | null>(null);
@@ -130,6 +136,9 @@ const AgreementSecond: React.FC = () => {
     const [isAgreementAccepted, setIsAgreementAccepted] = useState(false);
 
 
+
+
+
     useEffect(() => {
         axios
             .get("https://stage-master-backend.epravaha.com/api/State/GetAllStates")
@@ -145,52 +154,6 @@ const AgreementSecond: React.FC = () => {
             .catch((err) => console.error("❌ State API Error:", err));
     }, []);
 
-    // // 🏢 Get Districts when state.form.state changes
-    // useEffect(() => {
-    //     if (commonState) {
-    //         console.log("🌐 Selected State Code:", commonState);
-
-    //         axios
-    //             .get(
-    //                 `https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${commonState}`
-    //             )
-    //             .then((res) => {
-    //                 console.log("📜 Districts API Raw Response:", res.data);
-    //                 const mappedDistricts = res.data.map((item) => ({
-    //                     label: item.name,
-    //                     value: item.districtCode?.toString(),
-    //                 }));
-    //                 console.log("✅ Mapped Districts:", mappedDistricts);
-    //                 setDistrictsList(mappedDistricts);
-    //             })
-    //             .catch((err) => console.error("❌ District API Error:", err));
-    //     } else {
-    //         setDistrictsList([]);
-    //     }
-    // }, [commonState]);
-
-
-
-    // useEffect(() => {
-    //     if (cityState) {
-    //         console.log("📌 Selected District ID:", cityState);
-    //         axios
-    //             .get(
-    //                 `https://stage-master-backend.epravaha.com/api/City/GetCityBy${cityState}`
-    //             )
-    //             .then((res) => {
-
-    //                 const mappedCities = res.data.map((item) => ({
-    //                     label: item.name,
-    //                     value: item.cityCode?.toString(),
-    //                 }));
-    //                 setCitiesList(mappedCities);
-    //             })
-    //             .catch((err) => console.error("❌ Cities API Error:", err));
-    //     } else {
-    //         setCitiesList([]);
-    //     }
-    // }, [cityState]);
 
     const handleStateChange = (value: string, type: "Nominee" | "Witness", index: number) => {
         const selectedLabel = statesList.find((item) => item.value === value)?.label || "";
@@ -383,10 +346,10 @@ const AgreementSecond: React.FC = () => {
 
     useFocusEffect(
         React.useCallback(() => {
-            const params = route.params as { signature?: string; type?: string } | undefined;
-            if (params?.signature && params?.type) {
-                if (params.type === "nominee") setNomineeSignatureUri(params.signature);
-                else if (params.type === "witness") setWitnessSignatureUri(params.signature);
+            const params = route.params as { signatureUri?: string; type?: string } | undefined;
+            if (params?.signatureUri && params?.type) {
+                if (params.type === "nominee") setNomineeSignatureUri(params.signatureUri);
+                else if (params.type === "witness") setWitnessSignatureUri(params.signatureUri);
             }
         }, [route.params])
     );
@@ -411,7 +374,7 @@ const AgreementSecond: React.FC = () => {
             formData.append("VarietyId", selectedVariety);
             formData.append("PlantingMaterial", "SEED");
             formData.append("TagNumber", state.form.TagNumber || "");
-            formData.append("AuthorizedName", state.form.authorizedSignatory  || "");
+            formData.append("AuthorizedName", state.form.authorizedSignatory || "");
             formData.append("SeedClass", state.form.SeedClass || "");
             formData.append("CommodityId", selectedCommodityType);
             formData.append("Area", state.form.Area?.toString() ?? "0");
@@ -420,7 +383,7 @@ const AgreementSecond: React.FC = () => {
             formData.append("LotNumber", state.form.LotNumber || "");
             formData.append("DuringYear", state.form.DuringYear || "");
 
-           
+
             nominees.forEach((nominee, index) => {
                 Object.keys(nominee).forEach((key) => {
                     formData.append(`NomiNee[${index}][${key}]`, nominee[key as keyof NomineeType].toString());
@@ -436,7 +399,7 @@ const AgreementSecond: React.FC = () => {
 
 
 
-        
+
 
             for (let [key, value] of (formData as any).entries()) {
                 console.log(`📦 ${key}:`, value);
@@ -717,14 +680,26 @@ const AgreementSecond: React.FC = () => {
                                     style={styles.input}
                                 />
 
-                                {/* Signature placeholder */}
+                                {nomineeSignatureUri && (
+                                    <View style={{ marginVertical: 10, alignItems: "center" }}>
+                                        <Text style={{ fontWeight: "bold" }}>Signature Preview:</Text>
+                                        <Image
+                                            source={{ uri: nomineeSignatureUri }}
+                                            style={{ width: 250, height: 100, borderWidth: 1, borderColor: "#ccc", marginTop: 5 }}
+                                            resizeMode="contain"
+                                        />
+                                    </View>
+                                )}
+
                                 <TouchableOpacity
-                                    style={styles.signatureBtn}
-                                    onPress={() => Alert.alert("Signature", "Capture nominee signature here")}
+                                    style={styles.iconButton}
+                                    onPress={() => navigation.navigate("Signature", { type: "nominee" })}
                                 >
                                     <MaterialCommunityIcons name="signature-freehand" size={26} color="#2C5EFF" />
-                                    <Text>Add Signature</Text>
+                                    <Text>Add Nominee Signature</Text>
                                 </TouchableOpacity>
+
+
                             </Card.Content>
                         </Card>
                     ))}
@@ -819,15 +794,26 @@ const AgreementSecond: React.FC = () => {
                                     style={styles.input}
                                 />
 
+                                {witnessSignatureUri && (
+                                    <View style={{ marginVertical: 10, alignItems: "center" }}>
+                                        <Text style={{ fontWeight: "bold" }}>Signature Preview:</Text>
+                                        <Image
+                                            source={{ uri: witnessSignatureUri }}
+                                            style={{ width: 250, height: 100, borderWidth: 1, borderColor: "#ccc", marginTop: 5 }}
+                                            resizeMode="contain"
+                                        />
+                                    </View>
+                                )}
 
-                                {/* Signature placeholder */}
                                 <TouchableOpacity
-                                    style={styles.signatureBtn}
-                                    onPress={() => Alert.alert("Signature", "Capture witness signature here")}
+                                    style={styles.iconButton}
+                                    onPress={() => navigation.navigate("Signature", { type: "witness" })}
                                 >
                                     <MaterialCommunityIcons name="signature-freehand" size={26} color="#2C5EFF" />
-                                    <Text>Add Signature</Text>
+                                    <Text>Add Witness Signature</Text>
                                 </TouchableOpacity>
+
+
                             </Card.Content>
                         </Card>
                     ))}
@@ -841,7 +827,7 @@ const AgreementSecond: React.FC = () => {
 
 
 
-             
+
 
 
 
