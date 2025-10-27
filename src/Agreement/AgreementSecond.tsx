@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { StyleSheet, View, TouchableOpacity, ScrollView, Modal } from "react-native";
 import { Button, Text, Card, TextInput, Checkbox } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -9,8 +9,11 @@ import { Image } from "react-native";
 import useForm from "../Form/UseForm";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useFocusEffect, useRoute } from '@react-navigation/native';
+
+
 import { retrieveToken } from '../Service/apiInterceptors'
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { BackHandler } from 'react-native';
 import { Alert } from "react-native";
 import apiClient from "../Service/apiInterceptors";
 import { CommonActions } from "@react-navigation/native";
@@ -64,21 +67,8 @@ interface WitnessType {
 const AgreementSecond: React.FC = () => {
     const { state, updateState } = useForm();
     const [statesList, setStatesList] = useState([]);
-    const [districtsList, setDistrictsList] = useState([]);
     const [citiesList, setCitiesList] = useState([]);
-    const [commonState, setCommonState] = useState("");
-    const [cityState, setCityState] = useState("");
-
-
-    const [nomineeSignature, setNomineeSignature] = useState<string | null>(null);
-    const [witnessSignature, setWitnessSignature] = useState<string | null>(null);
-
-
-
-
-
     const route = useRoute();
-    const [signatureUri, setSignatureUri] = useState<string | null>(null);
     const { formData, selectedCommodityType, selectedFarmer, selectedVariety, Farmerdistribution, selectedCenterTarget } = route.params as { formData: any, selectedCommodityType: any, selectedFarmer: any, selectedVariety: any, Farmerdistribution: any, selectedCenterTarget: any };
     const navigation = useNavigation<any>();
     const [nomineeSignatureUri, setNomineeSignatureUri] = useState<string | null>(null);
@@ -134,6 +124,27 @@ const AgreementSecond: React.FC = () => {
     ]);
 
     const [isAgreementAccepted, setIsAgreementAccepted] = useState(false);
+
+
+
+    useFocusEffect(
+        useCallback(() => {
+            const onBackPress = () => {
+                navigation.navigate("AgreementForm" as never);
+                return true; // prevent default behavior
+            };
+
+            // ✅ Add the event listener
+            const subscription = BackHandler.addEventListener(
+                "hardwareBackPress",
+                onBackPress
+            );
+
+            // ✅ Clean up correctly
+            return () => subscription.remove();
+        }, [navigation])
+    );
+
 
 
 
@@ -439,6 +450,9 @@ const AgreementSecond: React.FC = () => {
     };
 
 
+
+
+
     const calculateAge = (dob) => {
         const birthDate = new Date(dob);
         const today = new Date();
@@ -548,7 +562,7 @@ const AgreementSecond: React.FC = () => {
                 enableOnAndroid={true}
                 extraScrollHeight={100}
                 keyboardShouldPersistTaps="handled"
-                enableAutomaticScroll={true}
+                enableAutomaticScroll={false}   // 👈 Disable automatic scroll
                 showsVerticalScrollIndicator={false}
             >
 

@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState ,  useCallback  } from "react";
 import { View, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
 import { Card, Text, Avatar, Divider } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
+import {  useFocusEffect,  useRoute, RouteProp, useNavigation } from "@react-navigation/native";
+import { BackHandler } from 'react-native';
 import apiClient from "../Service/apiInterceptors";
 import { DrawerParamList } from "../Type/type";
 
@@ -28,6 +29,29 @@ const NomineeScreen = () => {
 
   const [nominees, setNominees] = useState<Nominee[]>([]);
   const [loading, setLoading] = useState(true);
+
+
+
+  
+    useFocusEffect(
+      useCallback(() => {
+        const onBackPress = () => {
+          navigation.navigate("AgreementListScreen" as never);
+          return true; // prevent default behavior
+        };
+  
+        // ✅ Add the event listener
+        const subscription = BackHandler.addEventListener(
+          "hardwareBackPress",
+          onBackPress
+        );
+  
+        // ✅ Clean up correctly
+        return () => subscription.remove();
+      }, [navigation])
+    );
+
+
 
   useEffect(() => {
     fetchNominees();

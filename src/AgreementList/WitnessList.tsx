@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState ,  useCallback  } from "react";
 import {
   View,
   FlatList,
@@ -11,7 +11,8 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import apiClient from "../Service/apiInterceptors";
 import { DrawerParamList } from "../Type/type";
-
+import { BackHandler } from 'react-native';
+import { useFocusEffect  } from "@react-navigation/native";
 type Witness = {
   name: string;
   mobileno: string;
@@ -32,6 +33,26 @@ const WitnessScreen = () => {
 
   const [witnesses, setWitnesses] = useState<Witness[]>([]);
   const [loading, setLoading] = useState(true);
+
+
+      useFocusEffect(
+        useCallback(() => {
+          const onBackPress = () => {
+            navigation.navigate("AgreementListScreen" as never);
+            return true; // prevent default behavior
+          };
+    
+          // ✅ Add the event listener
+          const subscription = BackHandler.addEventListener(
+            "hardwareBackPress",
+            onBackPress
+          );
+    
+          // ✅ Clean up correctly
+          return () => subscription.remove();
+        }, [navigation])
+      );
+  
 
   useEffect(() => {
     fetchWitnesses();

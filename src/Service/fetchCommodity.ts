@@ -108,6 +108,7 @@ export const farmer = async (selectedCommodity: string) => {
 
 export const getFarmerLandDetail = async (farmerId: string) => {
   if (!farmerId) return null;
+  console.log("Fetching land detail for Farmer ID:", farmerId);
 
   try {
     const url = `/api/mobile/farmer/${farmerId}/landdetail`;

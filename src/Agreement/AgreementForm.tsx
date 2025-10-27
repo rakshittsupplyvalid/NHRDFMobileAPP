@@ -11,7 +11,7 @@ import useForm from "../Form/UseForm";
 import CustomDateTimePicker from '../CommonComponent/DateTimePicker';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useNavigation } from "@react-navigation/native";
-import { fetchCommodityTypes, fetchCommoditiesByType, farmer, farmerDetails, getFarmerLandDetail , fetchSeedOptions } from "../Service/fetchCommodity";
+import { fetchCommodityTypes, fetchCommoditiesByType, farmer, farmerDetails, getFarmerLandDetail, fetchSeedOptions } from "../Service/fetchCommodity";
 import axios from 'axios';
 
 const AgreementForm: React.FC = () => {
@@ -24,11 +24,14 @@ const AgreementForm: React.FC = () => {
   const [commodities, setCommodities] = useState([]);
   const [selectedCommodityType, setSelectedCommodityType] = useState('');
   const [selectedCommodity, setSelectedCommodity] = useState('');
-  const [selectedFarmerId, setSelectedFarmerId] = useState(""); 
-   const [selectedCenterTarget, setSelectedCenterTargetId] = useState(""); // 👈 ye new state hai
+  const [selectedFarmerId, setSelectedFarmerId] = useState("");
+  const [selectedCenterTarget, setSelectedCenterTargetId] = useState(""); // 👈 ye new state hai
   const [farmersList, setFarmersList] = useState([]);
   const [selectedFarmer, setSelectedFarmer] = useState('');
-const [seedOptions, setSeedOptions] = useState([]);
+  const [seedOptions, setSeedOptions] = useState([]);
+  const [farmerLandList, setFarmerLandList] = useState<any[]>([]);
+  const [selectedLandId, setSelectedLandId] = useState<string | null>(null);
+
 
   const [checked, setChecked] = useState(false);
 
@@ -103,6 +106,8 @@ const [seedOptions, setSeedOptions] = useState([]);
     })();
   }, [selectedCommodity]);
 
+
+
   useEffect(() => {
     if (!selectedFarmer) return;
 
@@ -111,11 +116,7 @@ const [seedOptions, setSeedOptions] = useState([]);
       const info = details.length > 0 ? details[0] : null;
 
       const landDetails = await getFarmerLandDetail(selectedFarmer);
-      const land = landDetails && landDetails.length > 0 ? landDetails[0] : null;
-
-      console.log("Selected Farmer:", selectedFarmer);
-      console.log("Farmer Details:", info);
-      console.log("Land Details:", land);
+      console.log("🌾 All Farmer Land Details:", landDetails);
 
       updateState({
         ...state,
@@ -138,21 +139,13 @@ const [seedOptions, setSeedOptions] = useState([]);
           pincode: info?.pincode?.toString() || "",
           phone: info?.phone || "",
           mobile: info?.mobile || "",
-          landTotalArea: land?.totalarea?.toString() || "",
-          landUnit: land?.unit || "",
-          landSowingArea: land?.sowingarea?.toString() || "",
-          landNumber: land?.number?.toString() || "",
-          landSubNumber: land?.subnumber?.toString() || "",
-          landDocument: land?.document || "",
-          landVillage: land?.village || "",
-          landState: land?.statename || "",
-          landDistrict: land?.districtname || "",
-          landSubDistrict: land?.subdistrictname || "",
-          landApprovalStatus: land?.approvalstatus || "",
         },
       });
+
+      setFarmerLandList(landDetails || []); // ✅ store all land details in new state
     })();
   }, [selectedFarmer]);
+
 
   useEffect(() => {
     axios
@@ -188,18 +181,18 @@ const [seedOptions, setSeedOptions] = useState([]);
 
 
 
-useEffect(() => {
-  (async () => {
-    const data = await fetchSeedOptions();
-    setSeedOptions(data);
-    console.log("Fetched Commodity Types:", data);
-  })();
-}, []);
+  useEffect(() => {
+    (async () => {
+      const data = await fetchSeedOptions();
+      setSeedOptions(data);
+      console.log("Fetched Commodity Types:", data);
+    })();
+  }, []);
 
 
 
 
-  
+
 
   const isFarmerSelected = !!selectedFarmer;
 
@@ -211,9 +204,47 @@ useEffect(() => {
     setIsFocused(prev => ({ ...prev, [field]: false }));
   };
 
-  const handleSubmit = () => {
-    console.log("Form Data:", state.form);
-  };
+
+const validateForm = () => {
+  if (!selectedCommodityType) {
+    alert("Please select a Commodity Type");
+    return false;
+  }
+  if (!selectedCommodity) {
+    alert("Please select a Commodity");
+    return false;
+  }
+  if (!selectedFarmer) {
+    alert("Please select a Farmer");
+    return false;
+  }
+  if (!state.form.produceseeds) {
+    alert("Please select Produce Seeds");
+    return false;
+  }
+  if (!state.form.seeds) {
+    alert("Please select Seeds");
+    return false;
+  }
+  if (!selectedDate) {
+    alert("Please select Duration From date");
+    return false;
+  }
+
+  // ✅ Area validation
+  const areaValue = Number(state.form.Area);
+  if (!areaValue || areaValue <= 0) {
+    alert("Please enter a valid Area (in acres)");
+    return false;
+  }
+  if (areaValue > 1000000) {
+    alert("Maximum Area allowed is 10,00,000 acres");
+    return false;
+  }
+
+  return true;
+};
+
 
   return (
     <KeyboardAwareScrollView
@@ -225,7 +256,7 @@ useEffect(() => {
       enableAutomaticScroll={true}
       showsVerticalScrollIndicator={false}
     >
-     
+
 
 
       <Card style={styles.sectionCard}>
@@ -235,7 +266,7 @@ useEffect(() => {
             selectedValue={selectedCommodityType}
             onValueChange={(value) => {
               setSelectedCommodityType(value);
-              console.log("commodity id" , value);
+              console.log("commodity id", value);
               setSelectedCommodity('');
             }}
             items={commodityTypes}
@@ -248,29 +279,30 @@ useEffect(() => {
             items={commodities}
           />
 
-          {selectedCommodity === "CMM2025091506361750433849034" && (
+          {/* {selectedCommodity === "CMM2025091506361750433849034" && (
             <View style={styles.infoContainer}>
               <Text style={styles.subTitle}>Onion Information</Text>
               <Text style={styles.description}>
                 • Onion is one of the most important commercial vegetable crops grown in Indias.
               </Text>
             </View>
-          )}
+          )} */}
 
-           <CommonPicker
-  label="Farmer"
-  selectedValue={selectedFarmer}
-  onValueChange={(value) => {
-    setSelectedFarmer(value); // ✅ farmerId store ho gaya
-    const selectedItem = farmersList.find(item => item.value === value);
-    if (selectedItem) {
-      setSelectedVariety(selectedItem.varietyId); // ✅ varietyId store
-      setSelectedFarmerId(selectedItem.Id);       // ✅ id bhi store ho gaya
-      setSelectedCenterTargetId(selectedItem.centertargetid);
-    }
-  }}
-  items={farmersList}
-/>
+          <CommonPicker
+            label="Farmer"
+            selectedValue={selectedFarmer}
+            onValueChange={(value) => {
+              setSelectedFarmer(value); // ✅ farmerId store ho gaya
+              const selectedItem = farmersList.find(item => item.value === value);
+              if (selectedItem) {
+                setSelectedVariety(selectedItem.varietyId); // ✅ varietyId store
+                console.log("✅ Selected Variety ID:", selectedItem.varietyId);
+                setSelectedFarmerId(selectedItem.Id);       // ✅ id bhi store ho gaya
+                setSelectedCenterTargetId(selectedItem.centertargetid);
+              }
+            }}
+            items={farmersList}
+          />
 
 
         </Card.Content>
@@ -311,47 +343,147 @@ useEffect(() => {
 
       <Card style={styles.farmerCard}>
         <Card.Content>
-          <Text  style={styles.sectionTitle}>Farmer Land Details</Text>
+          <Text style={styles.sectionTitle}>Farmer Land Details</Text>
           <Divider style={styles.headerDivider} />
 
-          <View style={styles.rowone}>
-            <Checkbox
-              status={checked ? "checked" : "unchecked"}
-              onPress={() => setChecked(!checked)}
-            />
-            <Text style={styles.labelone}>Select Farmerlist</Text>
-          </View>
+          {farmerLandList.length > 0 ? (
+            farmerLandList.map((land, index) => (
+              <View
+                key={index}
+                style={[
+                  styles.landCard,
+                  selectedLandId === land.id && styles.selectedLandCard,
+                ]}
+              >
+                <View style={styles.checkboxRow}>
+                  <Checkbox
+                    status={selectedLandId === land.id ? "checked" : "unchecked"}
+                    onPress={() =>
+                      setSelectedLandId(land.id === selectedLandId ? null : land.id)
+                    }
+                    color="#1976D2"
+                  />
+                  <Text style={styles.landLabel}>Select Land {index + 1}</Text>
+                </View>
 
-          {state.form.landNumber ? (
-            <View style={styles.detailsContainer}>
-              {landdetails.map((item, index) => (
-                <View key={index}>
+                <Divider />
+
+                <View style={styles.detailsContainer}>
                   <View style={styles.detailRow}>
                     <View style={styles.labelContainer}>
                       <MaterialCommunityIcons
-                        name={item.icon as any}
+                        name="numeric"
                         size={20}
-                        color={item.label === 'Approval Status' ? (
-                          item.value === 'PENDING' ? '#FFC107' :
-                          item.value === 'APPROVED' ? '#4CAF50' : '#F44336'
-                        ) : '#4CAF50'}
+                        color="#4CAF50"
                         style={{ marginRight: 8 }}
                       />
-                      <Text variant="bodyMedium" style={styles.detailLabel}>{item.label}:</Text>
+                      <Text style={styles.detailLabel}>Land Number:</Text>
                     </View>
-                    <Text variant="bodyMedium" style={styles.detailValue}>
-                      {item.value?.toString() || '-'}
+                    <Text style={styles.detailValue}>{land.number || "-"}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <View style={styles.labelContainer}>
+                      <MaterialCommunityIcons
+                        name="numeric-2-box-outline"
+                        size={20}
+                        color="#4CAF50"
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text style={styles.detailLabel}>Sub Number:</Text>
+                    </View>
+                    <Text style={styles.detailValue}>{land.subnumber || "-"}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <View style={styles.labelContainer}>
+                      <MaterialCommunityIcons
+                        name="square-outline"
+                        size={20}
+                        color="#4CAF50"
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text style={styles.detailLabel}>Total Area:</Text>
+                    </View>
+                    <Text style={styles.detailValue}>
+                      {land.totalarea || "-"} {land.unit}
                     </Text>
                   </View>
-                  {index < landdetails.length - 1 && <Divider style={styles.rowDivider} />}
+
+                  <View style={styles.detailRow}>
+                    <View style={styles.labelContainer}>
+                      <MaterialCommunityIcons
+                        name="nature"
+                        size={20}
+                        color="#4CAF50"
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text style={styles.detailLabel}>Sowing Area:</Text>
+                    </View>
+                    <Text style={styles.detailValue}>{land.sowingarea || "-"}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <View style={styles.labelContainer}>
+                      <MaterialCommunityIcons
+                        name="home-city"
+                        size={20}
+                        color="#4CAF50"
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text style={styles.detailLabel}>Village:</Text>
+                    </View>
+                    <Text style={styles.detailValue}>{land.village || "-"}</Text>
+                  </View>
+
+                  <View style={styles.detailRow}>
+                    <View style={styles.labelContainer}>
+                      <MaterialCommunityIcons
+                        name={
+                          land.approvalstatus === "PENDING"
+                            ? "clock-time-four-outline"
+                            : land.approvalstatus === "APPROVED"
+                              ? "check-circle-outline"
+                              : "close-circle-outline"
+                        }
+
+                        size={20}
+                        color={
+                          land.approvalstatus === "PENDING"
+                            ? "#FFC107"
+                            : land.approvalstatus === "APPROVED"
+                              ? "#4CAF50"
+                              : "#F44336"
+                        }
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text style={styles.detailLabel}>Approval Status:</Text>
+                    </View>
+                    <Text
+                      style={[
+                        styles.detailValue,
+                        {
+                          color:
+                            land.approvalstatus === "PENDING"
+                              ? "#FFC107"
+                              : land.approvalstatus === "APPROVED"
+                                ? "#4CAF50"
+                                : "#F44336",
+                        },
+                      ]}
+                    >
+                      {land.approvalstatus || "-"}
+                    </Text>
+                  </View>
                 </View>
-              ))}
-            </View>
+              </View>
+            ))
           ) : (
-            <Text variant="bodySmall" style={styles.noFarmerSelected}>No land details available</Text>
+            <Text style={styles.noFarmerSelected}>No land details available</Text>
           )}
         </Card.Content>
       </Card>
+
 
       <Card style={styles.sectionCard}>
         <Card.Content>
@@ -359,10 +491,10 @@ useEffect(() => {
           <Text style={styles.label}>Produce Seeds</Text>
           <CommonPicker
             selectedValue={state.form.produceseeds || ""}
-             onValueChange={value => {
-    console.log("✅ Selected Produce Seeds:", value); // 👈 yeh aapko selected value dikhayega
-    updateState({ ...state, form: { ...state.form, produceseeds: value } });
-  }}
+            onValueChange={value => {
+              console.log("✅ Selected Produce Seeds:", value); // 👈 yeh aapko selected value dikhayega
+              updateState({ ...state, form: { ...state.form, produceseeds: value } });
+            }}
             items={produceseeds}
             isFocused={isFocused.produceseeds}
             onFocus={() => handleFocus("produceseeds")}
@@ -370,17 +502,17 @@ useEffect(() => {
           />
 
           <Text style={styles.label}>Seeds</Text>
-    <CommonPicker
-  selectedValue={state.form.seeds || ""}
-  onValueChange={(value) => {
-    console.log("Selected seed value:", value); // 👈 Yeh print karega selected value
-    updateState({
-      ...state,
-      form: { ...state.form, seeds: value },
-    });
-  }}
-  items={seedOptions}
-/>
+          <CommonPicker
+            selectedValue={state.form.seeds || ""}
+            onValueChange={(value) => {
+              console.log("Selected seed value:", value); // 👈 Yeh print karega selected value
+              updateState({
+                ...state,
+                form: { ...state.form, seeds: value },
+              });
+            }}
+            items={seedOptions}
+          />
 
 
         </Card.Content>
@@ -414,20 +546,25 @@ useEffect(() => {
         mode="contained"
         style={styles.submitButton}
         contentStyle={styles.submitButtonContent}
-        onPress={() => navigation.navigate("Agreement" as never, { 
-          formData: state.form,
-            selectedCommodityType: selectedCommodity,
-            selectedFarmer : selectedFarmer,
-            Farmerdistribution : selectedFarmerId,
-            selectedVariety : selectedVariety,
-            selectedCenterTarget : selectedCenterTarget,
-             seeds: state.form.seeds, // 👈 yahan se pass karega
-             durationFrom: selectedDate, // ✅ yeh line add karo,
-             Area : state.form.Area, // ✅ yeh line bhi add karo
-         })}
+        onPress={() => {
+          if (validateForm()) {
+            navigation.navigate("Agreement" as never, {
+              formData: state.form,
+              selectedCommodityType: selectedCommodity,
+              selectedFarmer: selectedFarmer,
+              Farmerdistribution: selectedFarmerId,
+              selectedVariety: selectedVariety,
+              selectedCenterTarget: selectedCenterTarget,
+              seeds: state.form.seeds,
+              durationFrom: selectedDate,
+              Area: state.form.Area,
+            });
+          }
+        }}
       >
         Next
       </Button>
+
     </KeyboardAwareScrollView>
   );
 };
@@ -446,7 +583,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   headerCard: {
-   margin: 16,
+    margin: 16,
     borderRadius: 16,
     backgroundColor: "#4CAF50",
     elevation: 6, // Android shadow
@@ -456,7 +593,7 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
     overflow: "hidden",
   },
-    headerContent: {
+  headerContent: {
     paddingVertical: 24,
     paddingHorizontal: 20,
   },
@@ -471,7 +608,7 @@ const styles = StyleSheet.create({
     color: "#E0F2F1",
     lineHeight: 20,
   },
- 
+
 
 
   rowone: {
@@ -490,7 +627,7 @@ const styles = StyleSheet.create({
     color: "#2E7D32",
     fontSize: 14,
   },
- 
+
   pending: {
     color: "#FFA000",
     fontWeight: "700",
@@ -603,6 +740,27 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     color: '#70B04',
   },
+
+
+  landCard: {
+    marginVertical: 8,
+    backgroundColor: "#F9F9F9",
+    borderRadius: 10,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
+  selectedLandCard: {
+    borderColor: "#1976D2",
+    backgroundColor: "#E3F2FD",
+  },
+  checkboxRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 5,
+  },
+
+
   headerDivider: {
     marginVertical: 8,
     height: 1,
