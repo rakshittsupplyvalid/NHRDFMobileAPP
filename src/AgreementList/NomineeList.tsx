@@ -36,7 +36,7 @@ const NomineeScreen = () => {
     useFocusEffect(
       useCallback(() => {
         const onBackPress = () => {
-          navigation.navigate("AgreementListScreen" as never);
+          navigation.navigate("Agreement List" as never);
           return true; // prevent default behavior
         };
   
@@ -119,7 +119,7 @@ const NomineeScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity 
-  onPress={() => navigation.navigate("AgreementListScreen" as never)} 
+  onPress={() => navigation.navigate("Agreement List" as never)} 
         style={styles.backButton}>
           <MaterialCommunityIcons name="arrow-left" size={28} color="#fff" />
         </TouchableOpacity>

@@ -98,6 +98,7 @@ const AgreementForm: React.FC = () => {
     if (!selectedCommodity) {
       setFarmersList([]);
       setSelectedFarmer('');
+      setFarmerLandList([]);
       return;
     }
     (async () => {
@@ -205,45 +206,45 @@ const AgreementForm: React.FC = () => {
   };
 
 
-const validateForm = () => {
-  if (!selectedCommodityType) {
-    alert("Please select a Commodity Type");
-    return false;
-  }
-  if (!selectedCommodity) {
-    alert("Please select a Commodity");
-    return false;
-  }
-  if (!selectedFarmer) {
-    alert("Please select a Farmer");
-    return false;
-  }
-  if (!state.form.produceseeds) {
-    alert("Please select Produce Seeds");
-    return false;
-  }
-  if (!state.form.seeds) {
-    alert("Please select Seeds");
-    return false;
-  }
-  if (!selectedDate) {
-    alert("Please select Duration From date");
-    return false;
-  }
+  const validateForm = () => {
+    if (!selectedCommodityType) {
+      alert("Please select a Commodity Type");
+      return false;
+    }
+    if (!selectedCommodity) {
+      alert("Please select a Commodity");
+      return false;
+    }
+    if (!selectedFarmer) {
+      alert("Please select a Farmer");
+      return false;
+    }
+    if (!state.form.produceseeds) {
+      alert("Please select Produce Seeds");
+      return false;
+    }
+    if (!state.form.seeds) {
+      alert("Please select Seeds");
+      return false;
+    }
+    if (!selectedDate) {
+      alert("Please select Duration From date");
+      return false;
+    }
 
-  // ✅ Area validation
-  const areaValue = Number(state.form.Area);
-  if (!areaValue || areaValue <= 0) {
-    alert("Please enter a valid Area (in acres)");
-    return false;
-  }
-  if (areaValue > 1000000) {
-    alert("Maximum Area allowed is 10,00,000 acres");
-    return false;
-  }
+    // ✅ Area validation
+    const areaValue = Number(state.form.Area);
+    if (!areaValue || areaValue <= 0) {
+      alert("Please enter a valid Area (in acres)");
+      return false;
+    }
+    if (areaValue > 1000000) {
+      alert("Maximum Area allowed is 10,00,000 acres");
+      return false;
+    }
 
-  return true;
-};
+    return true;
+  };
 
 
   return (
@@ -505,15 +506,15 @@ const validateForm = () => {
           <CommonPicker
             selectedValue={state.form.seeds || ""}
             onValueChange={(value) => {
-              console.log("Selected seed value:", value); // 👈 Yeh print karega selected value
+              console.log("Selected seed name:", value); // 👈 yeh print karega selected name
+
               updateState({
                 ...state,
-                form: { ...state.form, seeds: value },
+                form: { ...state.form, seeds: value }, // 👈 backend pe name save hoga
               });
             }}
             items={seedOptions}
           />
-
 
         </Card.Content>
       </Card>
@@ -521,26 +522,39 @@ const validateForm = () => {
       <Card style={styles.sectionCard}>
         <Card.Content>
           <Text style={styles.sectionTitle}>Contract Terms</Text>
-          <Text style={styles.label}>Duration From</Text>
-          <CustomDateTimePicker
-            value={selectedDate}
-            onChange={(date) => setSelectedDate(date)}
-            mode="date"
+
+          {/* Duration Year */}
+          <TextInput
+            label="Duration Year"
+            mode="outlined"
+            placeholder="Enter Year (e.g. 2025)"
+            value={state.form.Year || ""}
+            keyboardType="numeric"
+            maxLength={4}
+            left={<TextInput.Icon icon="calendar" />}
+            onChangeText={(value) => {
+              const numericValue = value.replace(/[^0-9]/g, '');
+              updateState({ ...state, form: { ...state.form, Year: numericValue } });
+            }}
+            style={[styles.input, { backgroundColor: 'white' }]}
           />
 
+          {/* Area in Acres */}
           <TextInput
-            label="Area (in acres)"
+      label="Area (in hectares)"
+            mode="outlined"
+            placeholder="Enter area in acres"
             value={state.form.Area || ""}
             keyboardType="numeric"
-            mode="outlined"
             left={<TextInput.Icon icon="arrow-expand" />}
-            onChangeText={value =>
+            onChangeText={(value) =>
               updateState({ ...state, form: { ...state.form, Area: value } })
             }
-            style={styles.input}
+            style={[styles.input, { backgroundColor: 'white' }]}
           />
         </Card.Content>
       </Card>
+
 
       <Button
         mode="contained"
@@ -558,6 +572,7 @@ const validateForm = () => {
               seeds: state.form.seeds,
               durationFrom: selectedDate,
               Area: state.form.Area,
+              Year: state.form.Year,
             });
           }
         }}

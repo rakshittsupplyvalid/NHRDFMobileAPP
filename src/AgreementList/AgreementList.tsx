@@ -68,13 +68,13 @@ const AgreementListScreen = () => {
           <Text style={styles.centerName}>{item.centername}</Text>
         </View>
 
-        <View style={styles.row}>
+        {/* <View style={styles.row}>
           <MaterialCommunityIcons name="identifier" size={22} color="#70B04F" />
           <View style={styles.spacer} />
           <Text style={styles.label}>ID</Text>
           <View style={styles.flexSpacer} />
           <Text style={styles.value}>{item.id}</Text>
-        </View>
+        </View> */}
 
         <View style={styles.row}>
           <MaterialCommunityIcons name="account" size={22} color="#70B04F" />

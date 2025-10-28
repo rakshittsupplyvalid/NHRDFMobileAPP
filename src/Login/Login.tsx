@@ -7,7 +7,7 @@ import { storeToken } from '../Service/apiInterceptors';
 
 const Login = ({ navigation }: any) => {
   // const [mobileNumber, setMobileNumber] = useState('8976865879');
-    const [mobileNumber, setMobileNumber] = useState('6666667777');
+  const [mobileNumber, setMobileNumber] = useState('6666667777');
   const [password, setPassword] = useState('Password@123');
 
   const [rememberDevice, setRememberDevice] = useState(false);
@@ -20,7 +20,7 @@ const Login = ({ navigation }: any) => {
   const primaryColor = '#70B04F';
 
 
-  
+
 
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
@@ -43,48 +43,48 @@ const Login = ({ navigation }: any) => {
   }, []);
 
   // 🔹 Login API Call
- // 🔹 Login API Call
-const handleLogin = async () => {
-  if (!mobileNumber || !password) {
-    Alert.alert("Error", "Please enter both Mobile Number and Password");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const requestData = {
-      mobilenumber: mobileNumber,
-      assayerpassword: password,
-    };
-    console.log("Request data:", requestData);
-
-    const response = await apiClient.post(
-      "/api/mobile/assayer/login",
-      requestData
-    );
-
-    console.log("Login response:", response.data);
-
-    if (response.data?.token) {
-      // ✅ Token save karna zaroori hai
-      storeToken(response.data.token);
-      console.log("✅ Token saved:", response.data.token);
-
-      navigation.navigate("DrawerNavigator");
-    } else {
-      Alert.alert(
-        "Login Failed",
-        response.data?.message || "Invalid credentials"
-      );
+  // 🔹 Login API Call
+  const handleLogin = async () => {
+    if (!mobileNumber || !password) {
+      Alert.alert("Error", "Please enter both Mobile Number and Password");
+      return;
     }
-  } catch (error: any) {
-    console.error("Login error:", error?.response?.data || error.message);
-    Alert.alert("Error", "Something went wrong. Please try again.");
-  } finally {
-    setLoading(false);
-  }
-};
+
+    try {
+      setLoading(true);
+
+      const requestData = {
+        mobilenumber: mobileNumber,
+        assayerpassword: password,
+      };
+      console.log("Request data:", requestData);
+
+      const response = await apiClient.post(
+        "/api/mobile/assayer/login",
+        requestData
+      );
+
+      console.log("Login response:", response.data);
+
+      if (response.data?.token) {
+        // ✅ Token save karna zaroori hai
+        storeToken(response.data.token);
+        console.log("✅ Token saved:", response.data.token);
+
+        navigation.navigate("DrawerNavigator");
+      } else {
+        Alert.alert(
+          "Login Failed",
+          response.data?.message || "Invalid credentials"
+        );
+      }
+    } catch (error: any) {
+      console.error("Login error:", error?.response?.data || error.message);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
 
@@ -100,7 +100,7 @@ const handleLogin = async () => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={[styles.contentContainer, keyboardVisible && styles.keyboardActive]}>
-            
+
             {/* Logo */}
             <View style={styles.logoContainer}>
               <Image
@@ -110,26 +110,20 @@ const handleLogin = async () => {
               />
             </View>
 
-            {/* Mobile Number */}
             <TextInput
               label="Mobile Number"
               mode="outlined"
-              style={styles.input}
               placeholder="Enter your mobile number"
               keyboardType="phone-pad"
               value={mobileNumber}
               onChangeText={setMobileNumber}
               left={<TextInput.Icon icon="phone" />}
-              outlineColor="#E0E0E0"
-              activeOutlineColor={primaryColor}
-              theme={{ colors: { primary: primaryColor }, roundness: 50 }}
+              style={[styles.input, { backgroundColor: 'white' }]}
             />
 
-            {/* Password */}
             <TextInput
               label="Password"
               mode="outlined"
-              style={styles.input}
               placeholder="Enter your password"
               secureTextEntry={secureTextEntry}
               value={password}
@@ -137,14 +131,13 @@ const handleLogin = async () => {
               left={<TextInput.Icon icon="lock" />}
               right={
                 <TextInput.Icon
-                  icon={secureTextEntry ? "eye-off" : "eye"}
+                  icon={secureTextEntry ? 'eye-off' : 'eye'}
                   onPress={() => setSecureTextEntry(!secureTextEntry)}
                 />
               }
-              outlineColor="#E0E0E0"
-              activeOutlineColor={primaryColor}
-              theme={{ colors: { primary: primaryColor }, roundness: 50 }}
+              style={[styles.input, { backgroundColor: 'white' }]}
             />
+
 
             {/* Remember + Forgot */}
             <View style={styles.bottomRow}>

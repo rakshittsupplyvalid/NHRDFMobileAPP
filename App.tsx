@@ -1,61 +1,56 @@
+
+
+
 // import React, { useEffect, useState } from 'react';
+// import { View, ActivityIndicator, StyleSheet } from 'react-native';
 // import { NavigationContainer } from '@react-navigation/native';
 // import { createNativeStackNavigator } from '@react-navigation/native-stack';
-// import Login from './src/Login/Login';
 // import { Provider as PaperProvider } from 'react-native-paper';
 
+// import Login from './src/Login/Login';
 // import DrawerNavigator from './src/Navigation/DrawerNavigator';
-// import { storeToken } from './src/Service/apiInterceptors';
-
-
-
-
+// import { retrieveToken } from './src/Service/apiInterceptors';
 
 // const Stack = createNativeStackNavigator();
 
 // const App = () => {
-
 //   const [isLoading, setIsLoading] = useState(true);
-//   const [userToken, setUserToken] = useState(null);
+//   const [userToken, setUserToken] = useState<string | null>(null);
 
 //   useEffect(() => {
 //     const checkLogin = async () => {
-//       const token = storeToken
-//       console.log("token from first", token)
-//       setUserToken(token);
-//       setIsLoading(false);
+//       try {
+//         // ✅ Correct way to call the function
+//         const token = await retrieveToken();
+//         console.log("Token from first:", token);
+//         setUserToken(token);
+//       } catch (error) {
+//         console.log("Error fetching token:", error);
+//       } finally {
+//         setIsLoading(false);
+//       }
 //     };
 //     checkLogin();
 //   }, []);
 
-
 //   if (isLoading) {
-//     return null; // or a SplashScreen
+//     return (
+//       <View style={styles.loaderContainer}>
+//         <ActivityIndicator size="large" color="#4CAF50" />
+//       </View>
+//     );
 //   }
-
-
 
 //   return (
 //     <PaperProvider>
 //       <NavigationContainer>
-//         <Stack.Navigator id={undefined} initialRouteName="Login" screenOptions={{ headerShown: true }}>
-
-//           <Stack.Screen name="Login"
-//             component={Login}
-//             options={{ headerShown: false }}
-
-//           />
-
-
-
-
-//           <Stack.Screen name="DrawerNavigator"
-//             component={DrawerNavigator}
-//             options={{ headerShown: false }}
-
-//           />
-
-
+//         <Stack.Navigator
+//         id={undefined}
+//           initialRouteName={userToken ? "DrawerNavigator" : "Login"}
+//           screenOptions={{ headerShown: false }}
+//         >
+//           <Stack.Screen name="Login" component={Login} />
+//           <Stack.Screen name="DrawerNavigator" component={DrawerNavigator} />
 //         </Stack.Navigator>
 //       </NavigationContainer>
 //     </PaperProvider>
@@ -64,6 +59,15 @@
 
 // export default App;
 
+// const styles = StyleSheet.create({
+//   loaderContainer: {
+//     flex: 1,
+//     justifyContent: 'center',
+//     alignItems: 'center',
+//     backgroundColor: '#fff',
+//   },
+// });
+
 
 
 
@@ -71,13 +75,29 @@ import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Provider as PaperProvider } from 'react-native-paper';
+import { Provider as PaperProvider, MD3LightTheme } from 'react-native-paper';
 
 import Login from './src/Login/Login';
 import DrawerNavigator from './src/Navigation/DrawerNavigator';
 import { retrieveToken } from './src/Service/apiInterceptors';
 
 const Stack = createNativeStackNavigator();
+
+// 🎨 GLOBAL THEME
+const theme = {
+  ...MD3LightTheme,
+  roundness: 10, // global roundness for inputs/buttons
+  colors: {
+    ...MD3LightTheme.colors,
+    primary: '#1565C0',           // Focus + Button color
+    secondary: '#1565C0',
+    outline: '#BDBDBD',           // Border color for TextInput
+    background: '#F5F5F5',
+    surface: '#FFFFFF',
+    onSurfaceVariant: '#000000',  // Prevents glow/light issue
+    surfaceVariant: '#FFFFFF',
+  },
+};
 
 const App = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -86,12 +106,11 @@ const App = () => {
   useEffect(() => {
     const checkLogin = async () => {
       try {
-        // ✅ Correct way to call the function
         const token = await retrieveToken();
-        console.log("Token from first:", token);
+        console.log('Token from first:', token);
         setUserToken(token);
       } catch (error) {
-        console.log("Error fetching token:", error);
+        console.log('Error fetching token:', error);
       } finally {
         setIsLoading(false);
       }
@@ -108,11 +127,12 @@ const App = () => {
   }
 
   return (
-    <PaperProvider>
+    // ✅ Global theme applied here
+    <PaperProvider theme={theme}>
       <NavigationContainer>
         <Stack.Navigator
-        id={undefined}
-          initialRouteName={userToken ? "DrawerNavigator" : "Login"}
+          id={undefined}
+          initialRouteName={userToken ? 'DrawerNavigator' : 'Login'}
           screenOptions={{ headerShown: false }}
         >
           <Stack.Screen name="Login" component={Login} />
@@ -133,4 +153,3 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
 });
-

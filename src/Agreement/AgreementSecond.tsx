@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { StyleSheet, View, TouchableOpacity, ScrollView, Modal } from "react-native";
+import { StyleSheet, View, TouchableOpacity, ScrollView, Modal, PermissionsAndroid, Platform } from "react-native";
 import { Button, Text, Card, TextInput, Checkbox } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import CommonPicker from "../CommonComponent/CommonDropdown";
-import { commodity, Onion, Garlic, Potato, relations, states, districts, years } from "../Constants/constants";
+import { Onion, Garlic, Potato } from "../Constants/constants";
 import { useNavigation } from "@react-navigation/native";
 import { Image } from "react-native";
 import useForm from "../Form/UseForm";
@@ -18,6 +18,7 @@ import { Alert } from "react-native";
 import apiClient from "../Service/apiInterceptors";
 import { CommonActions } from "@react-navigation/native";
 import CustomDateTimePicker from "../CommonComponent/DateTimePicker";
+import { launchCamera, CameraOptions } from 'react-native-image-picker';
 import axios from "axios";
 import * as FileSystem from 'expo-file-system';
 
@@ -69,12 +70,15 @@ const AgreementSecond: React.FC = () => {
     const [statesList, setStatesList] = useState([]);
     const [citiesList, setCitiesList] = useState([]);
     const route = useRoute();
-    const { formData, selectedCommodityType, selectedFarmer, selectedVariety, Farmerdistribution, selectedCenterTarget } = route.params as { formData: any, selectedCommodityType: any, selectedFarmer: any, selectedVariety: any, Farmerdistribution: any, selectedCenterTarget: any };
+    const { formData, selectedCommodityType, selectedFarmer, selectedVariety, Farmerdistribution, selectedCenterTarget, seeds, Area, Year } = route.params as { formData: any, selectedCommodityType: any, selectedFarmer: any, selectedVariety: any, Farmerdistribution: any, selectedCenterTarget: any, seeds: any, Area: any, Year: any };
     const navigation = useNavigation<any>();
     const [nomineeSignatureUri, setNomineeSignatureUri] = useState<string | null>(null);
     const [witnessSignatureUri, setWitnessSignatureUri] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [nomineeDistrictsList, setNomineeDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
     const [nomineeCitiesList, setNomineeCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
+    const [signaturePhoto, setSignaturePhoto] = useState<string | null>(null);
+    const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
 
     const [witnessDistrictsList, setWitnessDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
     const [witnessCitiesList, setWitnessCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
@@ -125,12 +129,26 @@ const AgreementSecond: React.FC = () => {
 
     const [isAgreementAccepted, setIsAgreementAccepted] = useState(false);
 
+    useEffect(() => {
+        console.log("🧾 Received route params:");
+        console.log("📦 formData:", formData);
+        console.log("🌾 selectedCommodityType:", selectedCommodityType);
+        console.log("👨‍🌾 selectedFarmer:", selectedFarmer);
+        console.log("🧬 selectedVariety:", selectedVariety);
+        console.log("📦 Farmerdistribution:", Farmerdistribution);
+        console.log("🏢 selectedCenterTarget:", selectedCenterTarget);
+        console.log("🌱 seeds:", seeds);
+        console.log("📏 Area:", Area);
+        console.log("📅 Year:", Year);
+    }, []);
+
+
 
 
     useFocusEffect(
         useCallback(() => {
             const onBackPress = () => {
-                navigation.navigate("AgreementForm" as never);
+                navigation.navigate("Agreement Form" as never);
                 return true; // prevent default behavior
             };
 
@@ -146,8 +164,55 @@ const AgreementSecond: React.FC = () => {
     );
 
 
+    const requestCameraPermission = async () => {
+        if (Platform.OS === "android") {
+            try {
+                const granted = await PermissionsAndroid.request(
+                    PermissionsAndroid.PERMISSIONS.CAMERA,
+                    {
+                        title: "Camera Permission",
+                        message: "App needs access to your camera to take pictures.",
+                        buttonNeutral: "Ask Me Later",
+                        buttonNegative: "Cancel",
+                        buttonPositive: "OK",
+                    }
+                );
+                return granted === PermissionsAndroid.RESULTS.GRANTED;
+            } catch (err) {
+                console.warn(err);
+                return false;
+            }
+        }
+        return true;
+    };
 
+    // ✅ Launch Camera for Image Capture
+    const openCamera = async (setPhoto: (uri: string | null) => void) => {
+        const hasPermission = await requestCameraPermission();
+        if (!hasPermission) {
+            Alert.alert("Permission Denied", "Camera permission is required.");
+            return;
+        }
 
+        const options: CameraOptions = {
+            mediaType: "photo",
+            cameraType: "back",
+            includeBase64: false,
+            saveToPhotos: true,
+        };
+
+        launchCamera(options, (response) => {
+            if (response.didCancel) {
+                console.log("User cancelled image picker");
+            } else if (response.errorCode) {
+                console.log("ImagePicker Error: ", response.errorMessage);
+            } else if (response.assets && response.assets.length > 0) {
+                const uri = response.assets[0].uri;
+                console.log("Captured image:", uri);
+                setPhoto(uri || null);
+            }
+        });
+    };
 
 
     useEffect(() => {
@@ -165,9 +230,13 @@ const AgreementSecond: React.FC = () => {
             .catch((err) => console.error("❌ State API Error:", err));
     }, []);
 
-
+    // ------------------ State Change ------------------
     const handleStateChange = (value: string, type: "Nominee" | "Witness", index: number) => {
         const selectedLabel = statesList.find((item) => item.value === value)?.label || "";
+
+        console.log(`🗂️ handleStateChange() called for ${type} #${index}`);
+        console.log("➡️ Selected State Value:", value);
+        console.log("🏷️ Selected State Label:", selectedLabel);
 
         if (type === "Nominee") {
             const updatedNominees = [...nominees];
@@ -179,18 +248,19 @@ const AgreementSecond: React.FC = () => {
             updatedNominees[index].subdistrictname = "";
             setNominees(updatedNominees);
 
-            // Fetch districts for this nominee only
+            console.log(`🌍 Fetching Districts API for Nominee StateCode: ${value}`);
             axios
                 .get(`https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${value}`)
                 .then((res) => {
+                    console.log("✅ District API Response (Nominee):", res.data);
                     const mappedDistricts = res.data.map((item) => ({
                         label: item.name,
                         value: item.districtCode?.toString(),
                     }));
-                    setNomineeDistrictsList(prev => ({ ...prev, [index]: mappedDistricts }));
-                    setNomineeCitiesList(prev => ({ ...prev, [index]: [] })); // reset cities
+                    setNomineeDistrictsList((prev) => ({ ...prev, [index]: mappedDistricts }));
+                    setNomineeCitiesList((prev) => ({ ...prev, [index]: [] }));
                 })
-                .catch(err => console.error("Nominee District API Error:", err));
+                .catch((err) => console.error("❌ Nominee District API Error:", err));
         }
 
         if (type === "Witness") {
@@ -203,24 +273,34 @@ const AgreementSecond: React.FC = () => {
             updatedWitnesses[index].subdistrictname = "";
             setWitnesses(updatedWitnesses);
 
-            // Fetch districts for this witness only
+            console.log(`🌍 Fetching Districts API for Witness StateCode: ${value}`);
             axios
                 .get(`https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${value}`)
                 .then((res) => {
+                    console.log("✅ District API Response (Witness):", res.data);
                     const mappedDistricts = res.data.map((item) => ({
                         label: item.name,
                         value: item.districtCode?.toString(),
                     }));
-                    setWitnessDistrictsList(prev => ({ ...prev, [index]: mappedDistricts }));
-                    setWitnessCitiesList(prev => ({ ...prev, [index]: [] })); // reset cities
+                    setWitnessDistrictsList((prev) => ({ ...prev, [index]: mappedDistricts }));
+                    setWitnessCitiesList((prev) => ({ ...prev, [index]: [] }));
                 })
-                .catch(err => console.error("Witness District API Error:", err));
+                .catch((err) => console.error("❌ Witness District API Error:", err));
         }
     };
 
-    // ------------------ Nominee District Change ------------------
+    // ------------------ District Change ------------------
     const handleDistrictChange = (value: string, type: "Nominee" | "Witness", index: number) => {
-        const selectedLabel = (type === "Nominee" ? nomineeDistrictsList[index] : witnessDistrictsList[index])?.find(item => item.value === value)?.label || "";
+        // console.log(`🏙️ handleDistrictChange() called for ${type} #${index}`);
+        // console.log("➡️ Selected District Value:", value);
+
+        const selectedLabel =
+            (type === "Nominee"
+                ? nomineeDistrictsList[index]
+                : witnessDistrictsList[index]
+            )?.find((item) => item.value === value)?.label || "";
+
+        // console.log("🏷️ Selected District Label:", selectedLabel);
 
         if (type === "Nominee") {
             const updatedNominees = [...nominees];
@@ -230,17 +310,18 @@ const AgreementSecond: React.FC = () => {
             updatedNominees[index].subdistrictname = "";
             setNominees(updatedNominees);
 
-            // Fetch cities for this nominee only
+            console.log(`🌆 Fetching Cities API for Nominee DistrictCode: ${value}`);
             axios
-                .get(`https://stage-master-backend.epravaha.com/api/City/GetCityBy${value}`)
-                .then(res => {
-                    const mappedCities = res.data.map(item => ({
+                .get(`https://stage-master-backend.epravaha.com/api/City/GetCityBy/${value}`)
+                .then((res) => {
+                    console.log("✅ City API Response (Nominee):", res.data);
+                    const mappedCities = res.data.map((item) => ({
                         label: item.name,
                         value: item.cityCode?.toString(),
                     }));
-                    setNomineeCitiesList(prev => ({ ...prev, [index]: mappedCities }));
+                    setNomineeCitiesList((prev) => ({ ...prev, [index]: mappedCities }));
                 })
-                .catch(err => console.error("Nominee City API Error:", err));
+                .catch((err) => console.error("❌ Nominee City API Error:", err));
         }
 
         if (type === "Witness") {
@@ -251,32 +332,36 @@ const AgreementSecond: React.FC = () => {
             updatedWitnesses[index].subdistrictname = "";
             setWitnesses(updatedWitnesses);
 
-            // Fetch cities for this witness only
+            // console.log(`🌆 Fetching Cities API for Witness DistrictCode: ${value}`);
             axios
                 .get(`https://stage-master-backend.epravaha.com/api/City/GetCityBy${value}`)
-                .then(res => {
-                    const mappedCities = res.data.map(item => ({
+                .then((res) => {
+                    console.log("✅ City API Response (Witness):", res.data);
+                    const mappedCities = res.data.map((item) => ({
                         label: item.name,
                         value: item.cityCode?.toString(),
                     }));
-                    setWitnessCitiesList(prev => ({ ...prev, [index]: mappedCities }));
+                    setWitnessCitiesList((prev) => ({ ...prev, [index]: mappedCities }));
                 })
-                .catch(err => console.error("Witness City API Error:", err));
+                .catch((err) => console.error("❌ Witness City API Error:", err));
         }
     };
 
+    // ------------------ City Change ------------------
     const handleCityChange = (value: string, type: "Nominee" | "Witness", index: number) => {
-        const selectedLabel = citiesList.find((item) => item.value === value)?.label || "";
+        const currentCityList = type === "Nominee" ? nomineeCitiesList[index] : witnessCitiesList[index];
+        const selectedLabel = currentCityList?.find((item) => item.value === value)?.label || "";
 
+        // console.log(`🏡 handleCityChange() called for ${type} #${index}`);
+        // console.log("➡️ Selected City Value:", value);
+        // console.log("🏷️ Selected City Label:", selectedLabel);
 
         if (type === "Nominee") {
             const updatedNominees = [...nominees];
             updatedNominees[index].subdistrictid = value;
             updatedNominees[index].subdistrictname = selectedLabel;
             setNominees(updatedNominees);
-        }
-
-        if (type === "Witness") {
+        } else if (type === "Witness") {
             const updatedWitnesses = [...witnesses];
             updatedWitnesses[index].subdistrictid = value;
             updatedWitnesses[index].subdistrictname = selectedLabel;
@@ -287,14 +372,165 @@ const AgreementSecond: React.FC = () => {
 
 
 
+    // useEffect(() => {
+    //     axios
+    //         .get("https://stage-master-backend.epravaha.com/api/State/GetAllStates")
+    //         .then((res) => {
+    //             console.log("📜 States API Raw Response:", res.data);
+    //             const mappedStates = res.data.map((item) => ({
+    //                 label: item.name,
+    //                 value: item.stateCode?.toString(),
+    //             }));
+    //             console.log("✅ Mapped States:", mappedStates);
+    //             setStatesList(mappedStates);
+    //         })
+    //         .catch((err) => console.error("❌ State API Error:", err));
+    // }, []);
 
 
-    // ------------------ Nominee Handlers ------------------
+    // const handleStateChange = (value: string, type: "Nominee" | "Witness", index: number) => {
+    //     const selectedLabel = statesList.find((item) => item.value === value)?.label || "";
+
+    //     if (type === "Nominee") {
+    //         const updatedNominees = [...nominees];
+    //         updatedNominees[index].stateid = value;
+    //         updatedNominees[index].statename = selectedLabel;
+    //         updatedNominees[index].districtid = "";
+    //         updatedNominees[index].districtname = "";
+    //         updatedNominees[index].subdistrictid = "";
+    //         updatedNominees[index].subdistrictname = "";
+    //         setNominees(updatedNominees);
+
+    //         // Fetch districts for this nominee only
+    //         axios
+    //             .get(`https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${value}`)
+    //             .then((res) => {
+    //                 const mappedDistricts = res.data.map((item) => ({
+    //                     label: item.name,
+    //                     value: item.districtCode?.toString(),
+    //                 }));
+    //                 setNomineeDistrictsList(prev => ({ ...prev, [index]: mappedDistricts }));
+    //                 setNomineeCitiesList(prev => ({ ...prev, [index]: [] })); // reset cities
+    //             })
+    //             .catch(err => console.error("Nominee District API Error:", err));
+    //     }
+
+    //     if (type === "Witness") {
+    //         const updatedWitnesses = [...witnesses];
+    //         updatedWitnesses[index].stateid = value;
+    //         updatedWitnesses[index].statename = selectedLabel;
+    //         updatedWitnesses[index].districtid = "";
+    //         updatedWitnesses[index].districtname = "";
+    //         updatedWitnesses[index].subdistrictid = "";
+    //         updatedWitnesses[index].subdistrictname = "";
+    //         setWitnesses(updatedWitnesses);
+
+    //         // Fetch districts for this witness only
+    //         axios
+    //             .get(`https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${value}`)
+    //             .then((res) => {
+    //                 const mappedDistricts = res.data.map((item) => ({
+    //                     label: item.name,
+    //                     value: item.districtCode?.toString(),
+    //                 }));
+    //                 setWitnessDistrictsList(prev => ({ ...prev, [index]: mappedDistricts }));
+    //                 setWitnessCitiesList(prev => ({ ...prev, [index]: [] })); // reset cities
+    //             })
+    //             .catch(err => console.error("Witness District API Error:", err));
+    //     }
+    // };
+
+    // // ------------------ Nominee District Change ------------------
+    // const handleDistrictChange = (value: string, type: "Nominee" | "Witness", index: number) => {
+    //     const selectedLabel = (type === "Nominee" ? nomineeDistrictsList[index] : witnessDistrictsList[index])?.find(item => item.value === value)?.label || "";
+
+    //     if (type === "Nominee") {
+    //         const updatedNominees = [...nominees];
+    //         updatedNominees[index].districtid = value;
+    //         updatedNominees[index].districtname = selectedLabel;
+    //         updatedNominees[index].subdistrictid = "";
+    //         updatedNominees[index].subdistrictname = "";
+    //         setNominees(updatedNominees);
+
+    //         // Fetch cities for this nominee only
+    //         axios
+    //             .get(`https://stage-master-backend.epravaha.com/api/City/GetCityBy${value}`)
+    //             .then(res => {
+    //                 const mappedCities = res.data.map(item => ({
+    //                     label: item.name,
+    //                     value: item.cityCode?.toString(),
+    //                 }));
+    //                 setNomineeCitiesList(prev => ({ ...prev, [index]: mappedCities }));
+    //             })
+    //             .catch(err => console.error("Nominee City API Error:", err));
+    //     }
+
+    //     if (type === "Witness") {
+    //         const updatedWitnesses = [...witnesses];
+    //         updatedWitnesses[index].districtid = value;
+    //         updatedWitnesses[index].districtname = selectedLabel;
+    //         updatedWitnesses[index].subdistrictid = "";
+    //         updatedWitnesses[index].subdistrictname = "";
+    //         setWitnesses(updatedWitnesses);
+
+    //         // Fetch cities for this witness only
+    //         axios
+    //             .get(`https://stage-master-backend.epravaha.com/api/City/GetCityBy${value}`)
+    //             .then(res => {
+    //                 const mappedCities = res.data.map(item => ({
+    //                     label: item.name,
+    //                     value: item.cityCode?.toString(),
+    //                 }));
+    //                 setWitnessCitiesList(prev => ({ ...prev, [index]: mappedCities }));
+    //             })
+    //             .catch(err => console.error("Witness City API Error:", err));
+    //     }
+    // };
+
+    // const handleCityChange = (value: string, type: "Nominee" | "Witness", index: number) => {
+    //     // Correctly pick the city list based on type + index
+    //     const currentCityList =
+    //         type === "Nominee" ? nomineeCitiesList[index] : witnessCitiesList[index];
+
+    //     const selectedLabel =
+    //         currentCityList?.find((item) => item.value === value)?.label || "";
+
+    //     console.log("Selected City Label:", selectedLabel);
+
+    //     if (type === "Nominee") {
+    //         const updatedNominees = [...nominees];
+    //         updatedNominees[index].subdistrictid = value;
+    //         updatedNominees[index].subdistrictname = selectedLabel;
+    //         setNominees(updatedNominees);
+    //     } else if (type === "Witness") {
+    //         const updatedWitnesses = [...witnesses];
+    //         updatedWitnesses[index].subdistrictid = value;
+    //         updatedWitnesses[index].subdistrictname = selectedLabel;
+    //         setWitnesses(updatedWitnesses);
+    //     }
+    // };
+
+
     const updateNominee = (index: number, key: keyof NomineeType, value: string) => {
         const newNominees = [...nominees];
-        newNominees[index][key] = value;
+
+        if (key === "dob") {
+            // ✅ Convert only DOB into ISO format for backend
+            const isoDate = new Date(value).toISOString();
+            newNominees[index][key] = isoDate as any;
+        } else if (key === "year") {
+            // ✅ Allow only numeric and max 4 characters
+            const numericYear = value.replace(/[^0-9]/g, '').slice(0, 4);
+            newNominees[index][key] = numericYear as any;
+        } else {
+            // ✅ Handle all other normal text fields
+            newNominees[index][key] = value as any;
+        }
+
         setNominees(newNominees);
     };
+
+
 
     const addNominee = () => {
         setNominees([
@@ -366,7 +602,144 @@ const AgreementSecond: React.FC = () => {
     );
 
 
+    const validateForm = () => {
+        // Check if at least one nominee exists
+        if (nominees.length === 0) {
+            Alert.alert("Validation Error", "Please add at least one nominee.");
+            return false;
+        }
+
+        // 🔹 Validate Nominees
+        for (let i = 0; i < nominees.length; i++) {
+            const nominee = nominees[i];
+            if (!nominee.nomineename?.trim()) {
+                Alert.alert("Validation Error", `Please enter Full Name for Nominee ${i + 1}.`);
+                return false;
+            }
+            if (!nominee.gender?.trim()) {
+                Alert.alert("Validation Error", `Please select Gender for Nominee ${i + 1}.`);
+                return false;
+            }
+            if (!nominee.dob) {
+                Alert.alert("Validation Error", `Please select Date of Birth for Nominee ${i + 1}.`);
+                return false;
+            }
+
+            if (!nominee.year || nominee.year.length !== 4) {
+                Alert.alert("Validation Error", `Please enter valid 4-digit Duration Year for Nominee ${i + 1}.`);
+                return false;
+            }
+            if (!nominee.mobileno || nominee.mobileno.length !== 10 || !/^\d{10}$/.test(nominee.mobileno)) {
+                Alert.alert("Validation Error", `Please enter valid 10-digit Mobile Number for Nominee ${i + 1}.`);
+                return false;
+            }
+            if (nominee.email && !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(nominee.email)) {
+                Alert.alert("Validation Error", `Please enter valid Email for Nominee ${i + 1}.`);
+                return false;
+            }
+            if (!nominee.addrline?.trim()) {
+                Alert.alert("Validation Error", `Please enter Address for Nominee ${i + 1}.`);
+                return false;
+            }
+            if (!nominee.villagename?.trim()) {
+                Alert.alert("Validation Error", `Please enter Village Name for Nominee ${i + 1}.`);
+                return false;
+            }
+            if (!nominee.pincode || nominee.pincode.length !== 6 || !/^\d{6}$/.test(nominee.pincode)) {
+                Alert.alert("Validation Error", `Please enter valid 6-digit Pincode for Nominee ${i + 1}.`);
+                return false;
+            }
+            if (!nominee.stateid) {
+                Alert.alert("Validation Error", `Please select State for Nominee ${i + 1}.`);
+                return false;
+            }
+            if (!nominee.districtid) {
+                Alert.alert("Validation Error", `Please select District for Nominee ${i + 1}.`);
+                return false;
+            }
+            if (!nominee.subdistrictid) {
+                Alert.alert("Validation Error", `Please select City for Nominee ${i + 1}.`);
+                return false;
+            }
+            if (!nominee.relation?.trim()) {
+                Alert.alert("Validation Error", `Please enter Relation for Nominee ${i + 1}.`);
+                return false;
+            }
+        }
+
+        // 🔹 Validate Witnesses
+        if (witnesses.length === 0) {
+            Alert.alert("Validation Error", "Please add at least one witness.");
+            return false;
+        }
+
+        for (let i = 0; i < witnesses.length; i++) {
+            const witness = witnesses[i];
+            if (!witness.witnessname?.trim()) {
+                Alert.alert("Validation Error", `Please enter Full Name for Witness ${i + 1}.`);
+                return false;
+            }
+            if (!witness.witnessmobileno || witness.witnessmobileno.length !== 10 || !/^\d{10}$/.test(witness.witnessmobileno)) {
+                Alert.alert("Validation Error", `Please enter valid 10-digit Mobile Number for Witness ${i + 1}.`);
+                return false;
+            }
+            if (witness.witnessemail && !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(witness.witnessemail)) {
+                Alert.alert("Validation Error", `Please enter valid Email for Witness ${i + 1}.`);
+                return false;
+            }
+            if (!witness.addrline?.trim()) {
+                Alert.alert("Validation Error", `Please enter Address for Witness ${i + 1}.`);
+                return false;
+            }
+            if (!witness.pincode || witness.pincode.length !== 6 || !/^\d{6}$/.test(witness.pincode)) {
+                Alert.alert("Validation Error", `Please enter valid 6-digit Pincode for Witness ${i + 1}.`);
+                return false;
+            }
+            if (!witness.stateid) {
+                Alert.alert("Validation Error", `Please select State for Witness ${i + 1}.`);
+                return false;
+            }
+            if (!witness.districtid) {
+                Alert.alert("Validation Error", `Please select District for Witness ${i + 1}.`);
+                return false;
+            }
+            if (!witness.subdistrictid) {
+                Alert.alert("Validation Error", `Please select City for Witness ${i + 1}.`);
+                return false;
+            }
+            if (!witness.villagename?.trim()) {
+                Alert.alert("Validation Error", `Please enter Village Name for Witness ${i + 1}.`);
+                return false;
+            }
+        }
+
+        // 🔹 Validate Signatures
+        if (!nomineeSignatureUri) {
+            Alert.alert("Validation Error", "Please add Nominee Signature.");
+            return false;
+        }
+        if (!witnessSignatureUri) {
+            Alert.alert("Validation Error", "Please add Witness Signature.");
+            return false;
+        }
+
+        // 🔹 Validate Agreement
+        if (!isAgreementAccepted) {
+            Alert.alert("Agreement Required", "Please accept the Agreement Terms and Conditions.");
+            return false;
+        }
+
+        return true;
+    };
+
+
+
     const handleSubmit = async () => {
+
+        if (!validateForm()) return;
+
+        setIsSubmitting(true);
+
         if (!isAgreementAccepted) {
             Alert.alert(
                 "Agreement",
@@ -380,19 +753,36 @@ const AgreementSecond: React.FC = () => {
 
             // ✅ Main form fields dynamically from state/selection
             formData.append("CenterTargetId", selectedCenterTarget || "");
-            formData.append("FarmerDistributionId", Farmerdistribution);
-            formData.append("FarmerId", selectedFarmer);
-            formData.append("VarietyId", selectedVariety);
+
+            formData.append("FarmerDistributionId", Farmerdistribution?.toString() || "");
+            formData.append("FarmerId", selectedFarmer?.toString() || "");
+            formData.append("VarietyId", selectedVariety?.toString() || "");
+            formData.append("DuringYear", Year?.toString() || "");
+            formData.append("SeedClass", seeds?.toString() || "");
+            formData.append("CommodityId", selectedCommodityType?.toString() || "");
             formData.append("PlantingMaterial", "SEED");
             formData.append("TagNumber", state.form.TagNumber || "");
             formData.append("AuthorizedName", state.form.authorizedSignatory || "");
-            formData.append("SeedClass", state.form.SeedClass || "");
-            formData.append("CommodityId", selectedCommodityType);
-            formData.append("Area", state.form.Area?.toString() ?? "0");
+            formData.append("Area", Area || "0");
             formData.append("BillNumber", state.form.BillNumber || "");
             formData.append("TagNumber", state.form.TagNumber || "");
             formData.append("LotNumber", state.form.LotNumber || "");
             formData.append("DuringYear", state.form.DuringYear || "");
+
+
+            // ✅ Append captured images
+            formData.append("Signature", {
+                uri: signaturePhoto,
+                type: "image/jpeg",
+                name: "signature.jpg",
+            } as any);
+
+            formData.append("ProfFile", {
+                uri: profilePhoto,
+                type: "image/jpeg",
+                name: "profile.jpg",
+            } as any);
+
 
 
             nominees.forEach((nominee, index) => {
@@ -431,7 +821,7 @@ const AgreementSecond: React.FC = () => {
                             navigation.dispatch(
                                 CommonActions.reset({
                                     index: 0,
-                                    routes: [{ name: "DashboardScreen" }],
+                                    routes: [{ name: "Dashboard" }],
                                 })
                             );
                         },
@@ -546,7 +936,7 @@ const AgreementSecond: React.FC = () => {
             <View style={styles.headerContainer}>
                 <TouchableOpacity
                     style={styles.backButton}
-                    onPress={() => navigation.navigate("AgreementForm" as never)}
+                    onPress={() => navigation.navigate("Agreement Form" as never)}
                     activeOpacity={0.7}
                 >
                     <MaterialIcons name="arrow-back" size={24} color="#fff" />
@@ -591,26 +981,33 @@ const AgreementSecond: React.FC = () => {
                                     onChangeText={(text) => updateNominee(index, "gender", text)}
                                     style={styles.input}
                                 />
+
+
                                 <TextInput
                                     mode="outlined"
-                                    label="Age"
+                                    label="Duration Year"
                                     keyboardType="numeric"
-                                    value={nominee.age}
-                                    onChangeText={(text) => updateNominee(index, "age", text)}
+                                    value={nominee.year}
+                                    maxLength={4}
+                                    onChangeText={(text) => updateNominee(index, "year", text)}
+                                    right={<TextInput.Affix text="Year" />} // shows “Year” inside the box on the right
                                     style={styles.input}
                                 />
+
 
 
                                 <Text style={styles.label}>Date of Birth</Text>
                                 <CustomDateTimePicker
                                     value={nominee.dob ? new Date(nominee.dob) : new Date()}
                                     onChange={(date) => {
-                                        const formattedDate = date.toISOString().split("T")[0]; // YYYY-MM-DD
+                                        const formattedDate = date.toISOString(); // ✅ ISO format with time
+                                        console.log("Selected DOB (ISO):", formattedDate);
+
                                         updateNominee(index, "dob", formattedDate);
 
-                                        // Age calculate karke update kar do
+                                        // ✅ Calculate and update age too
                                         const age = calculateAge(formattedDate);
-                                        updateNominee(index, "age", age);
+                                        updateNominee(index, "age", age.toString());
                                     }}
                                     mode="date"
                                 />
@@ -848,6 +1245,46 @@ const AgreementSecond: React.FC = () => {
                 {/* Dynamic Commodity-Specific Dropdown */}
                 {renderCommodityDropdown()}
 
+
+                <Card style={styles.sectionCard}>
+                    <Card.Content>
+                        <Text style={styles.sectionTitle}>📸 Photo & Verify</Text>
+
+                        <View style={styles.photoContainer}>
+                            {/* Signature Button */}
+                            <Button
+                                mode="contained-tonal"
+                                icon={() => <MaterialIcons name="edit" size={22} color="#fff" />}
+                                onPress={() => openCamera(setSignaturePhoto)}
+                                style={styles.captureButton}
+                                contentStyle={styles.captureButtonContent}
+                            >
+                                Signature Photo
+                            </Button>
+                            {signaturePhoto && (
+                                <Image source={{ uri: signaturePhoto }} style={styles.previewImage} />
+                            )}
+
+                            {/* Profile Button */}
+                            <Button
+                                mode="contained"
+                                icon={() => <MaterialIcons name="photo-camera" size={22} color="#fff" />}
+                                onPress={() => openCamera(setProfilePhoto)}
+                                style={styles.captureButtonAlt}
+                                contentStyle={styles.captureButtonContent}
+                            >
+                                Profile Photo
+                            </Button>
+                            {profilePhoto && (
+                                <Image source={{ uri: profilePhoto }} style={styles.previewImage} />
+                            )}
+
+                            {/* Submit Button */}
+
+                        </View>
+                    </Card.Content>
+                </Card>
+
                 {/* NHRDF Authorized Signatory Section */}
                 <Card style={styles.sectionCard}>
                     <Card.Content>
@@ -863,19 +1300,7 @@ const AgreementSecond: React.FC = () => {
                             placeholder="Enter authorized signatory name"
                         />
 
-                        {/* NHRDF Address */}
-                        {/* <Text style={styles.label}>NHRDF Address</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.nhrdfAddress || "NATIONAL HORTICULTURAL RESEARCH AND DEVELOPMENT FOUNDATION, JANAKPURI, NEW DELHI"}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfAddress: text } })}
-                            style={styles.input}
-                            placeholder="Enter NHRDF address"
-                            multiline={true}
-                            numberOfLines={2}
-                        /> */}
 
-                        {/* Plot Number */}
                         <Text style={styles.label}>Lot Number</Text>
                         <TextInput
                             mode="outlined"
@@ -883,6 +1308,7 @@ const AgreementSecond: React.FC = () => {
                             onChangeText={(text) => updateState({ ...state, form: { ...state.form, LotNumber: text } })}
                             style={styles.input}
                             placeholder="Enter Lot number"
+                            maxLength={5}
                         />
 
 
@@ -894,6 +1320,7 @@ const AgreementSecond: React.FC = () => {
                             onChangeText={(text) => updateState({ ...state, form: { ...state.form, TagNumber: text } })}
                             style={styles.input}
                             placeholder="Enter Tag number"
+                            maxLength={5}
                         />
 
 
@@ -904,72 +1331,12 @@ const AgreementSecond: React.FC = () => {
                             onChangeText={(text) => updateState({ ...state, form: { ...state.form, BillNumber: text } })}
                             style={styles.input}
                             placeholder="Enter Bill number"
+                            maxLength={5}
                         />
 
 
-                        {/* Location Details */}
-                        <Text style={styles.label}>Location Details</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.locationDetails || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, locationDetails: text } })}
-                            style={styles.input}
-                            placeholder="Enter location details (e.g., Behind Hotel Murkishari)"
-                            multiline={true}
-                            numberOfLines={2}
-                        />
 
-                        {/* Village/Town */}
-                        {/* <Text style={styles.label}>Village/Town</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.nhrdfVillage || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfVillage: text } })}
-                            style={styles.input}
-                            placeholder="Enter village/town"
-                        /> */}
 
-                        {/* Post Office */}
-                        {/* <Text style={styles.label}>Post Office</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.nhrdfPostOffice || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfPostOffice: text } })}
-                            style={styles.input}
-                            placeholder="Enter post office"
-                        /> */}
-
-                        {/* Taluka */}
-                        {/* <Text style={styles.label}>Taluka</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.nhrdfTaluka || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfTaluka: text } })}
-                            style={styles.input}
-                            placeholder="Enter taluka"
-                        /> */}
-
-                        {/* District */}
-                        {/* <Text style={styles.label}>District</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.nhrdfDistrict || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfDistrict: text } })}
-                            style={styles.input}
-                            placeholder="Enter district"
-                        /> */}
-
-                        {/* Pincode */}
-                        {/* <Text style={styles.label}>Pincode</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.nhrdfPincode || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, nhrdfPincode: text } })}
-                            style={styles.input}
-                            placeholder="Enter pincode"
-                            keyboardType="numeric"
-                            maxLength={6}
-                        /> */}
                     </Card.Content>
                 </Card>
 
@@ -1014,19 +1381,18 @@ const AgreementSecond: React.FC = () => {
                     </Card.Content>
                 </Card>
 
-                {/* Submit Button */}
                 <Button
                     mode="contained"
                     onPress={handleSubmit}
                     style={[
                         styles.submitButton,
-                        !isAgreementAccepted && styles.submitButtonDisabled
+                        (!isAgreementAccepted || isSubmitting) && styles.submitButtonDisabled,
                     ]}
                     contentStyle={styles.submitButtonContent}
                     icon="check"
-                    disabled={!isAgreementAccepted}
+                    disabled={!isAgreementAccepted || isSubmitting} // ✅ disable during submit
                 >
-                    Submit Agreement
+                    {isSubmitting ? "Submitting..." : "Submit Agreement"}
                 </Button>
             </KeyboardAwareScrollView>
         </View>
@@ -1059,6 +1425,12 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: "#f5f5f5",
+    },
+    image: {
+        width: 200,
+        height: 200,
+        marginVertical: 10,
+        borderRadius: 10,
     },
     scrollContent: {
         padding: 16,
@@ -1155,6 +1527,37 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         elevation: 4,
     },
+
+    photoContainer: {
+        flexDirection: 'column',
+        gap: 20,
+        alignItems: 'center',   // centers horizontally
+        justifyContent: 'center', // centers vertically
+    },
+    captureSection: {
+        alignItems: 'center',
+    },
+    captureButton: {
+        borderRadius: 10,
+        backgroundColor: '#1976D2',
+        width: '80%',
+    },
+    captureButtonAlt: {
+        borderRadius: 10,
+        backgroundColor: '#0288D1',
+        width: '80%',
+    },
+    captureButtonContent: {
+        height: 45,
+    },
+    previewImage: {
+        width: 220,
+        height: 220,
+        borderRadius: 12,
+        marginTop: 12,
+        borderWidth: 2,
+        borderColor: '#ddd',
+    },
     submitButtonDisabled: {
         backgroundColor: "#BDBDBD",
     },
@@ -1205,4 +1608,4 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         marginTop: 10,
     },
-});
+}); 

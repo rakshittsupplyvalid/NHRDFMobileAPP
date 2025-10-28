@@ -10,6 +10,7 @@ import AgreementListScreen from '../AgreementList/AgreementList';
 import NomineeScreen from '../AgreementList/NomineeList';
 import WitnessScreen from '../AgreementList/WitnessList';
 import Signature from '../Signature/Signature';
+import CameraExample from '../Agreement/CameraExample';
 
 const Drawer = createDrawerNavigator();
 
@@ -53,22 +54,22 @@ function CustomDrawerContent(props: any) {
          <DrawerItem
           label="Dhasboard"
           icon={({ color, size }) => <MaterialCommunityIcons name="view-dashboard" size={size} color={color} />}
-          onPress={() => props.navigation.navigate('DashboardScreen')}
+          onPress={() => props.navigation.navigate('Dashboard')}
           labelStyle={styles.drawerLabel}
         />
 
 
-        <DrawerItem
+        {/* <DrawerItem
           label="Inspection Form"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Inspection Form')}
           labelStyle={styles.drawerLabel}
-        />
+        /> */}
 
         <DrawerItem
           label="Agreement Form"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
-          onPress={() => props.navigation.navigate('AgreementForm')}
+          onPress={() => props.navigation.navigate('Agreement Form')}
           labelStyle={styles.drawerLabel}
         />
            
@@ -76,9 +77,18 @@ function CustomDrawerContent(props: any) {
                <DrawerItem
           label="Agreement List"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
-          onPress={() => props.navigation.navigate('AgreementListScreen')}
+          onPress={() => props.navigation.navigate('Agreement List')}
           labelStyle={styles.drawerLabel}
         />
+
+{/* 
+              <DrawerItem
+          label="CameraExample"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('CameraExample')}
+          labelStyle={styles.drawerLabel}
+        /> */}
+
 
 
 
@@ -117,7 +127,7 @@ export default function DrawerNavigator() {
   return (
     <Drawer.Navigator
     id={undefined}
-    initialRouteName="DashboardScreen" 
+    initialRouteName="Dashboard" 
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerStyle: {
@@ -155,9 +165,10 @@ export default function DrawerNavigator() {
 
 
 
-      <Drawer.Screen name="AgreementForm" component={AgreementForm} />
-         <Drawer.Screen name="AgreementListScreen" component={AgreementListScreen} />
-       <Drawer.Screen name="DashboardScreen" component={DashboardScreen} />
+      <Drawer.Screen name="Agreement Form" component={AgreementForm} />
+         <Drawer.Screen name="Agreement List" component={AgreementListScreen} />
+       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
+             <Drawer.Screen name="CameraExample" component={CameraExample} />
       <Drawer.Screen name="Agreement" component={AgreementSecond} options={{ drawerItemStyle: { display: 'none' } ,     headerShown: false, }} />
             <Drawer.Screen name="NomineeScreen" component={NomineeScreen} options={{ drawerItemStyle: { display: 'none' } ,     headerShown: false, }} />
 

@@ -54,6 +54,8 @@ export const fetchCommoditiesByType = async (commodityTypeId: string) => {
 export const farmer = async (selectedCommodity: string) => {
   if (!selectedCommodity) return [];
 
+  
+
   try {
    
     const url = `/api/mobile/farmer/distribution${selectedCommodity}`;
@@ -161,10 +163,12 @@ export const fetchSeedOptions = async () => {
 
     const data = Array.isArray(res.data) ? res.data : [res.data];
 
+    // 👇 Dropdown me name show karega
     return data.map((item: any) => ({
-      label: item.name,
-      value: item.id,
-      ...item,
+      label: item.name,       // dropdown me dikhne wala text
+      value: item.name,       // backend pe bhejne wala value
+      id: item.id,
+      description: item.description,
     }));
   } catch (error: any) {
     console.error("Seed fetch error:", error);

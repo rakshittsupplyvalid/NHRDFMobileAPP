@@ -1,4 +1,4 @@
-import React ,  { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -6,15 +6,15 @@ import {
   Image,
   TouchableOpacity,
   SafeAreaView,
-   Alert
+  Alert
 } from 'react-native';
 import { Card, Text, Button, Divider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import apiClient from '../Service/apiInterceptors'; 
+import apiClient from '../Service/apiInterceptors';
 import { useNavigation } from "@react-navigation/native";
 
 const DashboardScreen = () => {
-   const navigation = useNavigation<any>();
+  const navigation = useNavigation<any>();
 
 
   const [countData, setCountData] = useState(null);
@@ -72,9 +72,9 @@ const DashboardScreen = () => {
                 compact
                 style={styles.actionBtn}
                 textColor="#fff"
-                 onPress={() => {
-    navigation.navigate('AgreementListScreen');
-  }}
+                onPress={() => {
+                  navigation.navigate('Agreement List');
+                }}
               >
                 Open
               </Button>
@@ -100,7 +100,7 @@ const DashboardScreen = () => {
                 compact
                 style={styles.actionBtn}
                 textColor="#fff"
-                onPress={() => {}}
+                onPress={() => { }}
               >
                 View
               </Button>
@@ -113,7 +113,9 @@ const DashboardScreen = () => {
         {/* Quick Actions Section */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.quickActionsContainer}>
-          <TouchableOpacity style={styles.quickCard}>
+          <TouchableOpacity style={styles.quickCard} onPress={() => {
+            navigation.navigate('Agreement Form');
+          }}>
             <MaterialCommunityIcons name="file-document-edit" size={36} color="#70B04F" />
             <Text style={styles.quickTitle}>Agreement Form</Text>
             <Text style={styles.quickDesc}>Create and manage agreements</Text>
