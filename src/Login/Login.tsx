@@ -5,12 +5,11 @@ import apiClient from '../Service/apiInterceptors';
 import { storeToken } from '../Service/apiInterceptors';
 
 
+
 const Login = ({ navigation }: any) => {
   // const [mobileNumber, setMobileNumber] = useState('8976865879');
-  const [mobileNumber, setMobileNumber] = useState('6666667777');
-  const [password, setPassword] = useState('Password@123');
-
-  const [rememberDevice, setRememberDevice] = useState(false);
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [password, setPassword] = useState('');
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
@@ -114,6 +113,7 @@ const Login = ({ navigation }: any) => {
               label="Mobile Number"
               mode="outlined"
               placeholder="Enter your mobile number"
+              maxLength={10}
               keyboardType="phone-pad"
               value={mobileNumber}
               onChangeText={setMobileNumber}
@@ -139,8 +139,7 @@ const Login = ({ navigation }: any) => {
             />
 
 
-            {/* Remember + Forgot */}
-            <View style={styles.bottomRow}>
+            {/* <View style={styles.bottomRow}>
               <View style={styles.rememberContainer}>
                 <Checkbox.Android
                   status={rememberDevice ? 'checked' : 'unchecked'}
@@ -157,7 +156,7 @@ const Login = ({ navigation }: any) => {
               >
                 Forgot Password?
               </Button>
-            </View>
+            </View> */}
 
             {/* Login Button */}
             <Button

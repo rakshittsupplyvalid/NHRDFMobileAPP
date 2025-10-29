@@ -1,7 +1,6 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import { View, StyleSheet, Button, Alert } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { useCallback } from 'react';
 
 type SignatureViewProps = {
   onSave: (signatureData: string) => void;
@@ -19,17 +18,8 @@ const SignatureView: React.FC<SignatureViewProps> = ({ onSave }) => {
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
       <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
       <style>
-        body, html {
-          margin: 0;
-          padding: 0;
-          height: 100%;
-          overflow: hidden;
-        }
-        #signature-pad {
-          width: 100%;
-          height: 100%;
-          touch-action: none;
-        }
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+        #signature-pad { width: 100%; height: 100%; touch-action: none; }
       </style>
     </head>
     <body>
@@ -41,7 +31,6 @@ const SignatureView: React.FC<SignatureViewProps> = ({ onSave }) => {
           penColor: 'rgb(0, 0, 0)'
         });
 
-        // Adjust canvas size
         function resizeCanvas() {
           const ratio = Math.max(window.devicePixelRatio || 1, 1);
           canvas.width = canvas.offsetWidth * ratio;
@@ -49,19 +38,15 @@ const SignatureView: React.FC<SignatureViewProps> = ({ onSave }) => {
           canvas.getContext('2d').scale(ratio, ratio);
           signaturePad.clear();
         }
-
         window.addEventListener('resize', resizeCanvas);
         resizeCanvas();
 
-        // Notify React Native when WebView is ready
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'webViewReady' }));
 
-        // Handle signature changes
         signaturePad.addEventListener('beginStroke', () => {
           window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'signatureChange', isEmpty: false }));
         });
 
-        // Expose functions to React Native
         window.clearSignature = function() {
           signaturePad.clear();
           window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'signatureCleared' }));
@@ -81,7 +66,7 @@ const SignatureView: React.FC<SignatureViewProps> = ({ onSave }) => {
   const handleWebViewMessage = useCallback((event: any) => {
     try {
       const data = JSON.parse(event.nativeEvent.data);
-      console.log('Received message:', data); // Debug log
+      console.log('Received message:', data);
 
       switch (data.type) {
         case 'webViewReady':
@@ -125,19 +110,14 @@ const SignatureView: React.FC<SignatureViewProps> = ({ onSave }) => {
         try {
           const signature = window.getSignature();
           if (signature) {
-            console.log('Signature found, sending to React Native');
             window.ReactNativeWebView.postMessage(JSON.stringify({ 
               type: 'signatureSaved', 
               data: signature 
             }));
           } else {
-            console.log('No signature found');
-            window.ReactNativeWebView.postMessage(JSON.stringify({ 
-              type: 'signatureEmpty' 
-            }));
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'signatureEmpty' }));
           }
         } catch (error) {
-          console.error('Error in save function:', error);
           window.ReactNativeWebView.postMessage(JSON.stringify({
             type: 'error',
             message: error.message
@@ -148,11 +128,20 @@ const SignatureView: React.FC<SignatureViewProps> = ({ onSave }) => {
     `);
   }, [webViewLoaded]);
 
-  const handleSave = useCallback((signatureData: string) => {
-    console.log('Signature data received:', signatureData.substring(0, 30) + '...');
-    onSave(signatureData);
-    Alert.alert('Success', 'Signature saved successfully!');
-  }, [onSave]);
+  const handleSave = useCallback(
+    (signatureData: string) => {
+      console.log('Signature data received:', signatureData.substring(0, 30) + '...');
+      onSave(signatureData);
+      Alert.alert('Success', 'Signature saved successfully!');
+
+      // ✅ Clear canvas automatically after save
+      clearSignature();
+
+      // ✅ Disable Save button again until new signature is drawn
+      setIsSignatureEmpty(true);
+    },
+    [onSave, clearSignature]
+  );
 
   return (
     <View style={styles.container}>
@@ -172,18 +161,17 @@ const SignatureView: React.FC<SignatureViewProps> = ({ onSave }) => {
       </View>
       <View style={styles.buttonContainer}>
         <Button title="Clear" onPress={clearSignature} color="#FF3B30" />
-        <Button
-          title="Save Signature"
-          onPress={saveSignature}
-          disabled={isSignatureEmpty || !webViewLoaded}
-          color="#007AFF"
-        />
+         <Button
+  title="Save Signature"
+  onPress={saveSignature}
+  disabled={isSignatureEmpty || !webViewLoaded}
+  color="green" // ✅ Green background on Android, green text on iOS
+/>
+
       </View>
     </View>
   );
 };
-
-// ... (keep the same styles)
 
 const styles = StyleSheet.create({
   container: {

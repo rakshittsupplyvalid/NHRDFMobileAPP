@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { StyleSheet, View, TouchableOpacity, ScrollView, Modal, PermissionsAndroid, Platform } from "react-native";
-import { Button, Text, Card, TextInput, Checkbox } from "react-native-paper";
+import { Button, Text, Card, TextInput, Checkbox, HelperText } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import CommonPicker from "../CommonComponent/CommonDropdown";
 import { Onion, Garlic, Potato } from "../Constants/constants";
 import { useNavigation } from "@react-navigation/native";
+import { Dropdown } from 'react-native-element-dropdown';
 import { Image } from "react-native";
 import useForm from "../Form/UseForm";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useFocusEffect, useRoute } from '@react-navigation/native';
-
-
+import { useFormData } from "../Constants/FormContext";
+import YearPickerInput from "../CommonComponent/CommonYearPicker";
 import { retrieveToken } from '../Service/apiInterceptors'
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { BackHandler } from 'react-native';
@@ -19,8 +20,9 @@ import apiClient from "../Service/apiInterceptors";
 import { CommonActions } from "@react-navigation/native";
 import CustomDateTimePicker from "../CommonComponent/DateTimePicker";
 import { launchCamera, CameraOptions } from 'react-native-image-picker';
+import * as FileSystem from "expo-file-system";
 import axios from "axios";
-import * as FileSystem from 'expo-file-system';
+
 
 
 
@@ -66,22 +68,95 @@ interface WitnessType {
 }
 
 const AgreementSecond: React.FC = () => {
+    const route = useRoute();
+    const navigation = useNavigation<any>();
+    const { formData } = useFormData();
     const { state, updateState } = useForm();
     const [statesList, setStatesList] = useState([]);
     const [citiesList, setCitiesList] = useState([]);
-    const route = useRoute();
-    const { formData, selectedCommodityType, selectedFarmer, selectedVariety, Farmerdistribution, selectedCenterTarget, seeds, Area, Year } = route.params as { formData: any, selectedCommodityType: any, selectedFarmer: any, selectedVariety: any, Farmerdistribution: any, selectedCenterTarget: any, seeds: any, Area: any, Year: any };
-    const navigation = useNavigation<any>();
+    const [nomineeEmailErrors, setNomineeEmailErrors] = useState<string[]>([]);
+    const [witnessEmailErrors, setWitnessEmailErrors] = useState<string[]>([]);
+    const [nomineeMobileErrors, setNomineeMobileErrors] = useState<string[]>([]);
+    const [witnessMobileErrors, setWitnessMobileErrors] = useState<string[]>([]);
     const [nomineeSignatureUri, setNomineeSignatureUri] = useState<string | null>(null);
     const [witnessSignatureUri, setWitnessSignatureUri] = useState<string | null>(null);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [nomineeDistrictsList, setNomineeDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
     const [nomineeCitiesList, setNomineeCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
     const [signaturePhoto, setSignaturePhoto] = useState<string | null>(null);
     const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+    const [nomineeAddressErrors, setNomineeAddressErrors] = useState<string[]>([]);
+    const [witnessAddressErrors, setWitnessAddressErrors] = useState<string[]>([]);
+      const [touched, setTouched] = useState<boolean[]>([]);
+
 
     const [witnessDistrictsList, setWitnessDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
     const [witnessCitiesList, setWitnessCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
+
+
+
+
+
+    const isValidEmail = (email: string) => {
+        const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i; // 'i' flag = case-insensitive
+        return emailPattern.test(email.trim());
+    };
+
+    const isWitnessEmail = (witnessemail: string) => {
+        const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i; // ✅ case-insensitive
+        return emailPattern.test(witnessemail.trim());
+    }
+
+    const validateMobile = (text: string, type: "nominee" | "witness", index: number) => {
+        const updatedErrors =
+            type === "nominee" ? [...nomineeMobileErrors] : [...witnessMobileErrors];
+
+        if (text.length === 0) {
+            updatedErrors[index] = "";
+        } else if (!/^[6-9]\d{0,9}$/.test(text)) {
+            updatedErrors[index] = "Mobile number must start with 6–9";
+        } else {
+            updatedErrors[index] = "";
+        }
+
+        type === "nominee"
+            ? setNomineeMobileErrors(updatedErrors)
+            : setWitnessMobileErrors(updatedErrors);
+    };
+
+
+    const validateAddress = (text: string, type: "nominee" | "witness", index: number) => {
+        const updatedErrors =
+            type === "nominee" ? [...nomineeAddressErrors] : [...witnessAddressErrors];
+
+        const trimmedText = text.trim();
+
+        if (trimmedText.length === 0) {
+            updatedErrors[index] = "Address cannot be empty";
+        } else if (trimmedText.length < 5) {
+            updatedErrors[index] = "Address must be at least 5 characters long";
+        }
+        // ✅ Only numbers not allowed
+        else if (/^\d+$/.test(trimmedText)) {
+            updatedErrors[index] = "Address cannot contain only numbers";
+        }
+        // ✅ Allow letters, numbers, spaces, commas, dots, and hyphens only
+        else if (!/^[a-zA-Z0-9\s,.-]+$/.test(trimmedText)) {
+            updatedErrors[index] = "Invalid characters in address";
+        }
+        else {
+            updatedErrors[index] = "";
+        }
+
+        if (type === "nominee") {
+            setNomineeAddressErrors(updatedErrors);
+        } else {
+            setWitnessAddressErrors(updatedErrors);
+        }
+    };
+
+
     const [nominees, setNominees] = useState<NomineeType[]>([
         {
             nomineename: "",
@@ -128,22 +203,6 @@ const AgreementSecond: React.FC = () => {
     ]);
 
     const [isAgreementAccepted, setIsAgreementAccepted] = useState(false);
-
-    useEffect(() => {
-        console.log("🧾 Received route params:");
-        console.log("📦 formData:", formData);
-        console.log("🌾 selectedCommodityType:", selectedCommodityType);
-        console.log("👨‍🌾 selectedFarmer:", selectedFarmer);
-        console.log("🧬 selectedVariety:", selectedVariety);
-        console.log("📦 Farmerdistribution:", Farmerdistribution);
-        console.log("🏢 selectedCenterTarget:", selectedCenterTarget);
-        console.log("🌱 seeds:", seeds);
-        console.log("📏 Area:", Area);
-        console.log("📅 Year:", Year);
-    }, []);
-
-
-
 
     useFocusEffect(
         useCallback(() => {
@@ -224,7 +283,7 @@ const AgreementSecond: React.FC = () => {
                     label: item.name,
                     value: item.stateCode?.toString(),
                 }));
-                console.log("✅ Mapped States:", mappedStates);
+                // console.log("✅ Mapped States:", mappedStates);
                 setStatesList(mappedStates);
             })
             .catch((err) => console.error("❌ State API Error:", err));
@@ -234,9 +293,9 @@ const AgreementSecond: React.FC = () => {
     const handleStateChange = (value: string, type: "Nominee" | "Witness", index: number) => {
         const selectedLabel = statesList.find((item) => item.value === value)?.label || "";
 
-        console.log(`🗂️ handleStateChange() called for ${type} #${index}`);
-        console.log("➡️ Selected State Value:", value);
-        console.log("🏷️ Selected State Label:", selectedLabel);
+        // console.log(`🗂️ handleStateChange() called for ${type} #${index}`);
+        // console.log("➡️ Selected State Value:", value);
+        // console.log("🏷️ Selected State Label:", selectedLabel);
 
         if (type === "Nominee") {
             const updatedNominees = [...nominees];
@@ -277,7 +336,7 @@ const AgreementSecond: React.FC = () => {
             axios
                 .get(`https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${value}`)
                 .then((res) => {
-                    console.log("✅ District API Response (Witness):", res.data);
+                    // console.log("✅ District API Response (Witness):", res.data);
                     const mappedDistricts = res.data.map((item) => ({
                         label: item.name,
                         value: item.districtCode?.toString(),
@@ -310,11 +369,11 @@ const AgreementSecond: React.FC = () => {
             updatedNominees[index].subdistrictname = "";
             setNominees(updatedNominees);
 
-            console.log(`🌆 Fetching Cities API for Nominee DistrictCode: ${value}`);
+            // console.log(`🌆 Fetching Cities API for Nominee DistrictCode: ${value}`);
             axios
                 .get(`https://stage-master-backend.epravaha.com/api/City/GetCityBy/${value}`)
                 .then((res) => {
-                    console.log("✅ City API Response (Nominee):", res.data);
+                    // console.log("✅ City API Response (Nominee):", res.data);
                     const mappedCities = res.data.map((item) => ({
                         label: item.name,
                         value: item.cityCode?.toString(),
@@ -369,148 +428,6 @@ const AgreementSecond: React.FC = () => {
         }
     };
 
-
-
-
-    // useEffect(() => {
-    //     axios
-    //         .get("https://stage-master-backend.epravaha.com/api/State/GetAllStates")
-    //         .then((res) => {
-    //             console.log("📜 States API Raw Response:", res.data);
-    //             const mappedStates = res.data.map((item) => ({
-    //                 label: item.name,
-    //                 value: item.stateCode?.toString(),
-    //             }));
-    //             console.log("✅ Mapped States:", mappedStates);
-    //             setStatesList(mappedStates);
-    //         })
-    //         .catch((err) => console.error("❌ State API Error:", err));
-    // }, []);
-
-
-    // const handleStateChange = (value: string, type: "Nominee" | "Witness", index: number) => {
-    //     const selectedLabel = statesList.find((item) => item.value === value)?.label || "";
-
-    //     if (type === "Nominee") {
-    //         const updatedNominees = [...nominees];
-    //         updatedNominees[index].stateid = value;
-    //         updatedNominees[index].statename = selectedLabel;
-    //         updatedNominees[index].districtid = "";
-    //         updatedNominees[index].districtname = "";
-    //         updatedNominees[index].subdistrictid = "";
-    //         updatedNominees[index].subdistrictname = "";
-    //         setNominees(updatedNominees);
-
-    //         // Fetch districts for this nominee only
-    //         axios
-    //             .get(`https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${value}`)
-    //             .then((res) => {
-    //                 const mappedDistricts = res.data.map((item) => ({
-    //                     label: item.name,
-    //                     value: item.districtCode?.toString(),
-    //                 }));
-    //                 setNomineeDistrictsList(prev => ({ ...prev, [index]: mappedDistricts }));
-    //                 setNomineeCitiesList(prev => ({ ...prev, [index]: [] })); // reset cities
-    //             })
-    //             .catch(err => console.error("Nominee District API Error:", err));
-    //     }
-
-    //     if (type === "Witness") {
-    //         const updatedWitnesses = [...witnesses];
-    //         updatedWitnesses[index].stateid = value;
-    //         updatedWitnesses[index].statename = selectedLabel;
-    //         updatedWitnesses[index].districtid = "";
-    //         updatedWitnesses[index].districtname = "";
-    //         updatedWitnesses[index].subdistrictid = "";
-    //         updatedWitnesses[index].subdistrictname = "";
-    //         setWitnesses(updatedWitnesses);
-
-    //         // Fetch districts for this witness only
-    //         axios
-    //             .get(`https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${value}`)
-    //             .then((res) => {
-    //                 const mappedDistricts = res.data.map((item) => ({
-    //                     label: item.name,
-    //                     value: item.districtCode?.toString(),
-    //                 }));
-    //                 setWitnessDistrictsList(prev => ({ ...prev, [index]: mappedDistricts }));
-    //                 setWitnessCitiesList(prev => ({ ...prev, [index]: [] })); // reset cities
-    //             })
-    //             .catch(err => console.error("Witness District API Error:", err));
-    //     }
-    // };
-
-    // // ------------------ Nominee District Change ------------------
-    // const handleDistrictChange = (value: string, type: "Nominee" | "Witness", index: number) => {
-    //     const selectedLabel = (type === "Nominee" ? nomineeDistrictsList[index] : witnessDistrictsList[index])?.find(item => item.value === value)?.label || "";
-
-    //     if (type === "Nominee") {
-    //         const updatedNominees = [...nominees];
-    //         updatedNominees[index].districtid = value;
-    //         updatedNominees[index].districtname = selectedLabel;
-    //         updatedNominees[index].subdistrictid = "";
-    //         updatedNominees[index].subdistrictname = "";
-    //         setNominees(updatedNominees);
-
-    //         // Fetch cities for this nominee only
-    //         axios
-    //             .get(`https://stage-master-backend.epravaha.com/api/City/GetCityBy${value}`)
-    //             .then(res => {
-    //                 const mappedCities = res.data.map(item => ({
-    //                     label: item.name,
-    //                     value: item.cityCode?.toString(),
-    //                 }));
-    //                 setNomineeCitiesList(prev => ({ ...prev, [index]: mappedCities }));
-    //             })
-    //             .catch(err => console.error("Nominee City API Error:", err));
-    //     }
-
-    //     if (type === "Witness") {
-    //         const updatedWitnesses = [...witnesses];
-    //         updatedWitnesses[index].districtid = value;
-    //         updatedWitnesses[index].districtname = selectedLabel;
-    //         updatedWitnesses[index].subdistrictid = "";
-    //         updatedWitnesses[index].subdistrictname = "";
-    //         setWitnesses(updatedWitnesses);
-
-    //         // Fetch cities for this witness only
-    //         axios
-    //             .get(`https://stage-master-backend.epravaha.com/api/City/GetCityBy${value}`)
-    //             .then(res => {
-    //                 const mappedCities = res.data.map(item => ({
-    //                     label: item.name,
-    //                     value: item.cityCode?.toString(),
-    //                 }));
-    //                 setWitnessCitiesList(prev => ({ ...prev, [index]: mappedCities }));
-    //             })
-    //             .catch(err => console.error("Witness City API Error:", err));
-    //     }
-    // };
-
-    // const handleCityChange = (value: string, type: "Nominee" | "Witness", index: number) => {
-    //     // Correctly pick the city list based on type + index
-    //     const currentCityList =
-    //         type === "Nominee" ? nomineeCitiesList[index] : witnessCitiesList[index];
-
-    //     const selectedLabel =
-    //         currentCityList?.find((item) => item.value === value)?.label || "";
-
-    //     console.log("Selected City Label:", selectedLabel);
-
-    //     if (type === "Nominee") {
-    //         const updatedNominees = [...nominees];
-    //         updatedNominees[index].subdistrictid = value;
-    //         updatedNominees[index].subdistrictname = selectedLabel;
-    //         setNominees(updatedNominees);
-    //     } else if (type === "Witness") {
-    //         const updatedWitnesses = [...witnesses];
-    //         updatedWitnesses[index].subdistrictid = value;
-    //         updatedWitnesses[index].subdistrictname = selectedLabel;
-    //         setWitnesses(updatedWitnesses);
-    //     }
-    // };
-
-
     const updateNominee = (index: number, key: keyof NomineeType, value: string) => {
         const newNominees = [...nominees];
 
@@ -520,7 +437,7 @@ const AgreementSecond: React.FC = () => {
             newNominees[index][key] = isoDate as any;
         } else if (key === "year") {
             // ✅ Allow only numeric and max 4 characters
-            const numericYear = value.replace(/[^0-9]/g, '').slice(0, 4);
+            const numericYear = value.replace(/[^0-9]/g, "").slice(0, 4);
             newNominees[index][key] = numericYear as any;
         } else {
             // ✅ Handle all other normal text fields
@@ -528,9 +445,7 @@ const AgreementSecond: React.FC = () => {
         }
 
         setNominees(newNominees);
-    };
-
-
+    }
 
     const addNominee = () => {
         setNominees([
@@ -559,6 +474,46 @@ const AgreementSecond: React.FC = () => {
             },
         ]);
     };
+
+
+    const deleteNominee = (index) => {
+        Alert.alert(
+            "Delete Nominee",
+            "Are you sure you want to delete this nominee?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => {
+                        const updatedNominees = nominees.filter((_, i) => i !== index);
+                        setNominees(updatedNominees);
+                    },
+                },
+            ]
+        );
+    };
+
+    // ✅ Delete Witness function
+    const deleteWitness = (index) => {
+        Alert.alert(
+            "Delete Witness",
+            "Are you sure you want to delete this witness?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => {
+                        const updatedWitnesses = witnesses.filter((_, i) => i !== index);
+                        setWitnesses(updatedWitnesses);
+                    },
+                },
+            ]
+        );
+    };
+
+
 
     // ------------------ Witness Handlers ------------------
     const updateWitness = (index: number, key: keyof WitnessType, value: string) => {
@@ -601,244 +556,340 @@ const AgreementSecond: React.FC = () => {
         }, [route.params])
     );
 
+//      useFocusEffect(
+//   React.useCallback(() => {
+//     const params = route.params as { signatureUri?: string; type?: string } | undefined;
 
-    const validateForm = () => {
-        // Check if at least one nominee exists
-        if (nominees.length === 0) {
-            Alert.alert("Validation Error", "Please add at least one nominee.");
-            return false;
-        }
+//     if (params?.signatureUri && params?.type) {
+//       console.log("🖋️ Received Signature URI:", params.signatureUri);
+//       console.log("📄 Signature Type:", params.type);
 
-        // 🔹 Validate Nominees
-        for (let i = 0; i < nominees.length; i++) {
-            const nominee = nominees[i];
-            if (!nominee.nomineename?.trim()) {
-                Alert.alert("Validation Error", `Please enter Full Name for Nominee ${i + 1}.`);
-                return false;
-            }
-            if (!nominee.gender?.trim()) {
-                Alert.alert("Validation Error", `Please select Gender for Nominee ${i + 1}.`);
-                return false;
-            }
-            if (!nominee.dob) {
-                Alert.alert("Validation Error", `Please select Date of Birth for Nominee ${i + 1}.`);
-                return false;
-            }
+//       // ✅ Fixed line — using plain 'base64' instead of EncodingType
+//       FileSystem.readAsStringAsync(params.signatureUri, {
+//         encoding: 'base64',
+//       })
+//         .then((base64Data) => {
+//           const base64Image = `data:image/png;base64,${base64Data}`;
+//           console.log("✅ Base64 Image:", base64Image.substring(0, 100) + "...");
 
-            if (!nominee.year || nominee.year.length !== 4) {
-                Alert.alert("Validation Error", `Please enter valid 4-digit Duration Year for Nominee ${i + 1}.`);
-                return false;
-            }
-            if (!nominee.mobileno || nominee.mobileno.length !== 10 || !/^\d{10}$/.test(nominee.mobileno)) {
-                Alert.alert("Validation Error", `Please enter valid 10-digit Mobile Number for Nominee ${i + 1}.`);
-                return false;
-            }
-            if (nominee.email && !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(nominee.email)) {
-                Alert.alert("Validation Error", `Please enter valid Email for Nominee ${i + 1}.`);
-                return false;
-            }
-            if (!nominee.addrline?.trim()) {
-                Alert.alert("Validation Error", `Please enter Address for Nominee ${i + 1}.`);
-                return false;
-            }
-            if (!nominee.villagename?.trim()) {
-                Alert.alert("Validation Error", `Please enter Village Name for Nominee ${i + 1}.`);
-                return false;
-            }
-            if (!nominee.pincode || nominee.pincode.length !== 6 || !/^\d{6}$/.test(nominee.pincode)) {
-                Alert.alert("Validation Error", `Please enter valid 6-digit Pincode for Nominee ${i + 1}.`);
-                return false;
-            }
-            if (!nominee.stateid) {
-                Alert.alert("Validation Error", `Please select State for Nominee ${i + 1}.`);
-                return false;
-            }
-            if (!nominee.districtid) {
-                Alert.alert("Validation Error", `Please select District for Nominee ${i + 1}.`);
-                return false;
-            }
-            if (!nominee.subdistrictid) {
-                Alert.alert("Validation Error", `Please select City for Nominee ${i + 1}.`);
-                return false;
-            }
-            if (!nominee.relation?.trim()) {
-                Alert.alert("Validation Error", `Please enter Relation for Nominee ${i + 1}.`);
-                return false;
-            }
-        }
+//           // Convert Base64 → Blob for multipart upload
+//           const base64ToBlob = (base64, type = "image/png") => {
+//             const byteCharacters = atob(base64.split(",")[1]);
+//             const byteNumbers = new Array(byteCharacters.length);
+//             for (let i = 0; i < byteCharacters.length; i++) {
+//               byteNumbers[i] = byteCharacters.charCodeAt(i);
+//             }
+//             const byteArray = new Uint8Array(byteNumbers);
+//             return new Blob([byteArray], { type });
+//           };
 
-        // 🔹 Validate Witnesses
-        if (witnesses.length === 0) {
-            Alert.alert("Validation Error", "Please add at least one witness.");
-            return false;
-        }
+//           const imageBlob = base64ToBlob(base64Image, "image/png");
+//           console.log("📦 Converted Blob:", imageBlob);
+//           console.log("📏 Blob Size:", imageBlob.size);
 
-        for (let i = 0; i < witnesses.length; i++) {
-            const witness = witnesses[i];
-            if (!witness.witnessname?.trim()) {
-                Alert.alert("Validation Error", `Please enter Full Name for Witness ${i + 1}.`);
-                return false;
-            }
-            if (!witness.witnessmobileno || witness.witnessmobileno.length !== 10 || !/^\d{10}$/.test(witness.witnessmobileno)) {
-                Alert.alert("Validation Error", `Please enter valid 10-digit Mobile Number for Witness ${i + 1}.`);
-                return false;
-            }
-            if (witness.witnessemail && !/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/.test(witness.witnessemail)) {
-                Alert.alert("Validation Error", `Please enter valid Email for Witness ${i + 1}.`);
-                return false;
-            }
-            if (!witness.addrline?.trim()) {
-                Alert.alert("Validation Error", `Please enter Address for Witness ${i + 1}.`);
-                return false;
-            }
-            if (!witness.pincode || witness.pincode.length !== 6 || !/^\d{6}$/.test(witness.pincode)) {
-                Alert.alert("Validation Error", `Please enter valid 6-digit Pincode for Witness ${i + 1}.`);
-                return false;
-            }
-            if (!witness.stateid) {
-                Alert.alert("Validation Error", `Please select State for Witness ${i + 1}.`);
-                return false;
-            }
-            if (!witness.districtid) {
-                Alert.alert("Validation Error", `Please select District for Witness ${i + 1}.`);
-                return false;
-            }
-            if (!witness.subdistrictid) {
-                Alert.alert("Validation Error", `Please select City for Witness ${i + 1}.`);
-                return false;
-            }
-            if (!witness.villagename?.trim()) {
-                Alert.alert("Validation Error", `Please enter Village Name for Witness ${i + 1}.`);
-                return false;
-            }
-        }
+//           const formData = new FormData();
+       
+//           console.log("✅ FormData Ready for Upload");
+//         })
+//         .catch((err) => console.error("❌ Error reading file:", err));
 
-        // 🔹 Validate Signatures
-        if (!nomineeSignatureUri) {
-            Alert.alert("Validation Error", "Please add Nominee Signature.");
-            return false;
-        }
-        if (!witnessSignatureUri) {
-            Alert.alert("Validation Error", "Please add Witness Signature.");
-            return false;
-        }
+//       if (params.type === "nominee") {
+//         setNomineeSignatureUri(params.signatureUri);
+//       } else if (params.type === "witness") {
+//         setWitnessSignatureUri(params.signatureUri);
+//       }
+//     }
+//   }, [route.params])
+// );
 
-        // 🔹 Validate Agreement
-        if (!isAgreementAccepted) {
-            Alert.alert("Agreement Required", "Please accept the Agreement Terms and Conditions.");
-            return false;
-        }
 
-        return true;
+//     const handleSubmit = async () => {
+//         console.log("📦 Received from context:", formData);
+
+//         setIsSubmitting(true);
+
+//         if (!isAgreementAccepted) {
+//             Alert.alert(
+//                 "Agreement",
+//                 "Please read and accept the agreement terms before submitting."
+//             );
+//             return;
+//         }
+
+//         try {
+//             const requestData = new FormData();
+
+//             // 🔹 Append main contextual data first
+//             requestData.append("CenterTargetId", formData?.selectedCenterTarget || "");
+//             requestData.append("FarmerDistributionId", formData?.Farmerdistribution || "");
+//             requestData.append("FarmerId", formData?.selectedFarmer || "");
+//             requestData.append("VarietyId", formData?.selectedVariety || "");
+//             requestData.append("DuringYear", formData?.Year?.toString() || "");
+//             requestData.append("SeedClass", formData?.seeds?.toString() || "");
+//             requestData.append("CommodityId", formData?.selectedCommodityType?.toString() || "");
+//             requestData.append("PlantingMaterial", "SEED");
+//             requestData.append("Area", formData?.Area || "0");
+
+//             // 🔹 Append Agreement form fields
+//             requestData.append("AuthorizedName", state.form.authorizedSignatory || "");
+//             requestData.append("BillNumber", state.form.BillNumber || "");
+//             requestData.append("TagNumber", state.form.TagNumber || "");
+//             requestData.append("LotNumber", state.form.LotNumber || "");
+//             requestData.append("DuringYear", state.form.DuringYear || "");
+
+//             // 🔹 Append captured images
+//             if (signaturePhoto) {
+//                 requestData.append("Signature", {
+//                     uri: signaturePhoto,
+//                     type: "image/jpeg",
+//                     name: "signature.jpg",
+//                 } as any);
+//             }
+
+//             if (profilePhoto) {
+//                 requestData.append("ProfFile", {
+//                     uri: profilePhoto,
+//                     type: "image/jpeg",
+//                     name: "profile.jpg",
+//                 } as any);
+//             }
+
+//             // 🔹 Append nominees
+//             nominees.forEach((nominee, index) => {
+//                 Object.keys(nominee).forEach((key) => {
+//                     const value = nominee[key as keyof NomineeType];
+
+//                     if (key === "signature" && value) {
+//                         // 🔹 Send nominee signature image
+//                         requestData.append(`NomiNee[${index}][signature]`, {
+//                             uri: value,
+//                             type: "image/jpeg",
+//                             name: `nominee_signature_${index}.jpg`,
+//                         } as any);
+//                     } else {
+//                         // 🔹 Append normal text fields
+//                         requestData.append(
+//                             `NomiNee[${index}][${key}]`,
+//                             value?.toString() || ""
+//                         );
+//                     }
+//                 });
+//             });
+
+
+//             // 🔹 Append witnesses
+//             witnesses.forEach((witness, index) => {
+//                 Object.keys(witness).forEach((key) => {
+//                     requestData.append(
+//                         `Witness[${index}][${key}]`,
+//                         witness[key as keyof WitnessType]?.toString() || ""
+//                     );
+//                 });
+//             });
+
+//             // 🔹 Log everything before sending
+//             console.log("🚀 Sending this FormData:");
+//             for (let [key, value] of (requestData as any).entries()) {
+//                 console.log(`➡️ ${key}:`, value);
+//             }
+
+//             const token = await retrieveToken();
+
+//             const response = await apiClient.post("/api/mobile/agreement", requestData, {
+//                 headers: {
+//                     "Content-Type": "multipart/form-data",
+//                     Authorization: `Bearer ${token}`,
+//                 },
+//             });
+
+//             if (response.status === 200 || response.status === 201) {
+//                 Alert.alert("✅ Success", "Agreement submitted successfully.", [
+//                     {
+//                         text: "OK",
+//                         onPress: () => {
+//                             navigation.dispatch(
+//                                 CommonActions.reset({
+//                                     index: 0,
+//                                     routes: [{ name: "Dashboard" }],
+//                                 })
+//                             );
+//                         },
+//                     },
+//                 ]);
+//             } else {
+//                 Alert.alert("❌ Error", "Submission failed.");
+//             }
+//         } catch (error: any) {
+//             console.error("❌ Submit error:", error);
+//             Alert.alert(
+//                 "Error",
+//                 error.response?.data?.message || "Something went wrong."
+//             );
+//         }
+//     };
+
+
+
+
+
+  const handleSubmit = async () => {
+  console.log("📦 Received from context:", formData);
+  setIsSubmitting(true);
+
+  if (!isAgreementAccepted) {
+    Alert.alert(
+      "Agreement",
+      "Please read and accept the agreement terms before submitting."
+    );
+    return;
+  }
+
+  try {
+    const FS: any = FileSystem; // ✅ TypeScript ke liye fix
+    const requestData = new FormData();
+
+    // 🔹 Append main contextual data
+    requestData.append("CenterTargetId", formData?.selectedCenterTarget || "");
+    requestData.append("FarmerDistributionId", formData?.Farmerdistribution || "");
+    requestData.append("FarmerId", formData?.selectedFarmer || "");
+    requestData.append("VarietyId", formData?.selectedVariety || "");
+    requestData.append("DuringYear", formData?.Year?.toString() || "");
+    requestData.append("SeedClass", formData?.seeds?.toString() || "");
+    requestData.append("CommodityId", formData?.selectedCommodityType?.toString() || "");
+    requestData.append("PlantingMaterial", "SEED");
+    requestData.append("Area", formData?.Area || "0");
+
+    requestData.append("CertificateNo" , formData?.Certificate|| "");  
+        requestData.append("LandDetailId" , formData?.selectedLandId|| "");
+    requestData.append("SurveyNo" , formData?.Survey || "");
+
+    // 🔹 Append Agreement form fields
+    requestData.append("AuthorizedName", state.form.authorizedSignatory || "");
+    requestData.append("BillNumber", state.form.BillNumber || "");
+    requestData.append("TagNumber", state.form.TagNumber || "");
+    requestData.append("LotNumber", state.form.LotNumber || "");
+    requestData.append("DuringYear", state.form.DuringYear || "");
+
+    // 🔹 Append captured images (Profile + Signature)
+    if (signaturePhoto) {
+      requestData.append("Signature", {
+        uri: signaturePhoto,
+        type: "image/jpeg",
+        name: "signature.jpg",
+      } as any);
+    }
+
+    if (profilePhoto) {
+      requestData.append("ProfFile", {
+        uri: profilePhoto,
+        type: "image/jpeg",
+        name: "profile.jpg",
+      } as any);
+    }
+
+    // ✅ Helper to convert base64 to file URI
+    const convertBase64ToFile = async (base64Uri: string, name: string) => {
+      if (!base64Uri.startsWith("data:image")) return base64Uri; // Already file URI
+
+      const base64Data = base64Uri.split(",")[1];
+      const filePath = FS.cacheDirectory + `${name}.jpg`;
+      await FS.writeAsStringAsync(filePath, base64Data, {
+        encoding: FS.EncodingType.Base64,
+      });
+      return filePath;
     };
 
+    // 🔹 Append nominees
+    for (let index = 0; index < nominees.length; index++) {
+      const nominee = nominees[index];
 
+      for (const key of Object.keys(nominee)) {
+        const value = nominee[key as keyof NomineeType];
 
-    const handleSubmit = async () => {
+        if (key === "signature" && value) {
+          const fileUri = await convertBase64ToFile(
+            value,
+            `nominee_signature_${index}`
+          );
 
-        if (!validateForm()) return;
-
-        setIsSubmitting(true);
-
-        if (!isAgreementAccepted) {
-            Alert.alert(
-                "Agreement",
-                "Please read and accept the agreement terms before submitting."
-            );
-            return;
+          requestData.append(`NomiNee[${index}][signature]`, {
+            uri: fileUri,
+            type: "image/jpeg",
+            name: `nominee_signature_${index}.jpg`,
+          } as any);
+        } else {
+          requestData.append(
+            `NomiNee[${index}][${key}]`,
+            value?.toString() || ""
+          );
         }
+      }
+    }
 
-        try {
-            const formData = new FormData();
+    // 🔹 Append witnesses
+    for (let index = 0; index < witnesses.length; index++) {
+      const witness = witnesses[index];
 
-            // ✅ Main form fields dynamically from state/selection
-            formData.append("CenterTargetId", selectedCenterTarget || "");
+      for (const key of Object.keys(witness)) {
+        const value = witness[key as keyof WitnessType];
 
-            formData.append("FarmerDistributionId", Farmerdistribution?.toString() || "");
-            formData.append("FarmerId", selectedFarmer?.toString() || "");
-            formData.append("VarietyId", selectedVariety?.toString() || "");
-            formData.append("DuringYear", Year?.toString() || "");
-            formData.append("SeedClass", seeds?.toString() || "");
-            formData.append("CommodityId", selectedCommodityType?.toString() || "");
-            formData.append("PlantingMaterial", "SEED");
-            formData.append("TagNumber", state.form.TagNumber || "");
-            formData.append("AuthorizedName", state.form.authorizedSignatory || "");
-            formData.append("Area", Area || "0");
-            formData.append("BillNumber", state.form.BillNumber || "");
-            formData.append("TagNumber", state.form.TagNumber || "");
-            formData.append("LotNumber", state.form.LotNumber || "");
-            formData.append("DuringYear", state.form.DuringYear || "");
+        if (key === "signature" && value) {
+          const fileUri = await convertBase64ToFile(
+            value,
+            `witness_signature_${index}`
+          );
 
-
-            // ✅ Append captured images
-            formData.append("Signature", {
-                uri: signaturePhoto,
-                type: "image/jpeg",
-                name: "signature.jpg",
-            } as any);
-
-            formData.append("ProfFile", {
-                uri: profilePhoto,
-                type: "image/jpeg",
-                name: "profile.jpg",
-            } as any);
-
-
-
-            nominees.forEach((nominee, index) => {
-                Object.keys(nominee).forEach((key) => {
-                    formData.append(`NomiNee[${index}][${key}]`, nominee[key as keyof NomineeType].toString());
-                });
-            });
-
-            witnesses.forEach((witness, index) => {
-                Object.keys(witness).forEach((key) => {
-                    formData.append(`Witness[${index}][${key}]`, witness[key as keyof WitnessType].toString());
-                });
-            });
-
-
-
-
-
-
-            for (let [key, value] of (formData as any).entries()) {
-                console.log(`📦 ${key}:`, value);
-            }
-
-            const token = await retrieveToken();
-
-
-            const response = await apiClient.post("/api/mobile/agreement", formData);
-
-            // console.log("✅ Submit response:", response.data);
-
-            if (response.status === 200 || response.status === 201) {
-                Alert.alert("Success", "Agreement submitted successfully.", [
-                    {
-                        text: "OK",
-                        onPress: () => {
-                            navigation.dispatch(
-                                CommonActions.reset({
-                                    index: 0,
-                                    routes: [{ name: "Dashboard" }],
-                                })
-                            );
-                        },
-                    },
-                ]);
-            } else {
-                Alert.alert("Error", "Submission failed.");
-            }
-        } catch (error: any) {
-            console.error("❌ Submit error:", error);
-            Alert.alert(
-                "Error",
-                error.response?.data?.message || "Something went wrong."
-            );
+          requestData.append(`Witness[${index}][signature]`, {
+            uri: fileUri,
+            type: "image/jpeg",
+            name: `witness_signature_${index}.jpg`,
+          } as any);
+        } else {
+          requestData.append(
+            `Witness[${index}][${key}]`,
+            value?.toString() || ""
+          );
         }
-    };
+      }
+    }
 
+    // 🔹 Debugging
+    console.log("🚀 Sending this FormData:");
+    for (let [key, value] of (requestData as any).entries()) {
+      console.log(`➡️ ${key}:`, value);
+    }
+
+    // 🔹 API Call
+    const token = await retrieveToken();
+    const response = await apiClient.post("/api/mobile/agreement", requestData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (response.status === 200 || response.status === 201) {
+      Alert.alert("✅ Success", "Agreement submitted successfully.", [
+        {
+          text: "OK",
+          onPress: () => {
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [{ name: "Dashboard" }],
+              })
+            );
+          },
+        },
+      ]);
+    } else {
+      Alert.alert("❌ Error", "Submission failed.");
+    }
+  } catch (error: any) {
+    console.error("❌ Submit error:", error);
+    Alert.alert("Error", error.response?.data?.message || "Something went wrong.");
+  }
+};
 
 
 
@@ -973,25 +1024,32 @@ const AgreementSecond: React.FC = () => {
                                     value={nominee.nomineename}
                                     onChangeText={(text) => updateNominee(index, "nomineename", text)}
                                     style={styles.input}
+                                    maxLength={25}
                                 />
-                                <TextInput
-                                    mode="outlined"
-                                    label="Gender"
+
+
+
+                                <Dropdown
+                                    style={styles.dropdown}
+                                    placeholderStyle={styles.placeholderStyle}
+                                    selectedTextStyle={styles.selectedTextStyle}
+                                    data={[
+                                        { label: "Male", value: "Male" },
+                                        { label: "Female", value: "Female" },
+                                        { label: "Other", value: "Other" },
+                                    ]}
+                                    labelField="label"
+                                    valueField="value"
+                                    placeholder="Select Gender"
                                     value={nominee.gender}
-                                    onChangeText={(text) => updateNominee(index, "gender", text)}
-                                    style={styles.input}
+                                    onChange={(item) => updateNominee(index, "gender", item.value)}
                                 />
 
 
-                                <TextInput
-                                    mode="outlined"
-                                    label="Duration Year"
-                                    keyboardType="numeric"
+
+                                <YearPickerInput
                                     value={nominee.year}
-                                    maxLength={4}
-                                    onChangeText={(text) => updateNominee(index, "year", text)}
-                                    right={<TextInput.Affix text="Year" />} // shows “Year” inside the box on the right
-                                    style={styles.input}
+                                    onChange={(year) => updateNominee(index, "year", year)}
                                 />
 
 
@@ -1014,33 +1072,97 @@ const AgreementSecond: React.FC = () => {
 
                                 <TextInput
                                     mode="outlined"
-                                    label="Mobile No"
+                                    label="Nominee Mobile No"
                                     keyboardType="phone-pad"
                                     value={nominee.mobileno}
-                                    onChangeText={(text) => updateNominee(index, "mobileno", text)}
+                                    onChangeText={(text) => {
+                                        const numericText = text.replace(/[^0-9]/g, "");
+                                        updateNominee(index, "mobileno", numericText);
+                                        validateMobile(numericText, "nominee", index);
+                                    }}
                                     style={styles.input}
+                                    maxLength={10}
+                                    error={!!nomineeMobileErrors[index]}
                                 />
+
+                                {nomineeMobileErrors[index] ? (
+                                    <HelperText type="error" visible={!!nomineeMobileErrors[index]}>
+                                        {nomineeMobileErrors[index]}
+                                    </HelperText>
+                                ) : null}
+
+
+
                                 <TextInput
                                     mode="outlined"
                                     label="Email"
                                     keyboardType="email-address"
                                     value={nominee.email}
-                                    onChangeText={(text) => updateNominee(index, "email", text)}
+                                    onChangeText={(text) => {
+                                        updateNominee(index, "email", text);
+
+                                        // 🔹 Real-time validation per nominee
+                                        const updatedErrors = [...nomineeEmailErrors];
+
+                                        if (text.length === 0) {
+                                            updatedErrors[index] = ""; // no error if empty
+                                        } else if (!isValidEmail(text)) {
+                                            updatedErrors[index] = "Please enter a valid email address";
+                                        } else {
+                                            updatedErrors[index] = "";
+                                        }
+
+                                        setNomineeEmailErrors(updatedErrors);
+                                    }}
                                     style={styles.input}
+                                    maxLength={50}
+                                    error={!!nomineeEmailErrors[index]}
                                 />
+
+                                {nomineeEmailErrors[index] ? (
+                                    <HelperText type="error" visible={!!nomineeEmailErrors[index]}>
+                                        {nomineeEmailErrors[index]}
+                                    </HelperText>
+                                ) : null}
+
+
+                                <TextInput
+                                    mode="outlined"
+                                    label="Relation"
+                                    value={nominee.relation}
+                                    onChangeText={(text) => updateNominee(index, "relation", text)}
+                                    style={styles.input}
+                                    maxLength={15}
+                                />
+
+
                                 <TextInput
                                     mode="outlined"
                                     label="Address Line"
                                     value={nominee.addrline}
-                                    onChangeText={(text) => updateNominee(index, "addrline", text)}
+                                    onChangeText={(text) => {
+                                        updateNominee(index, "addrline", text);
+                                        validateAddress(text, "nominee", index);
+                                    }}
                                     style={styles.input}
+                                    maxLength={50}
+                                    error={!!nomineeAddressErrors[index]}
                                 />
+
+                                {nomineeAddressErrors[index] ? (
+                                    <HelperText type="error" visible={!!nomineeAddressErrors[index]}>
+                                        {nomineeAddressErrors[index]}
+                                    </HelperText>
+                                ) : null}
+
+
                                 <TextInput
                                     mode="outlined"
                                     label="Village Name"
                                     value={nominee.villagename}
                                     onChangeText={(text) => updateNominee(index, "villagename", text)}
                                     style={styles.input}
+                                    maxLength={25}
                                 />
 
                                 <TextInput
@@ -1050,20 +1172,20 @@ const AgreementSecond: React.FC = () => {
                                     value={nominee.pincode}
                                     onChangeText={(text) => updateNominee(index, "pincode", text)}
                                     style={styles.input}
+                                    maxLength={6}
                                 />
 
-                                {/* State Dropdown */}
-                                {/* 🏙️ State Dropdown */}
-                                <Text style={styles.label}>State</Text>
+
                                 <CommonPicker
+                                    label="States"
                                     selectedValue={nominee.stateid || ""}
                                     onValueChange={(value) => handleStateChange(value, "Nominee", index)}
                                     items={statesList}
                                 />
 
-                                {/* 🏢 District Dropdown */}
-                                <Text style={styles.label}>District</Text>
+
                                 <CommonPicker
+                                    label="District"
                                     selectedValue={nominee.districtid || ""}
                                     onValueChange={(value) => handleDistrictChange(value, "Nominee", index)}
                                     items={nomineeDistrictsList[index] || []}
@@ -1071,25 +1193,14 @@ const AgreementSecond: React.FC = () => {
 
 
 
-                                {/* ✅ City Dropdown */}
-                                <Text style={styles.label}>City</Text>
+
                                 <CommonPicker
+                                    label="City"
                                     selectedValue={nominee.subdistrictid || ""}
                                     onValueChange={(value) => handleCityChange(value, "Nominee", index)}
                                     items={nomineeCitiesList[index] || []}
                                 />
 
-
-
-
-
-                                <TextInput
-                                    mode="outlined"
-                                    label="Relation"
-                                    value={nominee.relation}
-                                    onChangeText={(text) => updateNominee(index, "relation", text)}
-                                    style={styles.input}
-                                />
 
                                 {nomineeSignatureUri && (
                                     <View style={{ marginVertical: 10, alignItems: "center" }}>
@@ -1111,12 +1222,27 @@ const AgreementSecond: React.FC = () => {
                                 </TouchableOpacity>
 
 
+                                <Button
+                                    mode="outlined"
+                                    icon="delete"
+                                    onPress={() => deleteNominee(index)}
+                                    textColor="red"
+                                    style={{ marginVertical: 10, borderColor: "red" }}
+                                >
+                                    Delete Nominee
+                                </Button>
+
+
                             </Card.Content>
                         </Card>
                     ))}
+
                     <Button mode="outlined" onPress={addNominee} style={{ marginVertical: 10 }}>
                         Add Another Nominee
                     </Button>
+
+
+
                 </Card>
 
                 {/* Witness Section */}
@@ -1136,30 +1262,82 @@ const AgreementSecond: React.FC = () => {
                                     value={witness.witnessname}
                                     onChangeText={(text) => updateWitness(index, "witnessname", text)}
                                     style={styles.input}
+                                    maxLength={25}
                                 />
+
+
                                 <TextInput
                                     mode="outlined"
-                                    label="Mobile No"
+                                    label="Witness Mobile No"
                                     keyboardType="phone-pad"
                                     value={witness.witnessmobileno}
-                                    onChangeText={(text) => updateWitness(index, "witnessmobileno", text)}
+                                    onChangeText={(text) => {
+                                        const numericText = text.replace(/[^0-9]/g, "");
+                                        updateWitness(index, "witnessmobileno", numericText);
+                                        validateMobile(numericText, "witness", index);
+                                    }}
                                     style={styles.input}
+                                    maxLength={10}
+                                    error={!!witnessMobileErrors[index]}
                                 />
+
+                                {witnessMobileErrors[index] ? (
+                                    <HelperText type="error" visible={!!witnessMobileErrors[index]}>
+                                        {witnessMobileErrors[index]}
+                                    </HelperText>
+                                ) : null}
+
+
                                 <TextInput
                                     mode="outlined"
                                     label="Email"
                                     keyboardType="email-address"
                                     value={witness.witnessemail}
-                                    onChangeText={(text) => updateWitness(index, "witnessemail", text)}
+                                    onChangeText={(text) => {
+                                        updateWitness(index, "witnessemail", text);
+
+                                        // 🔹 Real-time validation for this witness
+                                        const updatedErrors = [...witnessEmailErrors];
+
+                                        if (text.length === 0) {
+                                            updatedErrors[index] = ""; // no error if empty
+                                        } else if (!isWitnessEmail(text)) {
+                                            updatedErrors[index] = "Please enter a valid email address";
+                                        } else {
+                                            updatedErrors[index] = "";
+                                        }
+
+                                        setWitnessEmailErrors(updatedErrors);
+                                    }}
                                     style={styles.input}
+                                    maxLength={25}
                                 />
+
+                                {witnessEmailErrors[index] ? (
+                                    <HelperText type="error" visible={!!witnessEmailErrors[index]}>
+                                        {witnessEmailErrors[index]}
+                                    </HelperText>
+                                ) : null}
+
                                 <TextInput
                                     mode="outlined"
                                     label="Address Line"
                                     value={witness.addrline}
-                                    onChangeText={(text) => updateWitness(index, "addrline", text)}
+                                    onChangeText={(text) => {
+                                        updateWitness(index, "addrline", text);
+                                        validateAddress(text, "witness", index);
+                                    }}
                                     style={styles.input}
+                                    maxLength={50}
+                                    error={!!witnessAddressErrors[index]}
                                 />
+
+                                {witnessAddressErrors[index] ? (
+                                    <HelperText type="error" visible={!!witnessAddressErrors[index]}>
+                                        {witnessAddressErrors[index]}
+                                    </HelperText>
+                                ) : null}
+
                                 <TextInput
                                     mode="outlined"
                                     label="Pincode"
@@ -1167,6 +1345,7 @@ const AgreementSecond: React.FC = () => {
                                     value={witness.pincode}
                                     onChangeText={(text) => updateWitness(index, "pincode", text)}
                                     style={styles.input}
+                                    maxLength={6}
                                 />
 
 
@@ -1203,6 +1382,7 @@ const AgreementSecond: React.FC = () => {
                                     value={witness.villagename}
                                     onChangeText={(text) => updateWitness(index, "villagename", text)}
                                     style={styles.input}
+                                    maxLength={25}
                                 />
 
                                 {witnessSignatureUri && (
@@ -1223,6 +1403,16 @@ const AgreementSecond: React.FC = () => {
                                     <MaterialCommunityIcons name="signature-freehand" size={26} color="#2C5EFF" />
                                     <Text>Add Witness Signature</Text>
                                 </TouchableOpacity>
+
+                                <Button
+                                    mode="outlined"
+                                    icon="delete"
+                                    onPress={() => deleteWitness(index)}
+                                    textColor="red"
+                                    style={{ marginVertical: 10, borderColor: "red" }}
+                                >
+                                    Delete Witness
+                                </Button>
 
 
                             </Card.Content>
@@ -1248,7 +1438,7 @@ const AgreementSecond: React.FC = () => {
 
                 <Card style={styles.sectionCard}>
                     <Card.Content>
-                        <Text style={styles.sectionTitle}>📸 Photo & Verify</Text>
+                        <Text style={styles.sectionTitle}> Signature Photo & Verify</Text>
 
                         <View style={styles.photoContainer}>
                             {/* Signature Button */}
@@ -1298,6 +1488,7 @@ const AgreementSecond: React.FC = () => {
                             onChangeText={(text) => updateState({ ...state, form: { ...state.form, authorizedSignatory: text } })}
                             style={styles.input}
                             placeholder="Enter authorized signatory name"
+                            maxLength={20}
                         />
 
 
@@ -1608,4 +1799,22 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         marginTop: 10,
     },
+    dropdown: {
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        backgroundColor: '#fff',
+        marginBottom: 10,
+    },
+    placeholderStyle: {
+        fontSize: 14,
+        color: '#000',
+    },
+    selectedTextStyle: {
+        fontSize: 14,
+        color: '#000',
+    },
+
 }); 

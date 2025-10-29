@@ -36,10 +36,10 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
     mode === 'time'
       ? value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       : value.toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-        });
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      });
 
   return (
     <View style={[styles.container, style]}>
@@ -60,7 +60,10 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
         onConfirm={handleConfirm}
         onCancel={() => setIsVisible(false)}
         display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+        minimumDate={new Date(1960, 0, 1)}   // ✅ Start from 1 Jan 1960
+        maximumDate={new Date()}              // ✅ Up to today's date
       />
+
     </View>
   );
 };
@@ -70,7 +73,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   label: {
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: '400',
     color: '#374151',
     marginBottom: 4,
@@ -78,7 +81,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-
+    borderRadius: 10, // ✅ Added smooth rounded corners
     padding: 12,
     backgroundColor: '#fff',
     justifyContent: 'center',

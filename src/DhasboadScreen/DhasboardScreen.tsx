@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   ScrollView,
@@ -6,17 +6,16 @@ import {
   Image,
   TouchableOpacity,
   SafeAreaView,
-  Alert
+  Alert,
+  BackHandler,
 } from 'react-native';
 import { Card, Text, Button, Divider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import apiClient from '../Service/apiInterceptors';
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 const DashboardScreen = () => {
   const navigation = useNavigation<any>();
-
-
   const [countData, setCountData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -39,6 +38,23 @@ const DashboardScreen = () => {
     }
   };
 
+  // 🔹 Completely disable Android back button
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        // Just return true to block it
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress
+      );
+
+      // cleanup
+      return () => subscription.remove();
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -61,20 +77,24 @@ const DashboardScreen = () => {
         <Card style={styles.actionCard}>
           <Card.Content>
             <View style={styles.cardHeader}>
-              <MaterialCommunityIcons name="file-document-edit" size={26} color="#fff" />
+              <MaterialCommunityIcons
+                name="file-document-edit"
+                size={26}
+                color="#fff"
+              />
               <Text style={styles.cardTitle}>Agreement Form</Text>
             </View>
             <Text style={styles.cardSubtitle}>Create & View Agreements</Text>
             <View style={styles.cardFooter}>
-              <Text style={styles.cardInfo}>Agreement Count :{countData ?? 'No Data'} </Text>
+              <Text style={styles.cardInfo}>
+                Agreement Count: {countData ?? 'No Data'}
+              </Text>
               <Button
                 mode="outlined"
                 compact
                 style={styles.actionBtn}
                 textColor="#fff"
-                onPress={() => {
-                  navigation.navigate('Agreement List');
-                }}
+                onPress={() => navigation.navigate('Agreement List')}
               >
                 Open
               </Button>
@@ -82,14 +102,17 @@ const DashboardScreen = () => {
           </Card.Content>
         </Card>
 
-        {/* Divider */}
         <Divider style={styles.divider} />
 
         {/* Inspection Report Card */}
         <Card style={styles.actionCard}>
           <Card.Content>
             <View style={styles.cardHeader}>
-              <MaterialCommunityIcons name="clipboard-text" size={26} color="#fff" />
+              <MaterialCommunityIcons
+                name="clipboard-text"
+                size={26}
+                color="#fff"
+              />
               <Text style={styles.cardTitle}>Inspection Report</Text>
             </View>
             <Text style={styles.cardSubtitle}>Manage Site Inspections</Text>
@@ -100,7 +123,7 @@ const DashboardScreen = () => {
                 compact
                 style={styles.actionBtn}
                 textColor="#fff"
-                onPress={() => { }}
+                onPress={() => {}}
               >
                 View
               </Button>
@@ -113,26 +136,37 @@ const DashboardScreen = () => {
         {/* Quick Actions Section */}
         <Text style={styles.sectionTitle}>Quick Actions</Text>
         <View style={styles.quickActionsContainer}>
-          <TouchableOpacity style={styles.quickCard} onPress={() => {
-            navigation.navigate('Agreement Form');
-          }}>
-            <MaterialCommunityIcons name="file-document-edit" size={36} color="#70B04F" />
+          <TouchableOpacity
+            style={styles.quickCard}
+            onPress={() => navigation.navigate('Agreement Form')}
+          >
+            <MaterialCommunityIcons
+              name="file-document-edit"
+              size={36}
+              color="#70B04F"
+            />
             <Text style={styles.quickTitle}>Agreement Form</Text>
-            <Text style={styles.quickDesc}>Create and manage agreements</Text>
+            <Text style={styles.quickDesc}>
+              Create and manage agreements
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.quickCard}>
-            <MaterialCommunityIcons name="clipboard-text" size={36} color="#70B04F" />
+            <MaterialCommunityIcons
+              name="clipboard-text"
+              size={36}
+              color="#70B04F"
+            />
             <Text style={styles.quickTitle}>Inspection Report</Text>
-            <Text style={styles.quickDesc}>Submit inspection reports easily</Text>
+            <Text style={styles.quickDesc}>
+              Submit inspection reports easily
+            </Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 };
-
-
 
 const styles = StyleSheet.create({
   safeArea: {

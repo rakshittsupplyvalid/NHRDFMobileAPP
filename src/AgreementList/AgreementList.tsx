@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState  , useCallback} from "react";
 import { View, FlatList, StyleSheet, ActivityIndicator } from "react-native";
 import { Card, Text, Button } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -6,6 +6,8 @@ import { useNavigation } from "@react-navigation/native";
 import apiClient, { retrieveToken } from "../Service/apiInterceptors";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { DrawerParamList } from "../Type/type";
+import {  useFocusEffect } from "@react-navigation/native";
+import { BackHandler } from 'react-native';
 
 
 type AgreementListScreenNavigationProp = NativeStackNavigationProp<
@@ -49,6 +51,27 @@ const AgreementListScreen = () => {
       setLoading(false);
     }
   };
+
+
+
+     useFocusEffect(
+        useCallback(() => {
+          const onBackPress = () => {
+            navigation.navigate("Dashboard" as never);
+            return true; // prevent default behavior
+          };
+    
+          // ✅ Add the event listener
+          const subscription = BackHandler.addEventListener(
+            "hardwareBackPress",
+            onBackPress
+          );
+    
+          // ✅ Clean up correctly
+          return () => subscription.remove();
+        }, [navigation])
+      );
+  
 
   const handleNominee = (item) => {
     console.log("Nominee clicked:", item.id);

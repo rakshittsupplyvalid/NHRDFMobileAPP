@@ -1,18 +1,19 @@
 import React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { View, StyleSheet } from "react-native";
-
+import { BackHandler } from 'react-native';
 import { TextInput, Button, Text, Card, Checkbox, Divider } from "react-native-paper";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-
+import { useFocusEffect } from '@react-navigation/native';
 import CommonPicker from "../CommonComponent/CommonDropdown";
 import { produceseeds, Seeds } from "../Constants/constants";
 import useForm from "../Form/UseForm";
-import CustomDateTimePicker from '../CommonComponent/DateTimePicker';
+import YearPickerInput from "../CommonComponent/CommonYearPicker";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useNavigation } from "@react-navigation/native";
 import { fetchCommodityTypes, fetchCommoditiesByType, farmer, farmerDetails, getFarmerLandDetail, fetchSeedOptions } from "../Service/fetchCommodity";
 import axios from 'axios';
+import { useFormData } from "../Constants/FormContext";
 
 const AgreementForm: React.FC = () => {
   const { state, updateState } = useForm();
@@ -35,7 +36,30 @@ const AgreementForm: React.FC = () => {
 
   const [checked, setChecked] = useState(false);
 
+  const { setFormData } = useFormData();
+
   const navigation = useNavigation<any>();
+
+
+
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate("Dashboard" as never);
+        return true; // prevent default behavior
+      };
+
+      // ✅ Add the event listener
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
+      );
+
+      // ✅ Clean up correctly
+      return () => subscription.remove();
+    }, [navigation])
+  );
 
   const fields = [
     { label: 'Full Name', value: state.form.name, icon: 'account' },
@@ -113,16 +137,24 @@ const AgreementForm: React.FC = () => {
     if (!selectedFarmer) return;
 
     (async () => {
+      console.log("🧑‍🌾 Selected Farmer ID:", selectedFarmer);
+
       const details = await farmerDetails(selectedFarmer);
       const info = details.length > 0 ? details[0] : null;
 
       const landDetails = await getFarmerLandDetail(selectedFarmer);
       console.log("🌾 All Farmer Land Details:", landDetails);
 
+      // ✅ Pick the first land ID (you can change logic if needed)
+      const firstLandId = landDetails?.length > 0 ? landDetails[0].id : "";
+      console.log("🌍 Selected Land ID:", firstLandId);
+
+      // ✅ Update main form state
       updateState({
         ...state,
         form: {
           ...state.form,
+          id: info?.id || "",
           name: info?.name || "",
           age: "25",
           occupation: info?.occupation || "",
@@ -143,9 +175,14 @@ const AgreementForm: React.FC = () => {
         },
       });
 
-      setFarmerLandList(landDetails || []); // ✅ store all land details in new state
+      // ✅ Update both list and selected land ID
+      setFarmerLandList(landDetails || []);
+      setSelectedLandId(firstLandId);
+
+      console.log("✅ State updated with farmer + land details");
     })();
   }, [selectedFarmer]);
+
 
 
   useEffect(() => {
@@ -223,6 +260,13 @@ const AgreementForm: React.FC = () => {
       alert("Please select Produce Seeds");
       return false;
     }
+    if (!selectedLandId) {
+      alert("Please select at least one Land");
+      return false;
+    }
+
+
+
     if (!state.form.seeds) {
       alert("Please select Seeds");
       return false;
@@ -304,6 +348,40 @@ const AgreementForm: React.FC = () => {
             }}
             items={farmersList}
           />
+
+
+          {/* Certificate No */}
+          <TextInput
+            label="Certificate No"
+            mode="outlined"
+            placeholder="Enter certificate number"
+            value={state.form.CertificateNo || ""} // ✅ empty string if not filled
+            onChangeText={(value) =>
+              updateState({
+                ...state,
+                form: { ...state.form, CertificateNo: value },
+              })
+            }
+            style={[styles.input, { backgroundColor: "white" }]}
+            maxLength={10}
+          />
+
+          {/* Survey No */}
+          <TextInput
+            label="Survey No"
+            mode="outlined"
+            placeholder="Enter survey number"
+            value={state.form.SurveyNo || ""} // ✅ empty string if not filled
+            onChangeText={(value) =>
+              updateState({
+                ...state,
+                form: { ...state.form, SurveyNo: value },
+              })
+            }
+            style={[styles.input, { backgroundColor: "white" }]}
+            maxLength={10}
+          />
+
 
 
         </Card.Content>
@@ -524,27 +602,21 @@ const AgreementForm: React.FC = () => {
           <Text style={styles.sectionTitle}>Contract Terms</Text>
 
           {/* Duration Year */}
-          <TextInput
-            label="Duration Year"
-            mode="outlined"
-            placeholder="Enter Year (e.g. 2025)"
-            value={state.form.Year || ""}
-            keyboardType="numeric"
-            maxLength={4}
-            left={<TextInput.Icon icon="calendar" />}
-            onChangeText={(value) => {
-              const numericValue = value.replace(/[^0-9]/g, '');
-              updateState({ ...state, form: { ...state.form, Year: numericValue } });
-            }}
-            style={[styles.input, { backgroundColor: 'white' }]}
+          <YearPickerInput
+            value={state.form.Year}
+            onChange={(year) =>
+              updateState({ ...state, form: { ...state.form, Year: year } })
+            }
           />
+
 
           {/* Area in Acres */}
           <TextInput
-      label="Area (in hectares)"
+            label="Area (in hectares)"
             mode="outlined"
-            placeholder="Enter area in acres"
+            placeholder="Enter area in "
             value={state.form.Area || ""}
+            maxLength={8}
             keyboardType="numeric"
             left={<TextInput.Icon icon="arrow-expand" />}
             onChangeText={(value) =>
@@ -555,30 +627,40 @@ const AgreementForm: React.FC = () => {
         </Card.Content>
       </Card>
 
-
       <Button
         mode="contained"
         style={styles.submitButton}
         contentStyle={styles.submitButtonContent}
         onPress={() => {
-          if (validateForm()) {
-            navigation.navigate("Agreement" as never, {
-              formData: state.form,
-              selectedCommodityType: selectedCommodity,
-              selectedFarmer: selectedFarmer,
-              Farmerdistribution: selectedFarmerId,
-              selectedVariety: selectedVariety,
-              selectedCenterTarget: selectedCenterTarget,
-              seeds: state.form.seeds,
-              durationFrom: selectedDate,
-              Area: state.form.Area,
-              Year: state.form.Year,
-            });
+          if (!validateForm()) {
+            console.log("❌ Validation failed — please fill all required fields");
+            return;
           }
+
+          const dataToSend = {
+            formData: state.form,
+            selectedCommodityType: selectedCommodity,
+            selectedFarmer: selectedFarmer,
+            Farmerdistribution: selectedFarmerId,
+            selectedVariety: selectedVariety,
+            selectedCenterTarget: selectedCenterTarget,
+            seeds: state.form.seeds,
+            Area: state.form.Area,
+            Year: state.form.Year,
+            selectedLandId: selectedLandId, // ✅ land id added dynamically
+            Certificate: state.form.CertificateNo || "",
+            Survey: state.form.SurveyNo || "",
+          };
+
+          console.log("🚀 Data sent via Context:", dataToSend);
+
+          setFormData(dataToSend);
+          navigation.navigate("Agreement" as never);
         }}
       >
         Next
       </Button>
+
 
     </KeyboardAwareScrollView>
   );
@@ -689,6 +771,7 @@ const styles = StyleSheet.create({
     height: 38,
     fontSize: 14,
     paddingHorizontal: 10,
+    borderRadius: 30
   },
   row: {
     flexDirection: "row",

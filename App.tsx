@@ -76,6 +76,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Provider as PaperProvider, MD3LightTheme } from 'react-native-paper';
+import { FormProvider } from './src/Constants/FormContext';
 
 import Login from './src/Login/Login';
 import DrawerNavigator from './src/Navigation/DrawerNavigator';
@@ -129,6 +130,7 @@ const App = () => {
   return (
     // ✅ Global theme applied here
     <PaperProvider theme={theme}>
+    
       <NavigationContainer>
         <Stack.Navigator
           id={undefined}
@@ -136,9 +138,19 @@ const App = () => {
           screenOptions={{ headerShown: false }}
         >
           <Stack.Screen name="Login" component={Login} />
-          <Stack.Screen name="DrawerNavigator" component={DrawerNavigator} />
+                   {/* ✅ Wrap DrawerNavigator inside FormProvider */}
+          <Stack.Screen
+            name="DrawerNavigator"
+            children={() => (
+              <FormProvider>
+                <DrawerNavigator />
+              </FormProvider>
+            )}
+          />
+
         </Stack.Navigator>
       </NavigationContainer>
+ 
     </PaperProvider>
   );
 };

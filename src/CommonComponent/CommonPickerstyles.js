@@ -15,7 +15,7 @@ export default StyleSheet.create({
     height: 38,
     borderWidth: 1,
     borderColor: '#D1D5DB',
-  
+    borderRadius: 10,   // ✅ Add this line
     paddingHorizontal: 17,
     backgroundColor: '#FFFFFF',
   },
@@ -23,7 +23,6 @@ export default StyleSheet.create({
     backgroundColor: '#F9FAFB',
     borderWidth: 1,
     borderColor: '#D1D5DB',
-    borderRadius: 8,
+    borderRadius: 10,
   },
-  
 });
