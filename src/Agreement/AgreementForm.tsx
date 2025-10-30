@@ -2,7 +2,7 @@ import React from "react";
 import { useState, useEffect, useCallback } from "react";
 import { View, StyleSheet } from "react-native";
 import { BackHandler } from 'react-native';
-import { TextInput, Button, Text, Card, Checkbox, Divider } from "react-native-paper";
+import { TextInput, Button, Text, Card, Checkbox, Divider, HelperText } from "react-native-paper";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import CommonPicker from "../CommonComponent/CommonDropdown";
@@ -19,93 +19,232 @@ const AgreementForm: React.FC = () => {
   const { state, updateState } = useForm();
   const [statesList, setStatesList] = useState([]);
   const [districtsList, setDistrictsList] = useState([]);
-  const [selectedVariety, setSelectedVariety] = useState("");  // varietyId
+  const [selectedVariety, setSelectedVariety] = useState("");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [commodityTypes, setCommodityTypes] = useState([]);
   const [commodities, setCommodities] = useState([]);
   const [selectedCommodityType, setSelectedCommodityType] = useState('');
   const [selectedCommodity, setSelectedCommodity] = useState('');
   const [selectedFarmerId, setSelectedFarmerId] = useState("");
-  const [selectedCenterTarget, setSelectedCenterTargetId] = useState(""); // 👈 ye new state hai
+  const [selectedCenterTarget, setSelectedCenterTargetId] = useState("");
   const [farmersList, setFarmersList] = useState([]);
   const [selectedFarmer, setSelectedFarmer] = useState('');
   const [seedOptions, setSeedOptions] = useState([]);
   const [farmerLandList, setFarmerLandList] = useState<any[]>([]);
   const [selectedLandId, setSelectedLandId] = useState<string | null>(null);
 
-
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [touched, setTouched] = useState<{[key: string]: boolean}>({});
+  const [focusedFields, setFocusedFields] = useState<{[key: string]: boolean}>({});
   const [checked, setChecked] = useState(false);
 
   const { setFormData } = useFormData();
-
   const navigation = useNavigation<any>();
 
+  // Validation functions
+  const validateField = (field: string, value: any): string => {
+    let error = '';
+
+    switch (field) {
+      case 'selectedCommodityType':
+        if (!value || value.toString().trim() === '') {
+          error = 'Commodity Type is required';
+        }
+        break;
+      
+      case 'selectedCommodity':
+        if (!value || value.toString().trim() === '') {
+          error = 'Commodity is required';
+        }
+        break;
+      
+      case 'selectedFarmer':
+        if (!value || value.toString().trim() === '') {
+          error = 'Farmer selection is required';
+        }
+        break;
+      
+      case 'produceseeds':
+        if (!value || value.toString().trim() === '') {
+          error = 'Produce Seeds selection is required';
+        }
+        break;
+      
+      case 'seeds':
+        if (!value || value.toString().trim() === '') {
+          error = 'Seeds selection is required';
+        }
+        break;
+      
+      case 'Year':
+        if (!value || value.toString().trim() === '') {
+          error = 'Year is required';
+        }
+        break;
+      
+      case 'Area':
+        if (!value || value.toString().trim() === '') {
+          error = 'Area is required';
+        } else if (isNaN(Number(value)) || parseFloat(value) <= 0) {
+          error = 'Please enter a valid area';
+        } else if (parseFloat(value) > 1000000) {
+          error = 'Maximum area allowed is 10,00,000 hectares';
+        }
+        break;
+      
+      case 'CertificateNo':
+        if (!value || value.toString().trim() === '') {
+          error = 'Certificate No is required';
+        } else if (value.length > 10) {
+          error = 'Certificate No cannot exceed 10 characters';
+        }
+        break;
+      
+      case 'SurveyNo':
+        if (!value || value.toString().trim() === '') {
+          error = 'Survey No is required';
+        } else if (value.length > 10) {
+          error = 'Survey No cannot exceed 10 characters';
+        }
+        break;
+      
+      case 'selectedLandId':
+        if (!value || value.toString().trim() === '') {
+          error = 'Please select at least one land';
+        }
+        break;
+      
+      default:
+        break;
+    }
+
+    return error;
+  };
+
+  const validateForm = (): boolean => {
+    const newErrors: {[key: string]: string} = {};
+    
+    // Validate all required fields
+    newErrors.selectedCommodityType = validateField('selectedCommodityType', selectedCommodityType);
+    newErrors.selectedCommodity = validateField('selectedCommodity', selectedCommodity);
+    newErrors.selectedFarmer = validateField('selectedFarmer', selectedFarmer);
+    newErrors.produceseeds = validateField('produceseeds', state.form.produceseeds);
+    newErrors.seeds = validateField('seeds', state.form.seeds);
+    newErrors.Year = validateField('Year', state.form.Year);
+    newErrors.Area = validateField('Area', state.form.Area);
+    newErrors.CertificateNo = validateField('CertificateNo', state.form.CertificateNo);
+    newErrors.SurveyNo = validateField('SurveyNo', state.form.SurveyNo);
+    newErrors.selectedLandId = validateField('selectedLandId', selectedLandId);
+
+    setErrors(newErrors);
+    
+    // Mark all fields as touched to show all errors
+    const allFields = [
+      'selectedCommodityType', 'selectedCommodity', 'selectedFarmer', 
+      'produceseeds', 'seeds', 'Year', 'Area', 'CertificateNo', 
+      'SurveyNo', 'selectedLandId'
+    ];
+    const newTouched: {[key: string]: boolean} = {};
+    allFields.forEach(field => {
+      newTouched[field] = true;
+    });
+    setTouched(newTouched);
+
+    return Object.values(newErrors).every(error => error === '');
+  };
+
+  const handleFieldChange = (field: string, value: any) => {
+  console.log(`🔄 Field ${field} changed to:`, value);
+
+  // Update state
+  if (field === 'selectedCommodityType') {
+    setSelectedCommodityType(value);
+    setSelectedCommodity('');
+    setFarmersList([]);
+    setSelectedFarmer('');
+    setFarmerLandList([]);
+    setSelectedLandId(null);
+  } else if (field === 'selectedCommodity') {
+    setSelectedCommodity(value);
+  } else if (field === 'selectedFarmer') {
+    setSelectedFarmer(value);
+    const selectedItem = farmersList.find(item => item.value === value);
+    if (selectedItem) {
+      setSelectedVariety(selectedItem.varietyId);
+      setSelectedFarmerId(selectedItem.Id);
+      setSelectedCenterTargetId(selectedItem.centertargetid);
+    }
+  } else if (field === 'selectedLandId') {
+    setSelectedLandId(value);
+  } else {
+    updateState({
+      ...state,
+      form: { ...state.form, [field]: value },
+    });
+  }
+
+  // Mark touched
+  setTouched(prev => ({ ...prev, [field]: true }));
+
+  // ✅ If value selected -> remove error immediately
+  if (value && value !== "") {
+    setErrors(prev => ({ ...prev, [field]: '' }));
+  } else {
+    // Only validate if value empty
+    const error = validateField(field, value);
+    setErrors(prev => ({ ...prev, [field]: error }));
+  }
+};
 
 
+const handlePickerFocus = (field: string) => {
+  console.log(`🎯 Picker ${field} focused`);
+  setFocusedFields(prev => ({ ...prev, [field]: true }));
+  setTouched(prev => ({ ...prev, [field]: true }));
+};
 
-  useFocusEffect(
-    useCallback(() => {
-      const onBackPress = () => {
-        navigation.navigate("Dashboard" as never);
-        return true; // prevent default behavior
-      };
 
-      // ✅ Add the event listener
-      const subscription = BackHandler.addEventListener(
-        "hardwareBackPress",
-        onBackPress
-      );
+const handlePickerBlur = (field: string) => {
+  let value =
+    field === "selectedCommodityType" ? selectedCommodityType :
+    field === "selectedCommodity" ? selectedCommodity :
+    field === "selectedFarmer" ? selectedFarmer :
+    field === "selectedLandId" ? selectedLandId :
+    state.form[field];
 
-      // ✅ Clean up correctly
-      return () => subscription.remove();
-    }, [navigation])
-  );
+  // Only validate if empty
+  if (!value) {
+    const error = validateField(field, value);
+    setErrors(prev => ({ ...prev, [field]: error }));
+  }
+};
 
-  const fields = [
-    { label: 'Full Name', value: state.form.name, icon: 'account' },
-    { label: 'Age', value: '25', icon: 'calendar' },
-    { label: 'Gender', value: state.form.gender, icon: 'gender-male-female' },
-    { label: 'Relation', value: state.form.relation, icon: 'account-group' },
-    { label: 'Relative Name', value: state.form.relativename, icon: 'account' },
-    { label: 'Village', value: state.form.villagename, icon: 'home-city' },
-    { label: 'District', value: state.form.districtname, icon: 'map-marker' },
-    { label: 'State', value: state.form.statename, icon: 'map' },
-    { label: 'Pincode', value: state.form.pincode, icon: 'numeric' },
-    { label: 'Mobile Number', value: state.form.mobile, icon: 'phone' },
-  ];
+  // FIXED: Proper handler for text inputs
+  const handleTextInputBlur = (field: string) => {
+    setTouched(prev => ({ ...prev, [field]: true }));
+    const value = state.form[field];
+    const error = validateField(field, value);
+    setErrors(prev => ({ ...prev, [field]: error }));
+  };
 
-  const landdetails = [
-    { label: 'Land Number', value: state.form.landNumber, icon: 'numeric' },
-    { label: 'Sub Number', value: state.form.landSubNumber, icon: 'numeric' },
-    { label: 'Total Area', value: `${state.form.landTotalArea} ${state.form.landUnit}`, icon: 'square-outline' },
-    { label: 'Sowing Area', value: state.form.landSowingArea, icon: 'nature' },
-    { label: 'Village', value: state.form.landVillage, icon: 'home-city' },
-    { label: 'State', value: state.form.landState, icon: 'map-marker' },
-    { label: 'District', value: state.form.landDistrict, icon: 'map-marker-radius' },
-    { label: 'Sub-District', value: state.form.landSubDistrict, icon: 'map-outline' },
-    {
-      label: 'Approval Status',
-      value: state.form.landApprovalStatus,
-      icon: state.form.landApprovalStatus === 'PENDING'
-        ? 'hourglass-empty'
-        : state.form.landApprovalStatus === 'APPROVED'
-          ? 'check-circle'
-          : 'cancel'
-    },
-  ];
+  // Helper to check if error should be shown
+ const shouldShowError = (field: string) => {
+  const value =
+    field === "selectedCommodityType" ? selectedCommodityType :
+    field === "selectedCommodity" ? selectedCommodity :
+    field === "selectedFarmer" ? selectedFarmer :
+    field === "selectedLandId" ? selectedLandId :
+    state.form[field];
 
-  const [isFocused, setIsFocused] = useState({
-    produceseeds: false,
-    agreementType: false,
-    duration: false,
-    FarmerName: false,
-  });
+  return touched[field] && errors[field] && (!value || value === "");
+};
 
+
+  // Rest of your useEffect functions remain the same...
   useEffect(() => {
     (async () => {
       const data = await fetchCommodityTypes();
       setCommodityTypes(data);
-      console.log("Fetched Commodity Types:", data);
     })();
   }, []);
 
@@ -114,7 +253,6 @@ const AgreementForm: React.FC = () => {
     (async () => {
       const items = await fetchCommoditiesByType(selectedCommodityType);
       setCommodities(items);
-      console.log("commodities", items);
     })();
   }, [selectedCommodityType]);
 
@@ -123,6 +261,7 @@ const AgreementForm: React.FC = () => {
       setFarmersList([]);
       setSelectedFarmer('');
       setFarmerLandList([]);
+      setSelectedLandId(null);
       return;
     }
     (async () => {
@@ -131,23 +270,14 @@ const AgreementForm: React.FC = () => {
     })();
   }, [selectedCommodity]);
 
-
-
   useEffect(() => {
     if (!selectedFarmer) return;
 
     (async () => {
-      console.log("🧑‍🌾 Selected Farmer ID:", selectedFarmer);
-
       const details = await farmerDetails(selectedFarmer);
       const info = details.length > 0 ? details[0] : null;
-
       const landDetails = await getFarmerLandDetail(selectedFarmer);
-      console.log("🌾 All Farmer Land Details:", landDetails);
 
-
-
-      // ✅ Update main form state
       updateState({
         ...state,
         form: {
@@ -173,121 +303,31 @@ const AgreementForm: React.FC = () => {
         },
       });
 
-      // ✅ Update both list and selected land ID
       setFarmerLandList(landDetails || []);
-    
-
-      console.log("✅ State updated with farmer + land details");
     })();
   }, [selectedFarmer]);
 
 
+    useEffect(() => {
+      (async () => {
+        const data = await fetchSeedOptions();
+        setSeedOptions(data);
+        console.log("Fetched Commodity Types:", data);
+      })();
+    }, []);
 
-  useEffect(() => {
-    axios
-      .get('https://stage-master-backend.epravaha.com/api/State/GetAllStates')
-      .then(res => {
-        const mappedStates = res.data.map(item => ({
-          label: item.name,
-          value: item.stateCode?.toString(),
-        }));
-        setStatesList(mappedStates);
-      })
-      .catch(err => console.error(err));
-  }, []);
-
-  useEffect(() => {
-    if (state.form.state) {
-      axios
-        .get(
-          `https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${state.form.state}`
-        )
-        .then(res => {
-          const mappedDistricts = res.data.map(item => ({
-            label: item.name,
-            value: item.districtCode?.toString(),
-          }));
-          setDistrictsList(mappedDistricts);
-        })
-        .catch(err => console.error(err));
-    } else {
-      setDistrictsList([]);
-    }
-  }, [state.form.state]);
-
-
-
-  useEffect(() => {
-    (async () => {
-      const data = await fetchSeedOptions();
-      setSeedOptions(data);
-      console.log("Fetched Commodity Types:", data);
-    })();
-  }, []);
-
-
-
-
-
-
-  const isFarmerSelected = !!selectedFarmer;
-
-  const handleFocus = (field: string) => {
-    setIsFocused(prev => ({ ...prev, [field]: true }));
-  };
-
-  const handleBlur = (field: string) => {
-    setIsFocused(prev => ({ ...prev, [field]: false }));
-  };
-
-
-  const validateForm = () => {
-    if (!selectedCommodityType) {
-      alert("Please select a Commodity Type");
-      return false;
-    }
-    if (!selectedCommodity) {
-      alert("Please select a Commodity");
-      return false;
-    }
-    if (!selectedFarmer) {
-      alert("Please select a Farmer");
-      return false;
-    }
-    if (!state.form.produceseeds) {
-      alert("Please select Produce Seeds");
-      return false;
-    }
-    if (!selectedLandId) {
-      alert("Please select at least one Land");
-      return false;
-    }
-
-
-
-    if (!state.form.seeds) {
-      alert("Please select Seeds");
-      return false;
-    }
-    if (!selectedDate) {
-      alert("Please select Duration From date");
-      return false;
-    }
-
-    // ✅ Area validation
-    const areaValue = Number(state.form.Area);
-    if (!areaValue || areaValue <= 0) {
-      alert("Please enter a valid Area (in acres)");
-      return false;
-    }
-    if (areaValue > 1000000) {
-      alert("Maximum Area allowed is 10,00,000 acres");
-      return false;
-    }
-
-    return true;
-  };
-
+  const fields = [
+    { label: 'Full Name', value: state.form.name, icon: 'account' },
+    { label: 'Age', value: '25', icon: 'calendar' },
+    { label: 'Gender', value: state.form.gender, icon: 'gender-male-female' },
+    { label: 'Relation', value: state.form.relation, icon: 'account-group' },
+    { label: 'Relative Name', value: state.form.relativename, icon: 'account' },
+    { label: 'Village', value: state.form.villagename, icon: 'home-city' },
+    { label: 'District', value: state.form.districtname, icon: 'map-marker' },
+    { label: 'State', value: state.form.statename, icon: 'map' },
+    { label: 'Pincode', value: state.form.pincode, icon: 'numeric' },
+    { label: 'Mobile Number', value: state.form.mobile, icon: 'phone' },
+  ];
 
   return (
     <KeyboardAwareScrollView
@@ -299,99 +339,86 @@ const AgreementForm: React.FC = () => {
       enableAutomaticScroll={true}
       showsVerticalScrollIndicator={false}
     >
-
-
-
       <Card style={styles.sectionCard}>
         <Card.Content>
+          <Text style={styles.label}>Commodity Type *</Text>
           <CommonPicker
-            label="Commodity Type"
             selectedValue={selectedCommodityType}
-            onValueChange={(value) => {
-              setSelectedCommodityType(value);
-              console.log("commodity id", value);
-              setSelectedCommodity('');
-            }}
+            onValueChange={(value) => handleFieldChange('selectedCommodityType', value)}
+            onFocus={() => handlePickerFocus('selectedCommodityType')}
+            onBlur={() => handlePickerBlur('selectedCommodityType')}
             items={commodityTypes}
+            isFocused={focusedFields.selectedCommodityType}
           />
+          <HelperText type="error" visible={shouldShowError('selectedCommodityType')}>
+            {errors.selectedCommodityType}
+          </HelperText>
 
+          <Text style={styles.label}>Commodity *</Text>
           <CommonPicker
-            label="Commodity"
             selectedValue={selectedCommodity}
-            onValueChange={(value) => setSelectedCommodity(value)}
+            onValueChange={(value) => handleFieldChange('selectedCommodity', value)}
+            onFocus={() => handlePickerFocus('selectedCommodity')}
+            onBlur={() => handlePickerBlur('selectedCommodity')}
             items={commodities}
+            isFocused={focusedFields.selectedCommodity}
           />
+          <HelperText type="error" visible={shouldShowError('selectedCommodity')}>
+            {errors.selectedCommodity}
+          </HelperText>
 
-          {/* {selectedCommodity === "CMM2025091506361750433849034" && (
-            <View style={styles.infoContainer}>
-              <Text style={styles.subTitle}>Onion Information</Text>
-              <Text style={styles.description}>
-                • Onion is one of the most important commercial vegetable crops grown in Indias.
-              </Text>
-            </View>
-          )} */}
-
+          <Text style={styles.label}>Farmer *</Text>
           <CommonPicker
-            label="Farmer"
             selectedValue={selectedFarmer}
-            onValueChange={(value) => {
-              setSelectedFarmer(value); // ✅ farmerId store ho gaya
-              const selectedItem = farmersList.find(item => item.value === value);
-              if (selectedItem) {
-                setSelectedVariety(selectedItem.varietyId); // ✅ varietyId store
-                console.log("✅ Selected Variety ID:", selectedItem.varietyId);
-                setSelectedFarmerId(selectedItem.Id);       // ✅ id bhi store ho gaya
-                setSelectedCenterTargetId(selectedItem.centertargetid);
-              }
-            }}
+            onValueChange={(value) => handleFieldChange('selectedFarmer', value)}
+            onFocus={() => handlePickerFocus('selectedFarmer')}
+            onBlur={() => handlePickerBlur('selectedFarmer')}
             items={farmersList}
+            isFocused={focusedFields.selectedFarmer}
           />
+          <HelperText type="error" visible={shouldShowError('selectedFarmer')}>
+            {errors.selectedFarmer}
+          </HelperText>
 
-
-          {/* Certificate No */}
-            <Text style={styles.label}>Certificate No</Text>
+          <Text style={styles.label}>Certificate No *</Text>
           <TextInput
             label="Certificate No"
             mode="outlined"
             placeholder="Enter certificate number"
-            value={state.form.CertificateNo || ""} // ✅ empty string if not filled
-            onChangeText={(value) =>
-              updateState({
-                ...state,
-                form: { ...state.form, CertificateNo: value },
-              })
-            }
+            value={state.form.CertificateNo || ""}
+            onChangeText={(value) => handleFieldChange('CertificateNo', value)}
+            onBlur={() => handleTextInputBlur('CertificateNo')}
             style={[styles.input, { backgroundColor: "white" }]}
             maxLength={10}
+            error={shouldShowError('CertificateNo')}
           />
+          <HelperText type="error" visible={shouldShowError('CertificateNo')}>
+            {errors.CertificateNo}
+          </HelperText>
 
-          {/* Survey No */}
-           <Text style={styles.label}>Survey No</Text>
+          <Text style={styles.label}>Survey No *</Text>
           <TextInput
             label="Survey No"
             mode="outlined"
             placeholder="Enter survey number"
-            value={state.form.SurveyNo || ""} // ✅ empty string if not filled
-            onChangeText={(value) =>
-              updateState({
-                ...state,
-                form: { ...state.form, SurveyNo: value },
-              })
-            }
+            value={state.form.SurveyNo || ""}
+            onChangeText={(value) => handleFieldChange('SurveyNo', value)}
+            onBlur={() => handleTextInputBlur('SurveyNo')}
             style={[styles.input, { backgroundColor: "white" }]}
             maxLength={10}
+            error={shouldShowError('SurveyNo')}
           />
-
-
-
+          <HelperText type="error" visible={shouldShowError('SurveyNo')}>
+            {errors.SurveyNo}
+          </HelperText>
         </Card.Content>
       </Card>
 
+      {/* Farmer Information Card - Same as before */}
       <Card style={styles.farmerCard}>
         <Card.Content>
           <Text style={styles.sectionTitle}>Farmer Information</Text>
           <Divider style={styles.headerDivider} />
-
           {selectedFarmer ? (
             <View style={styles.detailsContainer}>
               {fields.map((item, index) => (
@@ -415,185 +442,188 @@ const AgreementForm: React.FC = () => {
               ))}
             </View>
           ) : (
-            <Text variant="bodySmall" style={styles.noFarmerSelected}>No farmer selected</Text>
+            <Text variant="bodySmall" style={styles.noFarmerSelected}>
+              {shouldShowError('selectedFarmer') ? errors.selectedFarmer : 'No farmer selected'}
+            </Text>
           )}
         </Card.Content>
       </Card>
 
+      {/* Farmer Land Details Card - Same as before */}
       <Card style={styles.farmerCard}>
         <Card.Content>
-          <Text style={styles.sectionTitle}>Farmer Land Details</Text>
+          <Text style={styles.sectionTitle}>Farmer Land Details *</Text>
           <Divider style={styles.headerDivider} />
-
           {farmerLandList.length > 0 ? (
-            farmerLandList.map((land, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.landCard,
-                  selectedLandId === land.id && styles.selectedLandCard,
-                ]}
-              >
-                <View style={styles.checkboxRow}>
-                  <Checkbox
-                    status={selectedLandId === land.id ? "checked" : "unchecked"}
-                    onPress={() =>
-                      setSelectedLandId(land.id === selectedLandId ? null : land.id)
-                    }
-                    color="#1976D2"
-                  />
-                  <Text style={styles.landLabel}>Select Land {index + 1}</Text>
+            <>
+              {farmerLandList.map((land, index) => (
+                <View
+                  key={index}
+                  style={[
+                    styles.landCard,
+                    selectedLandId === land.id && styles.selectedLandCard,
+                  ]}
+                >
+                  <View style={styles.checkboxRow}>
+                    <Checkbox
+                      status={selectedLandId === land.id ? "checked" : "unchecked"}
+                      onPress={() => handleFieldChange('selectedLandId', land.id === selectedLandId ? null : land.id)}
+                      color="#1976D2"
+                    />
+                    <Text style={styles.landLabel}>Select Land {index + 1}</Text>
+                  </View>
+                  <Divider />
+                  <View style={styles.detailsContainer}>
+                                 
+                                     <View style={styles.detailRow}>
+                                       <View style={styles.labelContainer}>
+                                         <MaterialCommunityIcons
+                                           name="numeric"
+                                           size={20}
+                                           color="#4CAF50"
+                                           style={{ marginRight: 8 }}
+                                         />
+                                         <Text style={styles.detailLabel}>Land Number:</Text>
+                                       </View>
+                                       <Text style={styles.detailValue}>{land.number || "-"}</Text>
+                                     </View>
+                 
+                                     <View style={styles.detailRow}>
+                                       <View style={styles.labelContainer}>
+                                         <MaterialCommunityIcons
+                                           name="numeric-2-box-outline"
+                                           size={20}
+                                           color="#4CAF50"
+                                           style={{ marginRight: 8 }}
+                                         />
+                                         <Text style={styles.detailLabel}>Sub Number:</Text>
+                                       </View>
+                                       <Text style={styles.detailValue}>{land.subnumber || "-"}</Text>
+                                     </View>
+                 
+                                     <View style={styles.detailRow}>
+                                       <View style={styles.labelContainer}>
+                                         <MaterialCommunityIcons
+                                           name="square-outline"
+                                           size={20}
+                                           color="#4CAF50"
+                                           style={{ marginRight: 8 }}
+                                         />
+                                         <Text style={styles.detailLabel}>Total Area:</Text>
+                                       </View>
+                                       <Text style={styles.detailValue}>
+                                         {land.totalarea || "-"} {land.unit}
+                                       </Text>
+                                     </View>
+                 
+                                     <View style={styles.detailRow}>
+                                       <View style={styles.labelContainer}>
+                                         <MaterialCommunityIcons
+                                           name="nature"
+                                           size={20}
+                                           color="#4CAF50"
+                                           style={{ marginRight: 8 }}
+                                         />
+                                         <Text style={styles.detailLabel}>Sowing Area:</Text>
+                                       </View>
+                                       <Text style={styles.detailValue}>{land.sowingarea || "-"}</Text>
+                                     </View>
+                 
+                                     <View style={styles.detailRow}>
+                                       <View style={styles.labelContainer}>
+                                         <MaterialCommunityIcons
+                                           name="home-city"
+                                           size={20}
+                                           color="#4CAF50"
+                                           style={{ marginRight: 8 }}
+                                         />
+                                         <Text style={styles.detailLabel}>Village:</Text>
+                                       </View>
+                                       <Text style={styles.detailValue}>{land.village || "-"}</Text>
+                                     </View>
+                 
+                                     <View style={styles.detailRow}>
+                                       <View style={styles.labelContainer}>
+                                         <MaterialCommunityIcons
+                                           name={
+                                             land.approvalstatus === "PENDING"
+                                               ? "clock-time-four-outline"
+                                               : land.approvalstatus === "APPROVED"
+                                                 ? "check-circle-outline"
+                                                 : "close-circle-outline"
+                                           }
+                                           size={20}
+                                           color={
+                                             land.approvalstatus === "PENDING"
+                                               ? "#FFC107"
+                                               : land.approvalstatus === "APPROVED"
+                                                 ? "#4CAF50"
+                                                 : "#F44336"
+                                           }
+                                           style={{ marginRight: 8 }}
+                                         />
+                                         <Text style={styles.detailLabel}>Approval Status:</Text>
+                                       </View>
+                                       <Text
+                                         style={[
+                                           styles.detailValue,
+                                           {
+                                             color:
+                                               land.approvalstatus === "PENDING"
+                                                 ? "#FFC107"
+                                                 : land.approvalstatus === "APPROVED"
+                                                   ? "#4CAF50"
+                                                   : "#F44336",
+                                           },
+                                         ]}
+                                       >
+                                         {land.approvalstatus || "-"}
+                                       </Text>
+                                     </View>
+                                   </View>
                 </View>
-
-                <Divider />
-
-                <View style={styles.detailsContainer}>
-                  <View style={styles.detailRow}>
-                    <View style={styles.labelContainer}>
-                      <MaterialCommunityIcons
-                        name="numeric"
-                        size={20}
-                        color="#4CAF50"
-                        style={{ marginRight: 8 }}
-                      />
-                      <Text style={styles.detailLabel}>Land Number:</Text>
-                    </View>
-                    <Text style={styles.detailValue}>{land.number || "-"}</Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <View style={styles.labelContainer}>
-                      <MaterialCommunityIcons
-                        name="numeric-2-box-outline"
-                        size={20}
-                        color="#4CAF50"
-                        style={{ marginRight: 8 }}
-                      />
-                      <Text style={styles.detailLabel}>Sub Number:</Text>
-                    </View>
-                    <Text style={styles.detailValue}>{land.subnumber || "-"}</Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <View style={styles.labelContainer}>
-                      <MaterialCommunityIcons
-                        name="square-outline"
-                        size={20}
-                        color="#4CAF50"
-                        style={{ marginRight: 8 }}
-                      />
-                      <Text style={styles.detailLabel}>Total Area:</Text>
-                    </View>
-                    <Text style={styles.detailValue}>
-                      {land.totalarea || "-"} {land.unit}
-                    </Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <View style={styles.labelContainer}>
-                      <MaterialCommunityIcons
-                        name="nature"
-                        size={20}
-                        color="#4CAF50"
-                        style={{ marginRight: 8 }}
-                      />
-                      <Text style={styles.detailLabel}>Sowing Area:</Text>
-                    </View>
-                    <Text style={styles.detailValue}>{land.sowingarea || "-"}</Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <View style={styles.labelContainer}>
-                      <MaterialCommunityIcons
-                        name="home-city"
-                        size={20}
-                        color="#4CAF50"
-                        style={{ marginRight: 8 }}
-                      />
-                      <Text style={styles.detailLabel}>Village:</Text>
-                    </View>
-                    <Text style={styles.detailValue}>{land.village || "-"}</Text>
-                  </View>
-
-                  <View style={styles.detailRow}>
-                    <View style={styles.labelContainer}>
-                      <MaterialCommunityIcons
-                        name={
-                          land.approvalstatus === "PENDING"
-                            ? "clock-time-four-outline"
-                            : land.approvalstatus === "APPROVED"
-                              ? "check-circle-outline"
-                              : "close-circle-outline"
-                        }
-
-                        size={20}
-                        color={
-                          land.approvalstatus === "PENDING"
-                            ? "#FFC107"
-                            : land.approvalstatus === "APPROVED"
-                              ? "#4CAF50"
-                              : "#F44336"
-                        }
-                        style={{ marginRight: 8 }}
-                      />
-                      <Text style={styles.detailLabel}>Approval Status:</Text>
-                    </View>
-                    <Text
-                      style={[
-                        styles.detailValue,
-                        {
-                          color:
-                            land.approvalstatus === "PENDING"
-                              ? "#FFC107"
-                              : land.approvalstatus === "APPROVED"
-                                ? "#4CAF50"
-                                : "#F44336",
-                        },
-                      ]}
-                    >
-                      {land.approvalstatus || "-"}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            ))
+              ))}
+              <HelperText type="error" visible={shouldShowError('selectedLandId')}>
+                {errors.selectedLandId}
+              </HelperText>
+            </>
           ) : (
-            <Text style={styles.noFarmerSelected}>No land details available</Text>
+            <Text style={styles.noFarmerSelected}>
+              {selectedFarmer ? 'No land details available' : 'Select a farmer to view land details'}
+            </Text>
           )}
         </Card.Content>
       </Card>
-
 
       <Card style={styles.sectionCard}>
         <Card.Content>
           <Text style={styles.sectionTitle}>Seed Production Details</Text>
-          <Text style={styles.label}>Produce Seeds</Text>
+          
+          <Text style={styles.label}>Produce Seeds *</Text>
           <CommonPicker
             selectedValue={state.form.produceseeds || ""}
-            onValueChange={value => {
-              console.log("✅ Selected Produce Seeds:", value); // 👈 yeh aapko selected value dikhayega
-              updateState({ ...state, form: { ...state.form, produceseeds: value } });
-            }}
+            onValueChange={value => handleFieldChange('produceseeds', value)}
+            onFocus={() => handlePickerFocus('produceseeds')}
+            onBlur={() => handlePickerBlur('produceseeds')}
             items={produceseeds}
-            isFocused={isFocused.produceseeds}
-            onFocus={() => handleFocus("produceseeds")}
-            onBlur={() => handleBlur("produceseeds")}
+            isFocused={focusedFields.produceseeds}
           />
+          <HelperText type="error" visible={shouldShowError('produceseeds')}>
+            {errors.produceseeds}
+          </HelperText>
 
-          <Text style={styles.label}>Seeds</Text>
+          <Text style={styles.label}>Seeds *</Text>
           <CommonPicker
             selectedValue={state.form.seeds || ""}
-            onValueChange={(value) => {
-              console.log("Selected seed name:", value); // 👈 yeh print karega selected name
-
-              updateState({
-                ...state,
-                form: { ...state.form, seeds: value }, // 👈 backend pe name save hoga
-              });
-            }}
+            onValueChange={(value) => handleFieldChange('seeds', value)}
+            onFocus={() => handlePickerFocus('seeds')}
+            onBlur={() => handlePickerBlur('seeds')}
             items={seedOptions}
+            isFocused={focusedFields.seeds}
           />
-
+          <HelperText type="error" visible={shouldShowError('seeds')}>
+            {errors.seeds}
+          </HelperText>
         </Card.Content>
       </Card>
 
@@ -601,29 +631,32 @@ const AgreementForm: React.FC = () => {
         <Card.Content>
           <Text style={styles.sectionTitle}>Contract Terms</Text>
 
-          {/* Duration Year */}
+          <Text style={styles.label}>Duration Year *</Text>
           <YearPickerInput
             value={state.form.Year}
-            onChange={(year) =>
-              updateState({ ...state, form: { ...state.form, Year: year } })
-            }
+            onChange={(year) => handleFieldChange('Year', year)}
           />
+          <HelperText type="error" visible={shouldShowError('Year')}>
+            {errors.Year}
+          </HelperText>
 
-
-          {/* Area in Acres */}
+          <Text style={styles.label}>Area (in hectares) *</Text>
           <TextInput
             label="Area (in hectares)"
             mode="outlined"
-            placeholder="Enter area in "
+            placeholder="Enter area"
             value={state.form.Area || ""}
             maxLength={8}
             keyboardType="numeric"
             left={<TextInput.Icon icon="arrow-expand" />}
-            onChangeText={(value) =>
-              updateState({ ...state, form: { ...state.form, Area: value } })
-            }
+            onChangeText={(value) => handleFieldChange('Area', value)}
+            onBlur={() => handleTextInputBlur('Area')}
             style={[styles.input, { backgroundColor: 'white' }]}
+            error={shouldShowError('Area')}
           />
+          <HelperText type="error" visible={shouldShowError('Area')}>
+            {errors.Area}
+          </HelperText>
         </Card.Content>
       </Card>
 
@@ -632,10 +665,10 @@ const AgreementForm: React.FC = () => {
         style={styles.submitButton}
         contentStyle={styles.submitButtonContent}
         onPress={() => {
-          // if (!validateForm()) {
-          //   console.log("❌ Validation failed — please fill all required fields");
-          //   return;
-          // }
+          if (!validateForm()) {
+            console.log("❌ Validation failed — please fix all errors");
+            return;
+          }
 
           const dataToSend = {
             formData: state.form,
@@ -647,30 +680,27 @@ const AgreementForm: React.FC = () => {
             seeds: state.form.seeds,
             Area: state.form.Area,
             Year: state.form.Year,
-            selectedLandId: selectedLandId, // ✅ land id added dynamically
+            selectedLandId: selectedLandId,
             Certificate: state.form.CertificateNo || "",
             Survey: state.form.SurveyNo || "",
           };
 
           console.log("🚀 Data sent via Context:", dataToSend);
-
           setFormData(dataToSend);
           navigation.navigate("Agreement" as never);
         }}
       >
         Next
       </Button>
-
-
     </KeyboardAwareScrollView>
   );
 };
 
 export default AgreementForm;
 
-// styles remain the same as your original code
-
+// Styles remain the same as previous implementation
 const styles = StyleSheet.create({
+  // ... your existing styles
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
@@ -679,75 +709,16 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 30,
   },
-  headerCard: {
-    margin: 16,
-    borderRadius: 16,
-    backgroundColor: "#4CAF50",
-    elevation: 6, // Android shadow
-    shadowColor: "#000", // iOS shadow
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    overflow: "hidden",
-  },
-  headerContent: {
-    paddingVertical: 24,
-    paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: "#E0F2F1",
-    lineHeight: 20,
-  },
-
-
-
-  rowone: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between", // checkbox left, text right
-    paddingHorizontal: 10,
-    marginVertical: 5,
-  },
-  labelone: {
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  landLabel: {
-    fontWeight: "600",
-    color: "#2E7D32",
-    fontSize: 14,
-  },
-
-  pending: {
-    color: "#FFA000",
-    fontWeight: "700",
-  },
-  approved: {
-    color: "#388E3C",
-    fontWeight: "700",
-  },
-  rejected: {
-    color: "#D32F2F",
-    fontWeight: "700",
-  },
-  noLandText: {
-    textAlign: "center",
-    color: "#9E9E9E",
-    marginTop: 10,
-    fontStyle: "italic",
-  },
   sectionCard: {
     marginBottom: 16,
     borderRadius: 12,
     elevation: 2,
     backgroundColor: "white",
+  },
+   landLabel: {
+    fontWeight: "600",
+    color: "#2E7D32",
+    fontSize: 14,
   },
   sectionTitle: {
     fontSize: 18,
@@ -760,71 +731,28 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: "400",
-  color: "#455A64",
+    fontWeight: "600",
+    color: "#455A64",
     marginBottom: 8,
     marginTop: 4,
   },
   input: {
-    marginBottom: 12,
+    marginBottom: 4,
     backgroundColor: "white",
-    height: 38,
+    height: 50,
     fontSize: 14,
-    paddingHorizontal: 10,
-    borderRadius: 30
-  },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  halfInput: {
-    width: "48%",
   },
   submitButton: {
     marginTop: 8,
     marginBottom: 30,
-    paddingVertical: 4,  // kam kar diya
+    paddingVertical: 4,
     backgroundColor: "#4CAF50",
     borderRadius: 8,
     elevation: 4,
   },
   submitButtonContent: {
-    paddingVertical: 2, // aur bhi kam
+    paddingVertical: 2,
   },
-  infoContainer: {
-    marginTop: 12,
-    backgroundColor: "#F8F9FA",
-    borderRadius: 10,
-    padding: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: "#70B04F",
-  },
-
-  subTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#007BFF",
-    marginBottom: 6,
-  },
-
-  description: {
-    fontSize: 14,
-    color: "#333",
-    lineHeight: 20,
-    textAlign: "justify",
-  },
-  // farmerCard: {
-  //   margin: 16,
-  //   borderRadius: 16,
-  //   elevation: 6,
-  //   backgroundColor: 'red',
-  //   shadowColor: '#000',
-  //   shadowOpacity: 0.1,
-  //   shadowRadius: 10,
-  // },
-
-
   farmerCard: {
     marginBottom: 16,
     borderRadius: 12,
@@ -833,13 +761,6 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
-  cardHeader: {
-    fontWeight: '700',
-    marginBottom: 10,
-    color: '#70B04',
-  },
-
-
   landCard: {
     marginVertical: 8,
     backgroundColor: "#F9F9F9",
@@ -857,8 +778,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 5,
   },
-
-
   headerDivider: {
     marginVertical: 8,
     height: 1,
@@ -881,12 +800,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  iconStyle: {
-    fontFamily: 'MaterialIcons', // Paper icons
-    fontSize: 20,
-    color: '#F79B00',
-    marginRight: 6,
-  },
   detailLabel: {
     fontSize: 16,
     color: '#555',
@@ -908,5 +821,4 @@ const styles = StyleSheet.create({
     color: '#999',
     fontStyle: 'italic',
   },
-
 });

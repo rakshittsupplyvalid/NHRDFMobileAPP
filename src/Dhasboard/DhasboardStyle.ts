@@ -41,6 +41,12 @@ export const styles = StyleSheet.create({
     marginTop: 12,
   },
   input: {
+
+
+
+    height: 38,
+    fontSize: 14,
+    paddingHorizontal: 10,
     backgroundColor: "#fff",
     marginBottom: 4,
   },
