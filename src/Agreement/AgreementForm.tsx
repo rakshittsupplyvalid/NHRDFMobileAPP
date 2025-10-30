@@ -145,9 +145,7 @@ const AgreementForm: React.FC = () => {
       const landDetails = await getFarmerLandDetail(selectedFarmer);
       console.log("🌾 All Farmer Land Details:", landDetails);
 
-      // ✅ Pick the first land ID (you can change logic if needed)
-      const firstLandId = landDetails?.length > 0 ? landDetails[0].id : "";
-      console.log("🌍 Selected Land ID:", firstLandId);
+
 
       // ✅ Update main form state
       updateState({
@@ -177,7 +175,7 @@ const AgreementForm: React.FC = () => {
 
       // ✅ Update both list and selected land ID
       setFarmerLandList(landDetails || []);
-      setSelectedLandId(firstLandId);
+    
 
       console.log("✅ State updated with farmer + land details");
     })();
@@ -351,6 +349,7 @@ const AgreementForm: React.FC = () => {
 
 
           {/* Certificate No */}
+            <Text style={styles.label}>Certificate No</Text>
           <TextInput
             label="Certificate No"
             mode="outlined"
@@ -367,6 +366,7 @@ const AgreementForm: React.FC = () => {
           />
 
           {/* Survey No */}
+           <Text style={styles.label}>Survey No</Text>
           <TextInput
             label="Survey No"
             mode="outlined"
@@ -632,10 +632,10 @@ const AgreementForm: React.FC = () => {
         style={styles.submitButton}
         contentStyle={styles.submitButtonContent}
         onPress={() => {
-          if (!validateForm()) {
-            console.log("❌ Validation failed — please fill all required fields");
-            return;
-          }
+          // if (!validateForm()) {
+          //   console.log("❌ Validation failed — please fill all required fields");
+          //   return;
+          // }
 
           const dataToSend = {
             formData: state.form,
@@ -760,8 +760,8 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: "600",
-    color: "#455A64",
+    fontWeight: "400",
+  color: "#455A64",
     marginBottom: 8,
     marginTop: 4,
   },

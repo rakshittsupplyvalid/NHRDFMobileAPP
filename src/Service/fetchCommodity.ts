@@ -175,3 +175,48 @@ export const fetchSeedOptions = async () => {
     return [];
   }
 };
+
+
+
+export const Season = async () => {
+  try {
+    const res = await apiClient.get(
+      `/api/mobile/season/List?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`
+    );
+
+    const data = Array.isArray(res.data) ? res.data : [res.data];
+
+    // 👇 Dropdown me name show karega
+    return data.map((item: any) => ({
+      label: item.name,       // dropdown me dikhne wala text
+      value: item.name,       // backend pe bhejne wala value
+      id: item.id,
+      description: item.description,
+    }));
+  } catch (error: any) {
+    console.error("Seed fetch error:", error);
+    return [];
+  }
+};
+
+
+export const centertarget = async () => {
+  try {
+    const res = await apiClient.get(
+      `/api/mobile/centertarget/get/list?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`
+    );
+
+    const data = Array.isArray(res.data) ? res.data : [res.data];
+
+    // 👇 Dropdown me name show karega
+    return data.map((item: any) => ({
+      label: item.name,       // dropdown me dikhne wala text
+      value: item.name,       // backend pe bhejne wala value
+      id: item.id,
+      description: item.description,
+    }));
+  } catch (error: any) {
+    console.error("Seed fetch error:", error);
+    return [];
+  }
+};

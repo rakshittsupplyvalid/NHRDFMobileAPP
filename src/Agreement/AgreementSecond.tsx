@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { StyleSheet, View, TouchableOpacity, ScrollView, Modal, PermissionsAndroid, Platform } from "react-native";
-import { Button, Text, Card, TextInput, Checkbox, HelperText } from "react-native-paper";
+import { Button, Text, Card, TextInput, Checkbox, HelperText, Divider } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import CommonPicker from "../CommonComponent/CommonDropdown";
 import { Onion, Garlic, Potato } from "../Constants/constants";
@@ -22,9 +22,6 @@ import CustomDateTimePicker from "../CommonComponent/DateTimePicker";
 import { launchCamera, CameraOptions } from 'react-native-image-picker';
 import * as FileSystem from "expo-file-system";
 import axios from "axios";
-
-
-
 
 interface NomineeType {
     nomineename: string;
@@ -428,24 +425,22 @@ const AgreementSecond: React.FC = () => {
         }
     };
 
-    const updateNominee = (index: number, key: keyof NomineeType, value: string) => {
-        const newNominees = [...nominees];
+     const updateNominee = (index: number, key: keyof NomineeType, value: string) => {
+  const newNominees = [...nominees];
 
-        if (key === "dob") {
-            // ✅ Convert only DOB into ISO format for backend
-            const isoDate = new Date(value).toISOString();
-            newNominees[index][key] = isoDate as any;
-        } else if (key === "year") {
-            // ✅ Allow only numeric and max 4 characters
-            const numericYear = value.replace(/[^0-9]/g, "").slice(0, 4);
-            newNominees[index][key] = numericYear as any;
-        } else {
-            // ✅ Handle all other normal text fields
-            newNominees[index][key] = value as any;
-        }
+  if (key === "dob") {
+    // ✅ Value already ISO — no need to reconvert
+    newNominees[index][key] = value as any;
+  } else if (key === "year") {
+    const numericYear = value.replace(/[^0-9]/g, "").slice(0, 4);
+    newNominees[index][key] = numericYear as any;
+  } else {
+    newNominees[index][key] = value as any;
+  }
 
-        setNominees(newNominees);
-    }
+  setNominees(newNominees);
+};
+
 
     const addNominee = () => {
         setNominees([
@@ -546,364 +541,365 @@ const AgreementSecond: React.FC = () => {
     };
 
 
-    useFocusEffect(
-        React.useCallback(() => {
-            const params = route.params as { signatureUri?: string; type?: string } | undefined;
-            if (params?.signatureUri && params?.type) {
-                if (params.type === "nominee") setNomineeSignatureUri(params.signatureUri);
-                else if (params.type === "witness") setWitnessSignatureUri(params.signatureUri);
+    // useFocusEffect(
+    //     React.useCallback(() => {
+    //         const params = route.params as { signatureUri?: string; type?: string } | undefined;
+    //         if (params?.signatureUri && params?.type) {
+    //             if (params.type === "nominee") setNomineeSignatureUri(params.signatureUri);
+    //             else if (params.type === "witness") setWitnessSignatureUri(params.signatureUri);
+    //         }
+    //     }, [route.params])
+    // );
+
+     useFocusEffect(
+  React.useCallback(() => {
+    const params = route.params as { signatureUri?: string; type?: string } | undefined;
+
+    if (params?.signatureUri && params?.type) {
+      console.log("🖋️ Received Signature URI:", params.signatureUri);
+      console.log("📄 Signature Type:", params.type);
+
+      // ✅ Fixed line — using plain 'base64' instead of EncodingType
+      FileSystem.readAsStringAsync(params.signatureUri, {
+        encoding: 'base64',
+      })
+        .then((base64Data) => {
+          const base64Image = `data:image/png;base64,${base64Data}`;
+          console.log("✅ Base64 Image:", base64Image.substring(0, 100) + "...");
+
+          // Convert Base64 → Blob for multipart upload
+          const base64ToBlob = (base64, type = "image/png") => {
+            const byteCharacters = atob(base64.split(",")[1]);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
             }
-        }, [route.params])
-    );
+            const byteArray = new Uint8Array(byteNumbers);
+            return new Blob([byteArray], { type });
+          };
 
-//      useFocusEffect(
-//   React.useCallback(() => {
-//     const params = route.params as { signatureUri?: string; type?: string } | undefined;
+          const imageBlob = base64ToBlob(base64Image, "image/png");
+          console.log("📦 Converted Blob:", imageBlob);
+          console.log("📏 Blob Size:", imageBlob.size);
 
-//     if (params?.signatureUri && params?.type) {
-//       console.log("🖋️ Received Signature URI:", params.signatureUri);
-//       console.log("📄 Signature Type:", params.type);
-
-//       // ✅ Fixed line — using plain 'base64' instead of EncodingType
-//       FileSystem.readAsStringAsync(params.signatureUri, {
-//         encoding: 'base64',
-//       })
-//         .then((base64Data) => {
-//           const base64Image = `data:image/png;base64,${base64Data}`;
-//           console.log("✅ Base64 Image:", base64Image.substring(0, 100) + "...");
-
-//           // Convert Base64 → Blob for multipart upload
-//           const base64ToBlob = (base64, type = "image/png") => {
-//             const byteCharacters = atob(base64.split(",")[1]);
-//             const byteNumbers = new Array(byteCharacters.length);
-//             for (let i = 0; i < byteCharacters.length; i++) {
-//               byteNumbers[i] = byteCharacters.charCodeAt(i);
-//             }
-//             const byteArray = new Uint8Array(byteNumbers);
-//             return new Blob([byteArray], { type });
-//           };
-
-//           const imageBlob = base64ToBlob(base64Image, "image/png");
-//           console.log("📦 Converted Blob:", imageBlob);
-//           console.log("📏 Blob Size:", imageBlob.size);
-
-//           const formData = new FormData();
+          const formData = new FormData();
        
-//           console.log("✅ FormData Ready for Upload");
-//         })
-//         .catch((err) => console.error("❌ Error reading file:", err));
+          console.log("✅ FormData Ready for Upload");
+        })
+        .catch((err) => console.error("❌ Error reading file:", err));
 
-//       if (params.type === "nominee") {
-//         setNomineeSignatureUri(params.signatureUri);
-//       } else if (params.type === "witness") {
-//         setWitnessSignatureUri(params.signatureUri);
-//       }
+      if (params.type === "nominee") {
+        setNomineeSignatureUri(params.signatureUri);
+      } else if (params.type === "witness") {
+        setWitnessSignatureUri(params.signatureUri);
+      }
+    }
+  }, [route.params])
+);
+
+
+    const handleSubmit = async () => {
+        console.log("📦 Received from context:", formData);
+
+        setIsSubmitting(true);
+
+        if (!isAgreementAccepted) {
+            Alert.alert(
+                "Agreement",
+                "Please read and accept the agreement terms before submitting."
+            );
+            return;
+        }
+
+        try {
+            const requestData = new FormData();
+
+            // 🔹 Append main contextual data first
+            requestData.append("CenterTargetId", formData?.selectedCenterTarget || "");
+            requestData.append("FarmerDistributionId", formData?.Farmerdistribution || "");
+            requestData.append("FarmerId", formData?.selectedFarmer || "");
+            requestData.append("VarietyId", formData?.selectedVariety || "");
+            requestData.append("DuringYear", formData?.Year?.toString() || "");
+            requestData.append("SeedClass", formData?.seeds?.toString() || "");
+            requestData.append("CommodityId", formData?.selectedCommodityType?.toString() || "");
+            requestData.append("PlantingMaterial", "SEED");
+            requestData.append("Area", formData?.Area || "0");
+
+            // 🔹 Append Agreement form fields
+            requestData.append("AuthorizedName", state.form.authorizedSignatory || "");
+            requestData.append("BillNumber", state.form.BillNumber || "");
+            requestData.append("TagNumber", state.form.TagNumber || "");
+            requestData.append("LotNumber", state.form.LotNumber || "");
+            requestData.append("DuringYear", state.form.DuringYear || "");
+
+            // 🔹 Append captured images
+            if (signaturePhoto) {
+                requestData.append("Signature", {
+                    uri: signaturePhoto,
+                    type: "image/jpeg",
+                    name: "signature.jpg",
+                } as any);
+            }
+
+            if (profilePhoto) {
+                requestData.append("ProfFile", {
+                    uri: profilePhoto,
+                    type: "image/jpeg",
+                    name: "profile.jpg",
+                } as any);
+            }
+
+            // 🔹 Append nominees
+            nominees.forEach((nominee, index) => {
+                Object.keys(nominee).forEach((key) => {
+                    const value = nominee[key as keyof NomineeType];
+
+                    if (key === "signature" && value) {
+                        // 🔹 Send nominee signature image
+                        requestData.append(`NomiNee[${index}][signature]`, {
+                            uri: value,
+                            type: "image/jpeg",
+                            name: `nominee_signature_${index}.jpg`,
+                        } as any);
+                    } else {
+                        // 🔹 Append normal text fields
+                        requestData.append(
+                            `NomiNee[${index}][${key}]`,
+                            value?.toString() || ""
+                        );
+                    }
+                });
+            });
+
+
+            // 🔹 Append witnesses
+            witnesses.forEach((witness, index) => {
+                Object.keys(witness).forEach((key) => {
+                    requestData.append(
+                        `Witness[${index}][${key}]`,
+                        witness[key as keyof WitnessType]?.toString() || ""
+                    );
+                });
+            });
+
+            // 🔹 Log everything before sending
+            console.log("🚀 Sending this FormData:");
+            for (let [key, value] of (requestData as any).entries()) {
+                console.log(`➡️ ${key}:`, value);
+            }
+
+            const token = await retrieveToken();
+
+            const response = await apiClient.post("/api/mobile/agreement", requestData, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (response.status === 200 || response.status === 201) {
+                Alert.alert("✅ Success", "Agreement submitted successfully.", [
+                    {
+                        text: "OK",
+                        onPress: () => {
+                            navigation.dispatch(
+                                CommonActions.reset({
+                                    index: 0,
+                                    routes: [{ name: "Dashboard" }],
+                                })
+                            );
+                        },
+                    },
+                ]);
+            } else {
+                Alert.alert("❌ Error", "Submission failed.");
+            }
+        } catch (error: any) {
+            console.error("❌ Submit error:", error);
+            Alert.alert(
+                "Error",
+                error.response?.data?.message || "Something went wrong."
+            );
+        }
+    };
+
+
+
+
+
+//   const handleSubmit = async () => {
+//   console.log("📦 Received from context:", formData);
+//   setIsSubmitting(true);
+
+//   if (!isAgreementAccepted) {
+//     Alert.alert(
+//       "Agreement",
+//       "Please read and accept the agreement terms before submitting."
+//     );
+//     return;
+//   }
+
+//   try {
+//     const FS: any = FileSystem; // ✅ TypeScript ke liye fix
+//     const requestData = new FormData();
+
+//     // 🔹 Append main contextual data
+//     requestData.append("CenterTargetId", formData?.selectedCenterTarget || "");
+//     requestData.append("FarmerDistributionId", formData?.Farmerdistribution || "");
+//     requestData.append("FarmerId", formData?.selectedFarmer || "");
+//     requestData.append("VarietyId", formData?.selectedVariety || "");
+//     requestData.append("DuringYear", formData?.Year?.toString() || "");
+//     requestData.append("SeedClass", formData?.seeds?.toString() || "");
+//     requestData.append("CommodityId", formData?.selectedCommodityType?.toString() || "");
+//     requestData.append("PlantingMaterial", "SEED");
+//     requestData.append("Area", formData?.Area || "0");
+
+//     requestData.append("CertificateNo" , formData?.Certificate|| "");  
+//         requestData.append("LandDetailId" , formData?.selectedLandId|| "");
+//     requestData.append("SurveyNo" , formData?.Survey || "");
+
+//     // 🔹 Append Agreement form fields
+//     requestData.append("AuthorizedName", state.form.authorizedSignatory || "");
+//     requestData.append("BillNumber", state.form.BillNumber || "");
+//     requestData.append("TagNumber", state.form.TagNumber || "");
+//     requestData.append("LotNumber", state.form.LotNumber || "");
+//     requestData.append("DuringYear", state.form.DuringYear || "");
+
+//     // 🔹 Append captured images (Profile + Signature)
+//     if (signaturePhoto) {
+//       requestData.append("Signature", {
+//         uri: signaturePhoto,
+//         type: "image/jpeg",
+//         name: "signature.jpg",
+//       } as any);
 //     }
-//   }, [route.params])
-// );
 
+//     if (profilePhoto) {
+//       requestData.append("ProfFile", {
+//         uri: profilePhoto,
+//         type: "image/jpeg",
+//         name: "profile.jpg",
+//       } as any);
+//     }
 
-//     const handleSubmit = async () => {
-//         console.log("📦 Received from context:", formData);
+//     // ✅ Helper to convert base64 to file URI
+//     const convertBase64ToFile = async (base64Uri: string, name: string) => {
+//       if (!base64Uri.startsWith("data:image")) return base64Uri; // Already file URI
 
-//         setIsSubmitting(true);
-
-//         if (!isAgreementAccepted) {
-//             Alert.alert(
-//                 "Agreement",
-//                 "Please read and accept the agreement terms before submitting."
-//             );
-//             return;
-//         }
-
-//         try {
-//             const requestData = new FormData();
-
-//             // 🔹 Append main contextual data first
-//             requestData.append("CenterTargetId", formData?.selectedCenterTarget || "");
-//             requestData.append("FarmerDistributionId", formData?.Farmerdistribution || "");
-//             requestData.append("FarmerId", formData?.selectedFarmer || "");
-//             requestData.append("VarietyId", formData?.selectedVariety || "");
-//             requestData.append("DuringYear", formData?.Year?.toString() || "");
-//             requestData.append("SeedClass", formData?.seeds?.toString() || "");
-//             requestData.append("CommodityId", formData?.selectedCommodityType?.toString() || "");
-//             requestData.append("PlantingMaterial", "SEED");
-//             requestData.append("Area", formData?.Area || "0");
-
-//             // 🔹 Append Agreement form fields
-//             requestData.append("AuthorizedName", state.form.authorizedSignatory || "");
-//             requestData.append("BillNumber", state.form.BillNumber || "");
-//             requestData.append("TagNumber", state.form.TagNumber || "");
-//             requestData.append("LotNumber", state.form.LotNumber || "");
-//             requestData.append("DuringYear", state.form.DuringYear || "");
-
-//             // 🔹 Append captured images
-//             if (signaturePhoto) {
-//                 requestData.append("Signature", {
-//                     uri: signaturePhoto,
-//                     type: "image/jpeg",
-//                     name: "signature.jpg",
-//                 } as any);
-//             }
-
-//             if (profilePhoto) {
-//                 requestData.append("ProfFile", {
-//                     uri: profilePhoto,
-//                     type: "image/jpeg",
-//                     name: "profile.jpg",
-//                 } as any);
-//             }
-
-//             // 🔹 Append nominees
-//             nominees.forEach((nominee, index) => {
-//                 Object.keys(nominee).forEach((key) => {
-//                     const value = nominee[key as keyof NomineeType];
-
-//                     if (key === "signature" && value) {
-//                         // 🔹 Send nominee signature image
-//                         requestData.append(`NomiNee[${index}][signature]`, {
-//                             uri: value,
-//                             type: "image/jpeg",
-//                             name: `nominee_signature_${index}.jpg`,
-//                         } as any);
-//                     } else {
-//                         // 🔹 Append normal text fields
-//                         requestData.append(
-//                             `NomiNee[${index}][${key}]`,
-//                             value?.toString() || ""
-//                         );
-//                     }
-//                 });
-//             });
-
-
-//             // 🔹 Append witnesses
-//             witnesses.forEach((witness, index) => {
-//                 Object.keys(witness).forEach((key) => {
-//                     requestData.append(
-//                         `Witness[${index}][${key}]`,
-//                         witness[key as keyof WitnessType]?.toString() || ""
-//                     );
-//                 });
-//             });
-
-//             // 🔹 Log everything before sending
-//             console.log("🚀 Sending this FormData:");
-//             for (let [key, value] of (requestData as any).entries()) {
-//                 console.log(`➡️ ${key}:`, value);
-//             }
-
-//             const token = await retrieveToken();
-
-//             const response = await apiClient.post("/api/mobile/agreement", requestData, {
-//                 headers: {
-//                     "Content-Type": "multipart/form-data",
-//                     Authorization: `Bearer ${token}`,
-//                 },
-//             });
-
-//             if (response.status === 200 || response.status === 201) {
-//                 Alert.alert("✅ Success", "Agreement submitted successfully.", [
-//                     {
-//                         text: "OK",
-//                         onPress: () => {
-//                             navigation.dispatch(
-//                                 CommonActions.reset({
-//                                     index: 0,
-//                                     routes: [{ name: "Dashboard" }],
-//                                 })
-//                             );
-//                         },
-//                     },
-//                 ]);
-//             } else {
-//                 Alert.alert("❌ Error", "Submission failed.");
-//             }
-//         } catch (error: any) {
-//             console.error("❌ Submit error:", error);
-//             Alert.alert(
-//                 "Error",
-//                 error.response?.data?.message || "Something went wrong."
-//             );
-//         }
+//       const base64Data = base64Uri.split(",")[1];
+//       const filePath = FS.cacheDirectory + `${name}.jpg`;
+//       await FS.writeAsStringAsync(filePath, base64Data, {
+//         encoding: FS.EncodingType.Base64,
+//       });
+//       return filePath;
 //     };
 
+//     // 🔹 Append nominees
+//     for (let index = 0; index < nominees.length; index++) {
+//       const nominee = nominees[index];
+
+//       for (const key of Object.keys(nominee)) {
+//         const value = nominee[key as keyof NomineeType];
+
+//         if (key === "signature" && value) {
+//           const fileUri = await convertBase64ToFile(
+//             value,
+//             `nominee_signature_${index}`
+//           );
+
+//           requestData.append(`NomiNee[${index}][signature]`, {
+//             uri: fileUri,
+//             type: "image/jpeg",
+//             name: `nominee_signature_${index}.jpg`,
+//           } as any);
+//         } else {
+//           requestData.append(
+//             `NomiNee[${index}][${key}]`,
+//             value?.toString() || ""
+//           );
+//         }
+//       }
+//     }
+
+//     // 🔹 Append witnesses
+//     for (let index = 0; index < witnesses.length; index++) {
+//       const witness = witnesses[index];
+
+//       for (const key of Object.keys(witness)) {
+//         const value = witness[key as keyof WitnessType];
+
+//         if (key === "signature" && value) {
+//           const fileUri = await convertBase64ToFile(
+//             value,
+//             `witness_signature_${index}`
+//           );
+
+//           requestData.append(`Witness[${index}][signature]`, {
+//             uri: fileUri,
+//             type: "image/jpeg",
+//             name: `witness_signature_${index}.jpg`,
+//           } as any);
+//         } else {
+//           requestData.append(
+//             `Witness[${index}][${key}]`,
+//             value?.toString() || ""
+//           );
+//         }
+//       }
+//     }
+
+//     // 🔹 Debugging
+//     console.log("🚀 Sending this FormData:");
+//     for (let [key, value] of (requestData as any).entries()) {
+//       console.log(`➡️ ${key}:`, value);
+//     }
+
+//     // 🔹 API Call
+//     const token = await retrieveToken();
+//     const response = await apiClient.post("/api/mobile/agreement", requestData, {
+//       headers: {
+//         "Content-Type": "multipart/form-data",
+//         Authorization: `Bearer ${token}`,
+//       },
+//     });
+
+//     if (response.status === 200 || response.status === 201) {
+//       Alert.alert("✅ Success", "Agreement submitted successfully.", [
+//         {
+//           text: "OK",
+//           onPress: () => {
+//             navigation.dispatch(
+//               CommonActions.reset({
+//                 index: 0,
+//                 routes: [{ name: "Dashboard" }],
+//               })
+//             );
+//           },
+//         },
+//       ]);
+//     } else {
+//       Alert.alert("❌ Error", "Submission failed.");
+//     }
+//   } catch (error: any) {
+//     console.error("❌ Submit error:", error);
+//     Alert.alert("Error", error.response?.data?.message || "Something went wrong.");
+//   }
+// };
 
 
 
 
-  const handleSubmit = async () => {
-  console.log("📦 Received from context:", formData);
-  setIsSubmitting(true);
-
-  if (!isAgreementAccepted) {
-    Alert.alert(
-      "Agreement",
-      "Please read and accept the agreement terms before submitting."
-    );
-    return;
+    const calculateAge = (dob: string) => {
+  const birthDate = new Date(dob);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
   }
-
-  try {
-    const FS: any = FileSystem; // ✅ TypeScript ke liye fix
-    const requestData = new FormData();
-
-    // 🔹 Append main contextual data
-    requestData.append("CenterTargetId", formData?.selectedCenterTarget || "");
-    requestData.append("FarmerDistributionId", formData?.Farmerdistribution || "");
-    requestData.append("FarmerId", formData?.selectedFarmer || "");
-    requestData.append("VarietyId", formData?.selectedVariety || "");
-    requestData.append("DuringYear", formData?.Year?.toString() || "");
-    requestData.append("SeedClass", formData?.seeds?.toString() || "");
-    requestData.append("CommodityId", formData?.selectedCommodityType?.toString() || "");
-    requestData.append("PlantingMaterial", "SEED");
-    requestData.append("Area", formData?.Area || "0");
-
-    requestData.append("CertificateNo" , formData?.Certificate|| "");  
-        requestData.append("LandDetailId" , formData?.selectedLandId|| "");
-    requestData.append("SurveyNo" , formData?.Survey || "");
-
-    // 🔹 Append Agreement form fields
-    requestData.append("AuthorizedName", state.form.authorizedSignatory || "");
-    requestData.append("BillNumber", state.form.BillNumber || "");
-    requestData.append("TagNumber", state.form.TagNumber || "");
-    requestData.append("LotNumber", state.form.LotNumber || "");
-    requestData.append("DuringYear", state.form.DuringYear || "");
-
-    // 🔹 Append captured images (Profile + Signature)
-    if (signaturePhoto) {
-      requestData.append("Signature", {
-        uri: signaturePhoto,
-        type: "image/jpeg",
-        name: "signature.jpg",
-      } as any);
-    }
-
-    if (profilePhoto) {
-      requestData.append("ProfFile", {
-        uri: profilePhoto,
-        type: "image/jpeg",
-        name: "profile.jpg",
-      } as any);
-    }
-
-    // ✅ Helper to convert base64 to file URI
-    const convertBase64ToFile = async (base64Uri: string, name: string) => {
-      if (!base64Uri.startsWith("data:image")) return base64Uri; // Already file URI
-
-      const base64Data = base64Uri.split(",")[1];
-      const filePath = FS.cacheDirectory + `${name}.jpg`;
-      await FS.writeAsStringAsync(filePath, base64Data, {
-        encoding: FS.EncodingType.Base64,
-      });
-      return filePath;
-    };
-
-    // 🔹 Append nominees
-    for (let index = 0; index < nominees.length; index++) {
-      const nominee = nominees[index];
-
-      for (const key of Object.keys(nominee)) {
-        const value = nominee[key as keyof NomineeType];
-
-        if (key === "signature" && value) {
-          const fileUri = await convertBase64ToFile(
-            value,
-            `nominee_signature_${index}`
-          );
-
-          requestData.append(`NomiNee[${index}][signature]`, {
-            uri: fileUri,
-            type: "image/jpeg",
-            name: `nominee_signature_${index}.jpg`,
-          } as any);
-        } else {
-          requestData.append(
-            `NomiNee[${index}][${key}]`,
-            value?.toString() || ""
-          );
-        }
-      }
-    }
-
-    // 🔹 Append witnesses
-    for (let index = 0; index < witnesses.length; index++) {
-      const witness = witnesses[index];
-
-      for (const key of Object.keys(witness)) {
-        const value = witness[key as keyof WitnessType];
-
-        if (key === "signature" && value) {
-          const fileUri = await convertBase64ToFile(
-            value,
-            `witness_signature_${index}`
-          );
-
-          requestData.append(`Witness[${index}][signature]`, {
-            uri: fileUri,
-            type: "image/jpeg",
-            name: `witness_signature_${index}.jpg`,
-          } as any);
-        } else {
-          requestData.append(
-            `Witness[${index}][${key}]`,
-            value?.toString() || ""
-          );
-        }
-      }
-    }
-
-    // 🔹 Debugging
-    console.log("🚀 Sending this FormData:");
-    for (let [key, value] of (requestData as any).entries()) {
-      console.log(`➡️ ${key}:`, value);
-    }
-
-    // 🔹 API Call
-    const token = await retrieveToken();
-    const response = await apiClient.post("/api/mobile/agreement", requestData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (response.status === 200 || response.status === 201) {
-      Alert.alert("✅ Success", "Agreement submitted successfully.", [
-        {
-          text: "OK",
-          onPress: () => {
-            navigation.dispatch(
-              CommonActions.reset({
-                index: 0,
-                routes: [{ name: "Dashboard" }],
-              })
-            );
-          },
-        },
-      ]);
-    } else {
-      Alert.alert("❌ Error", "Submission failed.");
-    }
-  } catch (error: any) {
-    console.error("❌ Submit error:", error);
-    Alert.alert("Error", error.response?.data?.message || "Something went wrong.");
-  }
+  return age;
 };
 
-
-
-
-    const calculateAge = (dob) => {
-        const birthDate = new Date(dob);
-        const today = new Date();
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        return age.toString(); // TextInput ke liye string me
-    };
 
 
 
@@ -1436,44 +1432,69 @@ const AgreementSecond: React.FC = () => {
                 {renderCommodityDropdown()}
 
 
-                <Card style={styles.sectionCard}>
-                    <Card.Content>
-                        <Text style={styles.sectionTitle}> Signature Photo & Verify</Text>
+                      <Card style={styles.signatureCard}>
+      <Card.Content>
+        <Text style={styles.cardTitle}>Signature & Profile Verification</Text>
+        <Divider style={styles.divider} />
 
-                        <View style={styles.photoContainer}>
-                            {/* Signature Button */}
-                            <Button
-                                mode="contained-tonal"
-                                icon={() => <MaterialIcons name="edit" size={22} color="#fff" />}
-                                onPress={() => openCamera(setSignaturePhoto)}
-                                style={styles.captureButton}
-                                contentStyle={styles.captureButtonContent}
-                            >
-                                Signature Photo
-                            </Button>
-                            {signaturePhoto && (
-                                <Image source={{ uri: signaturePhoto }} style={styles.previewImage} />
-                            )}
+        <View style={styles.photoGrid}>
+          {/* ✅ Signature Capture */}
+          <View style={styles.photoBlock}>
+            <View style={styles.photoHeader}>
+              <MaterialIcons name="gesture" size={22} color="#007AFF" />
+              <Text style={styles.photoLabel}>Signature</Text>
+            </View>
 
-                            {/* Profile Button */}
-                            <Button
-                                mode="contained"
-                                icon={() => <MaterialIcons name="photo-camera" size={22} color="#fff" />}
-                                onPress={() => openCamera(setProfilePhoto)}
-                                style={styles.captureButtonAlt}
-                                contentStyle={styles.captureButtonContent}
-                            >
-                                Profile Photo
-                            </Button>
-                            {profilePhoto && (
-                                <Image source={{ uri: profilePhoto }} style={styles.previewImage} />
-                            )}
+            {signaturePhoto ? (
+              <Image source={{ uri: signaturePhoto }} style={styles.previewImage} />
+            ) : (
+              <View style={styles.emptyBox}>
+                <MaterialIcons name="border-color" size={28} color="#999" />
+                <Text style={styles.emptyText}>No Signature Added</Text>
+              </View>
+            )}
 
-                            {/* Submit Button */}
+            <Button
+              mode="contained"
+              onPress={() => openCamera(setSignaturePhoto)}
+              icon={() => <MaterialIcons name="edit" size={20} color="#fff" />}
+              style={styles.actionButton}
+              contentStyle={styles.buttonContent}
+            >
+              Capture Signature
+            </Button>
+          </View>
 
-                        </View>
-                    </Card.Content>
-                </Card>
+          {/* ✅ Profile Capture */}
+          <View style={styles.photoBlock}>
+            <View style={styles.photoHeader}>
+              <MaterialIcons name="person" size={22} color="#007AFF" />
+              <Text style={styles.photoLabel}>Profile</Text>
+            </View>
+
+            {profilePhoto ? (
+              <Image source={{ uri: profilePhoto }} style={styles.previewImage} />
+            ) : (
+              <View style={styles.emptyBox}>
+                <MaterialIcons name="photo-camera" size={28} color="#999" />
+                <Text style={styles.emptyText}>No Profile Photo</Text>
+              </View>
+            )}
+
+            <Button
+              mode="contained"
+              onPress={() => openCamera(setProfilePhoto)}
+              icon={() => <MaterialIcons name="photo-camera" size={20} color="#fff" />}
+              style={[styles.actionButton, styles.profileButton]}
+              contentStyle={styles.buttonContent}
+            >
+              Capture Profile
+            </Button>
+          </View>
+        </View>
+      </Card.Content>
+    </Card>
+
 
                 {/* NHRDF Authorized Signatory Section */}
                 <Card style={styles.sectionCard}>
@@ -1742,8 +1763,8 @@ const styles = StyleSheet.create({
         height: 45,
     },
     previewImage: {
-        width: 220,
-        height: 220,
+        width: 123,
+        height: 140,
         borderRadius: 12,
         marginTop: 12,
         borderWidth: 2,
@@ -1816,5 +1837,76 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#000',
     },
+    signatureCard: {
+    borderRadius: 16,
+    elevation: 4,
+    backgroundColor: "#fdfdfd",
+    marginVertical: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+  },
+  cardTitle: {
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#1e1e1e",
+    marginBottom: 10,
+    textAlign: "center",
+  },
+  divider: {
+    marginBottom: 15,
+  },
+  photoGrid: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  photoBlock: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: "#e6e6e6",
+  },
+  photoHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+    gap: 6,
+  },
+  photoLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#333",
+  },
+  
+  emptyBox: {
+    width: "100%",
+    height: 140,
+    borderWidth: 1.2,
+    borderColor: "#d9d9d9",
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 8,
+    backgroundColor: "#fafafa",
+  },
+  emptyText: {
+    fontSize: 12,
+    color: "#999",
+    marginTop: 4,
+  },
+  actionButton: {
+    backgroundColor: "#007AFF",
+    borderRadius: 10,
+  },
+  profileButton: {
+    backgroundColor: "#34C759",
+  },
+  buttonContent: {
+    height: 44,
+  },
 
 }); 

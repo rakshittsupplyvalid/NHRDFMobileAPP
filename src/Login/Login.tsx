@@ -8,8 +8,8 @@ import { storeToken } from '../Service/apiInterceptors';
 
 const Login = ({ navigation }: any) => {
   // const [mobileNumber, setMobileNumber] = useState('8976865879');
-  const [mobileNumber, setMobileNumber] = useState('');
-  const [password, setPassword] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('6754345656');
+  const [password, setPassword] = useState('Password@123');
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
@@ -56,12 +56,10 @@ const Login = ({ navigation }: any) => {
         mobilenumber: mobileNumber,
         assayerpassword: password,
       };
+
       console.log("Request data:", requestData);
 
-      const response = await apiClient.post(
-        "/api/mobile/assayer/login",
-        requestData
-      );
+      const response = await apiClient.post("/api/mobile/assayer/login", requestData);
 
       console.log("Login response:", response.data);
 
@@ -69,21 +67,27 @@ const Login = ({ navigation }: any) => {
         // ✅ Token save karna zaroori hai
         storeToken(response.data.token);
         console.log("✅ Token saved:", response.data.token);
-
         navigation.navigate("DrawerNavigator");
       } else {
         Alert.alert(
           "Login Failed",
-          response.data?.message || "Invalid credentials"
+          response.data?.message || "Invalid username or password"
         );
       }
     } catch (error: any) {
       console.error("Login error:", error?.response?.data || error.message);
-      Alert.alert("Error", "Something went wrong. Please try again.");
+
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong. Please try again.";
+
+      Alert.alert("Error", errorMessage);
     } finally {
       setLoading(false);
     }
   };
+
 
 
 
@@ -139,24 +143,19 @@ const Login = ({ navigation }: any) => {
             />
 
 
-            {/* <View style={styles.bottomRow}>
-              <View style={styles.rememberContainer}>
-                <Checkbox.Android
-                  status={rememberDevice ? 'checked' : 'unchecked'}
-                  onPress={() => setRememberDevice(!rememberDevice)}
-                  color={primaryColor}
-                />
-                <Text style={styles.rememberText}>Remember this Device</Text>
-              </View>
+            <View style={styles.bottomRow}>
+
               <Button
                 mode="text"
-                onPress={() => console.log('Forgot password pressed')}
+                onPress={() => navigation.navigate('ForgetPassword')}
                 labelStyle={{ color: primaryColor }}
                 compact
               >
                 Forgot Password?
               </Button>
-            </View> */}
+
+
+            </View>
 
             {/* Login Button */}
             <Button

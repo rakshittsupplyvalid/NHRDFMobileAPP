@@ -7,8 +7,8 @@ export default StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#374151',
+    fontWeight: '400',
+   color: "#455A64",
     marginBottom: 8,
   },
   picker: {

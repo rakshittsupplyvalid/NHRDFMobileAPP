@@ -35,7 +35,7 @@ export const removeToken = async () => {
 
 // ----------------------- Axios Instance -----------------------
 const apiClient = axios.create({
-  baseURL: 'https://stage-nhrdf-backend.supplyvalid.com',
+  baseURL: 'https://dev-nhrdf-backend.supplyvalid.com',
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',

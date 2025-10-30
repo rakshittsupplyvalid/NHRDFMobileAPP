@@ -1,16 +1,18 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image, Alert ,  Dimensions  , Platform} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Alert, Dimensions, Platform } from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Dhasboard from '../Dhasboard/Dhasboard';
+
 import AgreementForm from '../Agreement/AgreementForm';
 import AgreementSecond from '../Agreement/AgreementSecond';
-import  DashboardScreen from '../DhasboadScreen/DhasboardScreen'
+import DashboardScreen from '../DhasboadScreen/DhasboardScreen'
 import AgreementListScreen from '../AgreementList/AgreementList';
 import NomineeScreen from '../AgreementList/NomineeList';
 import WitnessScreen from '../AgreementList/WitnessList';
 import Signature from '../Signature/Signature';
 import CameraExample from '../Agreement/CameraExample';
+import Inspectionform from '../Dhasboard/Inspectionform';
+
 
 const Drawer = createDrawerNavigator();
 
@@ -41,30 +43,22 @@ function CustomDrawerContent(props: any) {
           style={styles.profileImage}
         />
 
-        <Text style={styles. profileName}>
+        <Text style={styles.profileName}>
           NHRDF
         </Text>
-  
-       
+
+
       </View>
 
       <DrawerContentScrollView {...props} style={{ marginTop: 10 }}>
         {/* Drawer Items */}
 
-         <DrawerItem
+        <DrawerItem
           label="Dhasboard"
           icon={({ color, size }) => <MaterialCommunityIcons name="view-dashboard" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Dashboard')}
           labelStyle={styles.drawerLabel}
         />
-
-
-        {/* <DrawerItem
-          label="Inspection Form"
-          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
-          onPress={() => props.navigation.navigate('Inspection Form')}
-          labelStyle={styles.drawerLabel}
-        /> */}
 
         <DrawerItem
           label="Agreement Form"
@@ -72,27 +66,14 @@ function CustomDrawerContent(props: any) {
           onPress={() => props.navigation.navigate('Agreement Form')}
           labelStyle={styles.drawerLabel}
         />
-           
 
-               <DrawerItem
+
+        <DrawerItem
           label="Agreement List"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Agreement List')}
           labelStyle={styles.drawerLabel}
         />
-
-{/* 
-              <DrawerItem
-          label="CameraExample"
-          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
-          onPress={() => props.navigation.navigate('CameraExample')}
-          labelStyle={styles.drawerLabel}
-        /> */}
-
-
-
-
-
 
         {/* Hidden Screen */}
         <DrawerItem
@@ -103,8 +84,17 @@ function CustomDrawerContent(props: any) {
         />
 
 
-{/* 
-           <DrawerItem
+        <DrawerItem
+          label="Inspection form"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document-outline" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('Inspection form')}
+            labelStyle={styles.drawerLabel}
+        />
+
+
+
+
+        {/* <DrawerItem
           label="Signature"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Signature')}
@@ -126,8 +116,8 @@ function CustomDrawerContent(props: any) {
 export default function DrawerNavigator() {
   return (
     <Drawer.Navigator
-    id={undefined}
-    initialRouteName="Dashboard" 
+      id={undefined}
+      initialRouteName="Dashboard"
       drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerStyle: {
@@ -151,28 +141,30 @@ export default function DrawerNavigator() {
         },
       }}
     >
-      <Drawer.Screen name="Inspection Form" component={Dhasboard} />
+    
 
 
-    <Drawer.Screen
-  name="Signature"
-  component={Signature}
-  options={{
-    headerShown: false,
-    drawerItemStyle: { display: 'none' } // optional if you want to hide from drawer
-  }}
-/>
+      <Drawer.Screen
+        name="Signature"
+        component={Signature}
+        options={{
+          headerShown: false,
+          drawerItemStyle: { display: 'none' } // optional if you want to hide from drawer
+        }}
+      />
 
 
 
       <Drawer.Screen name="Agreement Form" component={AgreementForm} />
-         <Drawer.Screen name="Agreement List" component={AgreementListScreen} />
-       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
-             <Drawer.Screen name="CameraExample" component={CameraExample} />
-      <Drawer.Screen name="Agreement" component={AgreementSecond} options={{ drawerItemStyle: { display: 'none' } ,     headerShown: false, }} />
-            <Drawer.Screen name="NomineeScreen" component={NomineeScreen} options={{ drawerItemStyle: { display: 'none' } ,     headerShown: false, }} />
+      <Drawer.Screen name="Agreement List" component={AgreementListScreen} />
+      <Drawer.Screen name="Inspection form" component={Inspectionform} />
+      <Drawer.Screen name="Dashboard" component={DashboardScreen} />
+      <Drawer.Screen name="CameraExample" component={CameraExample} />
+      <Drawer.Screen name="Agreement" component={AgreementSecond} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
+      <Drawer.Screen name="NomineeScreen" component={NomineeScreen} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
+    
 
-            <Drawer.Screen name="WitnessScreen" component={WitnessScreen} options={{ drawerItemStyle: { display: 'none' } ,     headerShown: false, }} />
+      <Drawer.Screen name="WitnessScreen" component={WitnessScreen} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
     </Drawer.Navigator>
   );
 }

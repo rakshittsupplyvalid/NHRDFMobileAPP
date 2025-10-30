@@ -1,84 +1,120 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet } from "react-native";
 
-export default StyleSheet.create({
-  keyboardAvoidingView: {
-    flex: 1,
-    backgroundColor: '#f5f7fa',
-  },
+export const styles = StyleSheet.create({
   container: {
-    flexGrow: 1,
-    paddingVertical: 20,
-    paddingHorizontal: 16,
+    flex: 1,
+    padding: 16,
+    backgroundColor: "#F4F9F4",
   },
-  formContainer: {
-    backgroundColor: '#ffffff',
+  card: {
+    marginBottom: 16,
     borderRadius: 12,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowRadius: 4,
+    backgroundColor: "#fff",
   },
   header: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginBottom: 20,
-    textAlign: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#eee',
-    paddingBottom: 10,
+    backgroundColor: "#E8F5E8",
+    padding: 16,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    flexDirection: "row",
+    alignItems: "center",
   },
-  form: {
-    width: '100%',
+  headerTitle: {
+    color: "#2E7D32",
+    fontSize: 18,
+    fontWeight: "bold",
+    marginLeft: 10,
   },
-  inputGroup: {
-    marginBottom: 20,
+  content: {
+    padding: 16,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
-    color: '#34495e',
-    marginBottom: 8,
+    fontWeight: "600",
+    marginBottom: 6,
+    color: "#333",
+    marginTop: 12,
   },
   input: {
-    height: 50,
+    backgroundColor: "#fff",
+    marginBottom: 4,
+  },
+  dateInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 50,
-    paddingHorizontal: 15,
-    fontSize: 16,
-
-    backgroundColor: '#ffffff',
-  },
-  inputFocused: {
-    borderColor: '#3498db',
+    borderColor: '#A5D6A7',
+    borderRadius: 4,
+    padding: 12,
     backgroundColor: '#fff',
-    shadowColor: '#3498db',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  button: {
-    backgroundColor: '#3498db',
-    padding: 15,
+  dropdown: {
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#A5D6A7",
+    borderRadius: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 4,
+  },
+  dropdownError: {
+    borderColor: "#D32F2F",
+  },
+  error: {
+    color: "#D32F2F",
+    fontSize: 12,
+    marginTop: 2,
+    marginBottom: 8,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  halfInput: {
+    width: "48%",
+  },
+  radioGroup: {
+    marginVertical: 8,
+  },
+  radioContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+  },
+  radioOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginRight: 20,
+  },
+  radioLabel: {
+    marginLeft: 4,
+    fontSize: 14,
+    color: "#333",
+  },
+  submitButton: {
+    backgroundColor: "#2E7D32",
+    paddingVertical: 8,
+    marginHorizontal: 16,
+    marginBottom: 30,
     borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
   },
-  buttonDisabled: {
-    backgroundColor: '#bdc3c7',
-    opacity: 0.7,
-  },
-  buttonText: {
-    color: 'white',
+  submitButtonText: {
+    color: "#fff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "bold",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#F4F9F4",
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: "#2E7D32",
   },
 });
