@@ -65,7 +65,7 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
         onConfirm={handleConfirm}
         onCancel={() => setIsVisible(false)}
         display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-        minimumDate={new Date(1960, 0, 1)}
+        minimumDate={new Date(1900, 0, 1)}
         maximumDate={new Date()}
       />
     </View>

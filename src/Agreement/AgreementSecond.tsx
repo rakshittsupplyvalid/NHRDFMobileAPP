@@ -154,11 +154,11 @@ const AgreementSecond: React.FC = () => {
 
     // Rest of the code remains the same...
     // Validation functions
-    const isValidEmail = (email: string) => {
-        if (!email) return true; // Empty is allowed
-        const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
-        return emailPattern.test(email.trim());
-    };
+      const isValidEmail = (email: string) => {
+  if (!email) return false; // Empty is NOT allowed now
+  const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
+  return emailPattern.test(email.trim());
+};
 
     const isValidMobile = (mobile: string) => {
         if (!mobile) return false;
@@ -171,12 +171,9 @@ const AgreementSecond: React.FC = () => {
     };
 
     const isValidAddress = (address: string) => {
-        if (!address) return false;
-        const trimmed = address.trim();
-        if (trimmed.length < 1) return false;
-        if (/^\d+$/.test(trimmed)) return false;
-        return /^[a-zA-Z0-9\s,.-]+$/.test(trimmed);
-    };
+  const trimmed = address?.trim() || "";
+  return trimmed.length >= 1 && trimmed.length <= 200;
+};
 
     const isValidPincode = (pincode: string) => {
         if (!pincode) return true; // Optional field
@@ -227,7 +224,7 @@ const AgreementSecond: React.FC = () => {
                 break;
             case 'addrline':
                 if (!isValidAddress(value)) {
-                    error = 'Address must be at least 5 characters (not only numbers)';
+                    error = 'Address must be at least 1 characters)';
                 }
                 break;
             case 'pincode':
@@ -236,8 +233,8 @@ const AgreementSecond: React.FC = () => {
                 }
                 break;
             case 'villagename':
-                if (value && !/^[a-zA-Z\s]{2,25}$/.test(value)) {
-                    error = 'Village name must be 2-25 letters only';
+                if (value && !/^[a-zA-Z\s]{1,100}$/.test(value)) {
+                    error = 'Village name must be 1-100 letters only';
                 }
                 break;
             case 'gender':
@@ -293,7 +290,7 @@ const AgreementSecond: React.FC = () => {
                 break;
             case 'addrline':
                 if (!isValidAddress(value)) {
-                    error = 'Address must be at least 5 characters (not only numbers)';
+                    error = 'Address must be at least 1 characters';
                 }
                 break;
             case 'pincode':
