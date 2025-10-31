@@ -161,12 +161,12 @@ const SignatureView: React.FC<SignatureViewProps> = ({ onSave }) => {
       </View>
       <View style={styles.buttonContainer}>
         <Button title="Clear" onPress={clearSignature} color="#FF3B30" />
-         <Button
-  title="Save Signature"
-  onPress={saveSignature}
-  disabled={isSignatureEmpty || !webViewLoaded}
-  color="green" // ✅ Green background on Android, green text on iOS
-/>
+        <Button
+          title="Save Signature"
+          onPress={saveSignature}
+          disabled={isSignatureEmpty || !webViewLoaded}
+          color="green" // ✅ Green background on Android, green text on iOS
+        />
 
       </View>
     </View>

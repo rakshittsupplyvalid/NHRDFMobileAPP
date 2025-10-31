@@ -9,7 +9,7 @@ import ForgetPassword from './src/Login/ForgetPassword';
 
 import Login from './src/Login/Login';
 import DrawerNavigator from './src/Navigation/DrawerNavigator';
-import { retrieveToken } from './src/Service/apiInterceptors';
+import apiClient, { removeToken, retrieveToken } from './src/Service/apiInterceptors';
 
 const Stack = createNativeStackNavigator();
 
@@ -37,14 +37,40 @@ const App = () => {
     const checkLogin = async () => {
       try {
         const token = await retrieveToken();
-        console.log('Token from first:', token);
-        setUserToken(token);
+        if (!token) {
+          setIsLoading(false);
+          return;
+        }
+
+        const response = await apiClient.get("api/login/validate", {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response?.status === 200) {
+          console.log('✅ Token valid:', token);
+          setUserToken(token);
+        } else {
+          console.warn('❌ Invalid or expired token:', response?.status);
+          await removeToken(); // remove from storage
+          setUserToken(null);
+        }
       } catch (error) {
-        console.log('Error fetching token:', error);
+        // Token expired or invalid
+        if (error.response?.status === 401) {
+          console.warn('⚠️ Token expired. Logging out user.');
+          await removeToken();
+          setUserToken(null);
+        } else {
+          console.error('Error fetching token:', error);
+        }
       } finally {
         setIsLoading(false);
       }
     };
+
     checkLogin();
   }, []);
 
@@ -59,7 +85,7 @@ const App = () => {
   return (
     // ✅ Global theme applied here
     <PaperProvider theme={theme}>
-    
+
       <NavigationContainer>
         <Stack.Navigator
           id={undefined}
@@ -68,7 +94,7 @@ const App = () => {
         >
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="ForgetPassword" component={ForgetPassword} />
-                   {/* ✅ Wrap DrawerNavigator inside FormProvider */}
+          {/* ✅ Wrap DrawerNavigator inside FormProvider */}
           <Stack.Screen
             name="DrawerNavigator"
             children={() => (
@@ -80,7 +106,7 @@ const App = () => {
 
         </Stack.Navigator>
       </NavigationContainer>
- 
+
     </PaperProvider>
   );
 };

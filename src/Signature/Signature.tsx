@@ -2,32 +2,33 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Image, Text, Button } from 'react-native';
 import SignatureView from './SignatureScreen';
-import { useNavigation  ,  useRoute} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const Signature: React.FC = () => {
   const [signature, setSignature] = useState<string | null>(null);
   const navigation = useNavigation<any>();
-    const route = useRoute();
+  const route = useRoute();
 
-  const { type } = route.params as { type: string };
+  const { type, index } = route.params as { type: string, index?: number };
 
   const handleSave = (signatureData: string) => {
-  setSignature(signatureData);
-  navigation.navigate('Agreement', {
-    type,                // nominee / witness
-    signatureUri: signatureData, // captured image
-  });
-};
+    setSignature(signatureData);
+    navigation.navigate('Agreement', {
+      type,                // nominee / witness
+      signatureUri: signatureData, // captured image
+      index:index
+    });
+  };
 
   return (
-     <View style={styles.container}>
+    <View style={styles.container}>
       <Text style={styles.title}>Digital Signature</Text>
       {signature ? (
         <View style={styles.signaturePreviewContainer}>
           <Text style={styles.previewTitle}>Signature Preview:</Text>
-          <Image 
-            source={{ uri: signature }} 
-            style={styles.signatureImage} 
+          <Image
+            source={{ uri: signature }}
+            style={styles.signatureImage}
             resizeMode="contain"
           />
           <Button title="Sign Again" onPress={() => setSignature(null)} />
