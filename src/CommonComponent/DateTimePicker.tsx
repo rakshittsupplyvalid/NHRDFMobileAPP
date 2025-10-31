@@ -6,7 +6,7 @@ type Mode = 'date' | 'time' | 'datetime';
 
 interface CustomDateTimePickerProps {
   mode?: Mode;
-  value: Date;
+  value?: Date | null; // ✅ made optional for blank state
   onChange: (date: Date) => void;
   label?: string;
   style?: StyleProp<ViewStyle>;
@@ -32,14 +32,19 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
     onChange(selectedDate);
   };
 
+  // ✅ Placeholder + safe display
   const formattedDate =
-    mode === 'time'
-      ? value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      : value.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-      });
+    value && value instanceof Date
+      ? (
+          mode === 'time'
+            ? value.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : value.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            })
+        )
+      : "Select Date"; // ✅ default text
 
   return (
     <View style={[styles.container, style]}>
@@ -56,14 +61,13 @@ const CustomDateTimePicker: React.FC<CustomDateTimePickerProps> = ({
       <DateTimePickerModal
         isVisible={isVisible}
         mode={mode}
-        date={value}
+        date={value || new Date()} // ✅ if no date, show today in picker
         onConfirm={handleConfirm}
         onCancel={() => setIsVisible(false)}
         display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-        minimumDate={new Date(1960, 0, 1)}   // ✅ Start from 1 Jan 1960
-        maximumDate={new Date()}              // ✅ Up to today's date
+        minimumDate={new Date(1960, 0, 1)}
+        maximumDate={new Date()}
       />
-
     </View>
   );
 };
@@ -81,7 +85,7 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 10, // ✅ Added smooth rounded corners
+    borderRadius: 10,
     padding: 12,
     backgroundColor: '#fff',
     justifyContent: 'center',

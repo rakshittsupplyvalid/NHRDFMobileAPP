@@ -683,6 +683,7 @@ const handlePickerBlur = (field: string) => {
             selectedLandId: selectedLandId,
             Certificate: state.form.CertificateNo || "",
             Survey: state.form.SurveyNo || "",
+            produceseeds : state.form.produceseeds || "",
           };
 
           console.log("🚀 Data sent via Context:", dataToSend);

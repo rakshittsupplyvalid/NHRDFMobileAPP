@@ -51,22 +51,42 @@ function CustomDrawerContent(props: any) {
       </View>
 
       <DrawerContentScrollView {...props} style={{ marginTop: 10 }}>
+
+
+
         {/* Drawer Items */}
+
 
         <DrawerItem
           label="Dhasboard"
-          icon={({ color, size }) => <MaterialCommunityIcons name="view-dashboard" size={size} color={color} />}
-          onPress={() => props.navigation.navigate('Dashboard')}
+          icon={({ color, size }) => (
+            <MaterialCommunityIcons name="view-dashboard" size={size} color={color} />
+          )}
+          onPress={() => {
+            props.navigation.reset({
+              index: 0,
+              routes: [{ name: 'Dashboard' }],
+            });
+          }}
           labelStyle={styles.drawerLabel}
         />
 
-        <DrawerItem
+
+
+         <DrawerItem
           label="Agreement Form"
-          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
-          onPress={() => props.navigation.navigate('Agreement Form')}
+          icon={({ color, size }) => (
+            <MaterialCommunityIcons name="view-dashboard" size={size} color={color} />
+          )}
+          onPress={() => {
+            props.navigation.reset({
+              index: 0,
+              routes: [{ name: 'Agreement Form' }],
+            });
+          }}
           labelStyle={styles.drawerLabel}
         />
-
+        
 
         <DrawerItem
           label="Agreement List"
@@ -88,7 +108,7 @@ function CustomDrawerContent(props: any) {
           label="Inspection form"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document-outline" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Inspection form')}
-            labelStyle={styles.drawerLabel}
+          labelStyle={styles.drawerLabel}
         />
 
 
@@ -141,7 +161,7 @@ export default function DrawerNavigator() {
         },
       }}
     >
-    
+
 
 
       <Drawer.Screen
@@ -162,7 +182,7 @@ export default function DrawerNavigator() {
       <Drawer.Screen name="CameraExample" component={CameraExample} />
       <Drawer.Screen name="Agreement" component={AgreementSecond} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
       <Drawer.Screen name="NomineeScreen" component={NomineeScreen} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
-    
+
 
       <Drawer.Screen name="WitnessScreen" component={WitnessScreen} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
     </Drawer.Navigator>
