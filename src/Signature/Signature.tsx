@@ -1,4 +1,4 @@
-// Signature.tsx
+
 import React, { useState } from 'react';
 import { View, StyleSheet, Image, Text, Button } from 'react-native';
 import SignatureView from './SignatureScreen';
@@ -48,6 +48,55 @@ const styles = StyleSheet.create({
 });
 
 export default Signature;
+
+
+
+
+// import React, { useState } from 'react';
+// import { View, StyleSheet, Image, Text, Button } from 'react-native';
+// import SignatureView from './SignatureScreen';
+
+// import { useNavigation, useRoute } from '@react-navigation/native';
+
+// const Signature = () => {
+//   const [signature, setSignature] = useState<string | null>(null);
+//   const navigation = useNavigation<any>();
+//   const route = useRoute();
+//   const { type } = route.params as { type: string };
+
+//   const handleSave = (signatureData: string) => {
+//     setSignature(signatureData);
+
+//     navigation.navigate("AgreementSecond", {
+//       type,
+//       signatureUri: signatureData,  // ✅ Passing base64
+//     });
+//   };
+
+//   return (
+//     <View style={styles.container}>
+//       <Text style={styles.title}>Digital Signature</Text>
+
+//       {signature ? (
+//         <View style={styles.previewContainer}>
+//           <Image source={{ uri: signature }} style={styles.previewImg} />
+//           <Button title="Sign Again" onPress={() => setSignature(null)} />
+//         </View>
+//       ) : (
+//         <SignatureView onSave={handleSave} />
+//       )}
+//     </View>
+//   );
+// };
+
+// const styles = StyleSheet.create({
+//   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+//   title: { fontSize: 22, fontWeight: 'bold', textAlign: 'center', marginBottom: 10 },
+//   previewContainer: { alignItems: 'center', marginTop: 20 },
+//   previewImg: { width: '100%', height: 200, borderWidth: 1, borderColor: '#000' },
+// });
+
+// export default Signature;
 
 
 

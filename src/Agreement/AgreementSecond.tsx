@@ -1910,3 +1910,83 @@ const styles = StyleSheet.create({
   },
 
 }); 
+
+
+
+// import React, { useEffect } from "react";
+// import { View, Text, Alert, ActivityIndicator } from "react-native";
+// import { useRoute, useNavigation } from "@react-navigation/native";
+// import apiClient from "../Service/apiInterceptors";
+
+// type RouteParams = {
+//   signatureUri: string;
+//   type: string;
+// };
+
+// const AgreementSecond = () => {
+//   const navigation = useNavigation<any>();
+//   const route = useRoute();
+//   const { signatureUri } = route.params as RouteParams;
+
+//   const submitNominee = async () => {
+//     try {
+//       const formData = new FormData();
+
+//       const base64 = signatureUri.replace("data:image/png;base64,", "");
+
+//       formData.append("Signature", {
+//         uri: `data:image/png;base64,${base64}`,
+//         type: "image/png",
+//         name: `signature_${Date.now()}.png`,
+//       } as any);
+
+//       formData.append("NomineeName", "test");
+//       formData.append("Gender", "FEMALE");
+//       formData.append("Relation", "brother");
+//       formData.append("MobileNo", "9990665358");
+//       formData.append("Email", "tyagirakshit@gmail.com");
+//       formData.append("DOB", "2025-10-30T16:44:54.111Z");
+//       formData.append("Age", "13");
+//       formData.append("Year", "23");
+//       formData.append("Addrline", "jagarti vihar");
+//       formData.append("Pincode", "201002");
+//       formData.append("StateName", "random");
+//       formData.append("DistrictName", "random");
+//       formData.append("SubdistrictName", "random");
+//       formData.append("VillageName", "random");
+//       formData.append("StateId", "2");
+//       formData.append("DistrictId", "3");
+//       formData.append("SubdistrictId", "4");
+//       formData.append("VillageId", "0");
+
+//       const apiUrl = "/api/mobile/add/nominee/AGR2025101309404516319557025";
+
+//       const res = await apiClient.post(apiUrl, formData, {
+//         headers: { "Content-Type": "multipart/form-data" },
+//       });
+
+//       console.log("✅ API", res?.data);
+//       Alert.alert("✅ Done", "Signature uploaded successfully!");
+
+//       navigation.navigate("Dashboard");
+//     } catch (error) {
+//       console.log("❌ Error", error);
+//       Alert.alert("❌ Upload Failed", "Please try again");
+//     }
+//   };
+
+//   useEffect(() => {
+//     submitNominee();
+//   }, []);
+
+//   return (
+//     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+//       <ActivityIndicator size="large" />
+//       <Text style={{ marginTop: 10, fontSize: 16 }}>
+//         Uploading Signature...
+//       </Text>
+//     </View>
+//   );
+// };
+
+// export default AgreementSecond;
