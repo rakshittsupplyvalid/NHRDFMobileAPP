@@ -91,7 +91,7 @@ const AgreementSecond: React.FC = () => {
     const [witnessDistrictsList, setWitnessDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
     const [witnessCitiesList, setWitnessCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
 
-
+    
 
 
 
@@ -672,6 +672,11 @@ const AgreementSecond: React.FC = () => {
                             type: "image/jpeg",
                             name: `nominee_signature_${index}.jpg`,
                         } as any);
+                        requestData.append(`NomiNee[${index}][profdocument]`, {
+                            uri: nomineeSignatureUri[index],
+                            type: "image/jpeg",
+                            name: `nominee_profdocument_${index}.jpg`,
+                        } as any);
                     } else {
                         // 🔹 Append normal text fields
                         requestData.append(
@@ -695,6 +700,11 @@ const AgreementSecond: React.FC = () => {
                             uri: witnessSignatureUri[index],
                             type: "image/jpeg",
                             name: `witness_signature_${index}.jpg`,
+                        } as any);
+                        requestData.append(`Witness[${index}][profdocument]`, {
+                            uri: witnessSignatureUri[index],
+                            type: "image/jpeg",
+                            name: `witness_profdocument_${index}.jpg`,
                         } as any);
                     } else {
                         // 🔹 Append normal text fields
@@ -726,23 +736,26 @@ const AgreementSecond: React.FC = () => {
             });
 
             if (response.status === 200 || response.status === 201) {
+                setIsSubmitting(false);
                 Alert.alert("✅ Success", "Agreement submitted successfully.", [
                     {
                         text: "OK",
-                        // onPress: () => {
-                        //     navigation.dispatch(
-                        //         CommonActions.reset({
-                        //             index: 0,
-                        //             routes: [{ name: "Dashboard" }],
-                        //         })
-                        //     );
-                        // },
+                        onPress: () => {
+                            navigation.dispatch(
+                                CommonActions.reset({
+                                    index: 0,
+                                    routes: [{ name: "Dashboard" }],
+                                })
+                            );
+                        },
                     },
                 ]);
             } else {
+                setIsSubmitting(false);
                 Alert.alert("❌ Error", "Submission failed.");
             }
         } catch (error: any) {
+            setIsSubmitting(false);
             console.error("❌ Submit error:", error);
             Alert.alert(
                 "Error",
