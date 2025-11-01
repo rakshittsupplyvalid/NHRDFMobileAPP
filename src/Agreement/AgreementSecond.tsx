@@ -325,6 +325,7 @@ const AgreementSecond: React.FC = () => {
     };
 
     const validateFormField = (field: string, value: string) => {
+       
         const newErrors = { ...formErrors };
         let error = '';
 
