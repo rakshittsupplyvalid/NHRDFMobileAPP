@@ -69,9 +69,92 @@ const AgreementSecond: React.FC = () => {
     const navigation = useNavigation<any>();
     const { formData } = useFormData();
     const { state, updateState } = useForm();
+    const [statesList, setStatesList] = useState([]);
+    const [citiesList, setCitiesList] = useState([]);
+    const [nomineeEmailErrors, setNomineeEmailErrors] = useState<string[]>([]);
+    const [witnessEmailErrors, setWitnessEmailErrors] = useState<string[]>([]);
+    const [nomineeMobileErrors, setNomineeMobileErrors] = useState<string[]>([]);
+    const [witnessMobileErrors, setWitnessMobileErrors] = useState<string[]>([]);
+    const [nomineeSignatureUri, setNomineeSignatureUri] = useState<string[] | null>([]);
+    const [witnessSignatureUri, setWitnessSignatureUri] = useState<string[] | null>([]);
 
-    // ✅ DECLARE nominees and witnesses FIRST
-    const [nominees, setNominees] = useState<NomineeType[]>([
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [nomineeDistrictsList, setNomineeDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
+    const [nomineeCitiesList, setNomineeCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
+    const [signaturePhoto, setSignaturePhoto] = useState<string | null>(null);
+    const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+    const [nomineeAddressErrors, setNomineeAddressErrors] = useState<string[]>([]);
+    const [witnessAddressErrors, setWitnessAddressErrors] = useState<string[]>([]);
+    const [touched, setTouched] = useState<boolean[]>([]);
+
+
+    const [witnessDistrictsList, setWitnessDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
+    const [witnessCitiesList, setWitnessCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
+
+
+
+
+
+    const isValidEmail = (email: string) => {
+        const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i; // 'i' flag = case-insensitive
+        return emailPattern.test(email.trim());
+    };
+
+    const isWitnessEmail = (witnessemail: string) => {
+        const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i; // ✅ case-insensitive
+        return emailPattern.test(witnessemail.trim());
+    }
+
+    const validateMobile = (text: string, type: "nominee" | "witness", index: number) => {
+        const updatedErrors =
+            type === "nominee" ? [...nomineeMobileErrors] : [...witnessMobileErrors];
+
+        if (text.length === 0) {
+            updatedErrors[index] = "";
+        } else if (!/^[6-9]\d{0,9}$/.test(text)) {
+            updatedErrors[index] = "Mobile number must start with 6–9";
+        } else {
+            updatedErrors[index] = "";
+        }
+
+        type === "nominee"
+            ? setNomineeMobileErrors(updatedErrors)
+            : setWitnessMobileErrors(updatedErrors);
+    };
+
+
+    const validateAddress = (text: string, type: "nominee" | "witness", index: number) => {
+        const updatedErrors =
+            type === "nominee" ? [...nomineeAddressErrors] : [...witnessAddressErrors];
+
+        const trimmedText = text.trim();
+
+        if (trimmedText.length === 0) {
+            updatedErrors[index] = "Address cannot be empty";
+        } else if (trimmedText.length < 5) {
+            updatedErrors[index] = "Address must be at least 5 characters long";
+        }
+        // ✅ Only numbers not allowed
+        else if (/^\d+$/.test(trimmedText)) {
+            updatedErrors[index] = "Address cannot contain only numbers";
+        }
+        // ✅ Allow letters, numbers, spaces, commas, dots, and hyphens only
+        else if (!/^[a-zA-Z0-9\s,.-]+$/.test(trimmedText)) {
+            updatedErrors[index] = "Invalid characters in address";
+        }
+        else {
+            updatedErrors[index] = "";
+        }
+
+        if (type === "nominee") {
+            setNomineeAddressErrors(updatedErrors);
+        } else {
+            setWitnessAddressErrors(updatedErrors);
+        }
+    };
+
+
+    const [nominees, setNominees] = useState<any>([
         {
             nomineename: "",
             gender: "",
@@ -116,313 +199,27 @@ const AgreementSecond: React.FC = () => {
         },
     ]);
 
-    // ✅ NOW declare other state variables that depend on nominees/witnesses
-    const [statesList, setStatesList] = useState([]);
-    const [citiesList, setCitiesList] = useState([]);
-
-    // Error states
-    const [nomineeErrors, setNomineeErrors] = useState<{ [key: string]: string }[]>([]);
-    const [witnessErrors, setWitnessErrors] = useState<{ [key: string]: string }[]>([]);
-    const [formErrors, setFormErrors] = useState({
-        authorizedSignatory: '',
-        LotNumber: '',
-        TagNumber: '',
-        BillNumber: '',
-        agreement: ''
-    });
-
-    const [nomineeSignatureUri, setNomineeSignatureUri] = useState<string | null>(null);
-    const [witnessSignatureUri, setWitnessSignatureUri] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    const [nomineeDistrictsList, setNomineeDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
-    const [nomineeCitiesList, setNomineeCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
-    const [signaturePhoto, setSignaturePhoto] = useState<string | null>(null);
-    const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
-    const [witnessDistrictsList, setWitnessDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
-    const [witnessCitiesList, setWitnessCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
     const [isAgreementAccepted, setIsAgreementAccepted] = useState(false);
 
-    // ✅ NOW useEffects can safely use nominees and witnesses
-    // Initialize errors when nominees/witnesses are added
-    useEffect(() => {
-        setNomineeErrors(nominees.map(() => ({})));
-    }, [nominees.length]);
-
-    useEffect(() => {
-        setWitnessErrors(witnesses.map(() => ({})));
-    }, [witnesses.length]);
-
-    // Rest of the code remains the same...
-    // Validation functions
-      const isValidEmail = (email: string) => {
-  if (!email) return false; // Empty is NOT allowed now
-  const emailPattern = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
-  return emailPattern.test(email.trim());
-};
-
-    const isValidMobile = (mobile: string) => {
-        if (!mobile) return false;
-        return /^[6-9]\d{9}$/.test(mobile);
-    };
-
-    const isValidName = (name: string) => {
-        if (!name) return false;
-        return /^[a-zA-Z\s]{1,100}$/.test(name.trim());
-    };
-
-    const isValidAddress = (address: string) => {
-  const trimmed = address?.trim() || "";
-  return trimmed.length >= 1 && trimmed.length <= 200;
-};
-
-    const isValidPincode = (pincode: string) => {
-        if (!pincode) return true; // Optional field
-        return /^\d{6}$/.test(pincode);
-    };
-
-    const isValidRelation = (relation: string) => {
-        if (!relation) return false;
-        return /^[a-zA-Z\s]{2,15}$/.test(relation.trim());
-    };
-
-    const isValidYear = (year: string) => {
-        if (!year) return true; // Optional field
-        const currentYear = new Date().getFullYear();
-        const yearNum = parseInt(year);
-        return yearNum >= 1900 && yearNum <= currentYear;
-    };
-
-    const isValidRequiredField = (value: string) => {
-        return value && value.trim().length > 0;
-    };
-
-    // Real-time validation functions
-    const validateNomineeField = (index: number, field: string, value: string) => {
-        const newErrors = [...nomineeErrors];
-        let error = '';
-
-        switch (field) {
-            case 'nomineename':
-                if (!isValidName(value)) {
-                    error = 'Name must be 1-100 letters only';
-                }
-                break;
-            case 'mobileno':
-                if (!isValidMobile(value)) {
-                    error = 'Valid 10-digit mobile number starting with 6-9';
-                }
-                break;
-            case 'email':
-                if (value && !isValidEmail(value)) {
-                    error = 'Please enter a valid email address';
-                }
-                break;
-            case 'relation':
-                if (!isValidRelation(value)) {
-                    error = 'Relation must be 2-15 letters only';
-                }
-                break;
-            case 'addrline':
-                if (!isValidAddress(value)) {
-                    error = 'Address must be at least 1 characters)';
-                }
-                break;
-            case 'pincode':
-                if (value && !isValidPincode(value)) {
-                    error = 'Pincode must be 6 digits';
-                }
-                break;
-            case 'villagename':
-                if (value && !/^[a-zA-Z\s]{1,100}$/.test(value)) {
-                    error = 'Village name must be 1-100 letters only';
-                }
-                break;
-            case 'gender':
-                if (!value) {
-                    error = 'Gender is required';
-                }
-                break;
-            case 'stateid':
-                if (!value) {
-                    error = 'State is required';
-                }
-                break;
-            case 'districtid':
-                if (!value) {
-                    error = 'District is required';
-                }
-                break;
-            case 'subdistrictid':
-                if (!value) {
-                    error = 'City is required';
-                }
-                break;
-            case 'year':
-                if (value && !isValidYear(value)) {
-                    error = 'Please enter a valid year';
-                }
-                break;
-        }
-
-        newErrors[index] = { ...newErrors[index], [field]: error };
-        setNomineeErrors(newErrors);
-    };
-
-    const validateWitnessField = (index: number, field: string, value: string) => {
-        const newErrors = [...witnessErrors];
-        let error = '';
-
-        switch (field) {
-            case 'witnessname':
-                if (!isValidName(value)) {
-                    error = 'Name must be 2-25 letters only';
-                }
-                break;
-            case 'witnessmobileno':
-                if (!isValidMobile(value)) {
-                    error = 'Valid 10-digit mobile number starting with 6-9';
-                }
-                break;
-            case 'witnessemail':
-                if (value && !isValidEmail(value)) {
-                    error = 'Please enter a valid email address';
-                }
-                break;
-            case 'addrline':
-                if (!isValidAddress(value)) {
-                    error = 'Address must be at least 1 characters';
-                }
-                break;
-            case 'pincode':
-                if (value && !isValidPincode(value)) {
-                    error = 'Pincode must be 6 digits';
-                }
-                break;
-            case 'villagename':
-                if (value && !/^[a-zA-Z\s]{2,25}$/.test(value)) {
-                    error = 'Village name must be 2-25 letters only';
-                }
-                break;
-            case 'stateid':
-                if (!value) {
-                    error = 'State is required';
-                }
-                break;
-            case 'districtid':
-                if (!value) {
-                    error = 'District is required';
-                }
-                break;
-            case 'subdistrictid':
-                if (!value) {
-                    error = 'City is required';
-                }
-                break;
-        }
-
-        newErrors[index] = { ...newErrors[index], [field]: error };
-        setWitnessErrors(newErrors);
-    };
-
-    const validateFormField = (field: string, value: string) => {
-       
-        const newErrors = { ...formErrors };
-        let error = '';
-
-        switch (field) {
-            case 'authorizedSignatory':
-                if (!isValidName(value)) {
-                    error = 'Name must be 2-20 letters only';
-                }
-                break;
-            case 'LotNumber':
-                if (!isValidRequiredField(value)) {
-                    error = 'Lot number is required';
-                }
-                break;
-            case 'TagNumber':
-                if (!isValidRequiredField(value)) {
-                    error = 'Tag number is required';
-                }
-                break;
-            case 'BillNumber':
-                if (!isValidRequiredField(value)) {
-                    error = 'Bill number is required';
-                }
-                break;
-        }
-
-        newErrors[field] = error;
-        setFormErrors(newErrors);
-    };
-
-    // Check if all validations pass
-    const isFormValid = () => {
-        // Check nominee validations
-        const nomineeValid = nominees.every((nominee, index) => {
-            return Object.keys(nomineeErrors[index] || {}).every(key =>
-                !nomineeErrors[index][key]
-            ) &&
-                isValidName(nominee.nomineename) &&
-                isValidMobile(nominee.mobileno) &&
-                isValidRelation(nominee.relation) &&
-                isValidAddress(nominee.addrline) &&
-                nominee.gender &&
-                nominee.stateid &&
-                nominee.districtid &&
-                nominee.subdistrictid &&
-                (!nominee.email || isValidEmail(nominee.email)) &&
-                (!nominee.pincode || isValidPincode(nominee.pincode)) &&
-                (!nominee.villagename || /^[a-zA-Z\s]{2,25}$/.test(nominee.villagename)) &&
-                (!nominee.year || isValidYear(nominee.year));
-        });
-
-        // Check witness validations
-        const witnessValid = witnesses.every((witness, index) => {
-            return Object.keys(witnessErrors[index] || {}).every(key =>
-                !witnessErrors[index][key]
-            ) &&
-                isValidName(witness.witnessname) &&
-                isValidMobile(witness.witnessmobileno) &&
-                isValidAddress(witness.addrline) &&
-                witness.stateid &&
-                witness.districtid &&
-                witness.subdistrictid &&
-                (!witness.witnessemail || isValidEmail(witness.witnessemail)) &&
-                (!witness.pincode || isValidPincode(witness.pincode)) &&
-                (!witness.villagename || /^[a-zA-Z\s]{2,25}$/.test(witness.villagename));
-        });
-
-        // Check form validations
-        const formValid =
-            isValidName(state.form.authorizedSignatory || '') &&
-            isValidRequiredField(state.form.LotNumber || '') &&
-            isValidRequiredField(state.form.TagNumber || '') &&
-            isValidRequiredField(state.form.BillNumber || '') &&
-            isAgreementAccepted;
-
-        return nomineeValid && witnessValid && formValid;
-    };
-
-    // Back handler and other existing functions remain the same...
     useFocusEffect(
         useCallback(() => {
             const onBackPress = () => {
                 navigation.navigate("Agreement Form" as never);
-                return true;
+                return true; // prevent default behavior
             };
 
+            // ✅ Add the event listener
             const subscription = BackHandler.addEventListener(
                 "hardwareBackPress",
                 onBackPress
             );
 
+            // ✅ Clean up correctly
             return () => subscription.remove();
         }, [navigation])
     );
 
 
-    // Camera permission and functions
     const requestCameraPermission = async () => {
         if (Platform.OS === "android") {
             try {
@@ -445,6 +242,7 @@ const AgreementSecond: React.FC = () => {
         return true;
     };
 
+    // ✅ Launch Camera for Image Capture
     const openCamera = async (setPhoto: (uri: string | null) => void) => {
         const hasPermission = await requestCameraPermission();
         if (!hasPermission) {
@@ -473,22 +271,28 @@ const AgreementSecond: React.FC = () => {
     };
 
 
-    // API calls and other existing functions...
     useEffect(() => {
         axios
             .get("https://stage-master-backend.epravaha.com/api/State/GetAllStates")
             .then((res) => {
+                console.log("📜 States API Raw Response:", res.data);
                 const mappedStates = res.data.map((item) => ({
                     label: item.name,
                     value: item.stateCode?.toString(),
                 }));
+                // console.log("✅ Mapped States:", mappedStates);
                 setStatesList(mappedStates);
             })
             .catch((err) => console.error("❌ State API Error:", err));
     }, []);
 
+    // ------------------ State Change ------------------
     const handleStateChange = (value: string, type: "Nominee" | "Witness", index: number) => {
         const selectedLabel = statesList.find((item) => item.value === value)?.label || "";
+
+        // console.log(`🗂️ handleStateChange() called for ${type} #${index}`);
+        // console.log("➡️ Selected State Value:", value);
+        // console.log("🏷️ Selected State Label:", selectedLabel);
 
         if (type === "Nominee") {
             const updatedNominees = [...nominees];
@@ -499,11 +303,12 @@ const AgreementSecond: React.FC = () => {
             updatedNominees[index].subdistrictid = "";
             updatedNominees[index].subdistrictname = "";
             setNominees(updatedNominees);
-            validateNomineeField(index, 'stateid', value);
 
+            console.log(`🌍 Fetching Districts API for Nominee StateCode: ${value}`);
             axios
                 .get(`https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${value}`)
                 .then((res) => {
+                    console.log("✅ District API Response (Nominee):", res.data);
                     const mappedDistricts = res.data.map((item) => ({
                         label: item.name,
                         value: item.districtCode?.toString(),
@@ -523,11 +328,12 @@ const AgreementSecond: React.FC = () => {
             updatedWitnesses[index].subdistrictid = "";
             updatedWitnesses[index].subdistrictname = "";
             setWitnesses(updatedWitnesses);
-            validateWitnessField(index, 'stateid', value);
 
+            console.log(`🌍 Fetching Districts API for Witness StateCode: ${value}`);
             axios
                 .get(`https://stage-master-backend.epravaha.com/api/District/GetDistrictsByStateCode/${value}`)
                 .then((res) => {
+                    // console.log("✅ District API Response (Witness):", res.data);
                     const mappedDistricts = res.data.map((item) => ({
                         label: item.name,
                         value: item.districtCode?.toString(),
@@ -539,12 +345,18 @@ const AgreementSecond: React.FC = () => {
         }
     };
 
+    // ------------------ District Change ------------------
     const handleDistrictChange = (value: string, type: "Nominee" | "Witness", index: number) => {
+        // console.log(`🏙️ handleDistrictChange() called for ${type} #${index}`);
+        // console.log("➡️ Selected District Value:", value);
+
         const selectedLabel =
             (type === "Nominee"
                 ? nomineeDistrictsList[index]
                 : witnessDistrictsList[index]
             )?.find((item) => item.value === value)?.label || "";
+
+        // console.log("🏷️ Selected District Label:", selectedLabel);
 
         if (type === "Nominee") {
             const updatedNominees = [...nominees];
@@ -553,11 +365,12 @@ const AgreementSecond: React.FC = () => {
             updatedNominees[index].subdistrictid = "";
             updatedNominees[index].subdistrictname = "";
             setNominees(updatedNominees);
-            validateNomineeField(index, 'districtid', value);
 
+            // console.log(`🌆 Fetching Cities API for Nominee DistrictCode: ${value}`);
             axios
                 .get(`https://stage-master-backend.epravaha.com/api/City/GetCityBy/${value}`)
                 .then((res) => {
+                    // console.log("✅ City API Response (Nominee):", res.data);
                     const mappedCities = res.data.map((item) => ({
                         label: item.name,
                         value: item.cityCode?.toString(),
@@ -574,11 +387,12 @@ const AgreementSecond: React.FC = () => {
             updatedWitnesses[index].subdistrictid = "";
             updatedWitnesses[index].subdistrictname = "";
             setWitnesses(updatedWitnesses);
-            validateWitnessField(index, 'districtid', value);
 
+            // console.log(`🌆 Fetching Cities API for Witness DistrictCode: ${value}`);
             axios
                 .get(`https://stage-master-backend.epravaha.com/api/City/GetCityBy${value}`)
                 .then((res) => {
+                    console.log("✅ City API Response (Witness):", res.data);
                     const mappedCities = res.data.map((item) => ({
                         label: item.name,
                         value: item.cityCode?.toString(),
@@ -589,22 +403,25 @@ const AgreementSecond: React.FC = () => {
         }
     };
 
+    // ------------------ City Change ------------------
     const handleCityChange = (value: string, type: "Nominee" | "Witness", index: number) => {
         const currentCityList = type === "Nominee" ? nomineeCitiesList[index] : witnessCitiesList[index];
         const selectedLabel = currentCityList?.find((item) => item.value === value)?.label || "";
+
+        // console.log(`🏡 handleCityChange() called for ${type} #${index}`);
+        // console.log("➡️ Selected City Value:", value);
+        // console.log("🏷️ Selected City Label:", selectedLabel);
 
         if (type === "Nominee") {
             const updatedNominees = [...nominees];
             updatedNominees[index].subdistrictid = value;
             updatedNominees[index].subdistrictname = selectedLabel;
             setNominees(updatedNominees);
-            validateNomineeField(index, 'subdistrictid', value);
         } else if (type === "Witness") {
             const updatedWitnesses = [...witnesses];
             updatedWitnesses[index].subdistrictid = value;
             updatedWitnesses[index].subdistrictname = selectedLabel;
             setWitnesses(updatedWitnesses);
-            validateWitnessField(index, 'subdistrictid', value);
         }
     };
 
@@ -612,6 +429,7 @@ const AgreementSecond: React.FC = () => {
         const newNominees = [...nominees];
 
         if (key === "dob") {
+            // ✅ Value already ISO — no need to reconvert
             newNominees[index][key] = value as any;
         } else if (key === "year") {
             const numericYear = value.replace(/[^0-9]/g, "").slice(0, 4);
@@ -621,8 +439,8 @@ const AgreementSecond: React.FC = () => {
         }
 
         setNominees(newNominees);
-        validateNomineeField(index, key, value);
     };
+
 
     const addNominee = () => {
         setNominees([
@@ -652,6 +470,7 @@ const AgreementSecond: React.FC = () => {
         ]);
     };
 
+
     const deleteNominee = (index) => {
         Alert.alert(
             "Delete Nominee",
@@ -664,19 +483,38 @@ const AgreementSecond: React.FC = () => {
                     onPress: () => {
                         const updatedNominees = nominees.filter((_, i) => i !== index);
                         setNominees(updatedNominees);
-                        const updatedErrors = nomineeErrors.filter((_, i) => i !== index);
-                        setNomineeErrors(updatedErrors);
                     },
                 },
             ]
         );
     };
 
+    // ✅ Delete Witness function
+    const deleteWitness = (index) => {
+        Alert.alert(
+            "Delete Witness",
+            "Are you sure you want to delete this witness?",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: () => {
+                        const updatedWitnesses = witnesses.filter((_, i) => i !== index);
+                        setWitnesses(updatedWitnesses);
+                    },
+                },
+            ]
+        );
+    };
+
+
+
+    // ------------------ Witness Handlers ------------------
     const updateWitness = (index: number, key: keyof WitnessType, value: string) => {
         const newWitnesses = [...witnesses];
         newWitnesses[index][key] = value;
         setWitnesses(newWitnesses);
-        validateWitnessField(index, key, value);
     };
 
     const addWitness = () => {
@@ -702,52 +540,91 @@ const AgreementSecond: React.FC = () => {
         ]);
     };
 
-    const deleteWitness = (index) => {
-        Alert.alert(
-            "Delete Witness",
-            "Are you sure you want to delete this witness?",
-            [
-                { text: "Cancel", style: "cancel" },
-                {
-                    text: "Delete",
-                    style: "destructive",
-                    onPress: () => {
-                        const updatedWitnesses = witnesses.filter((_, i) => i !== index);
-                        setWitnesses(updatedWitnesses);
-                        const updatedErrors = witnessErrors.filter((_, i) => i !== index);
-                        setWitnessErrors(updatedErrors);
-                    },
-                },
-            ]
-        );
-    };
+
+    // useFocusEffect(
+    //     React.useCallback(() => {
+    //         const params = route.params as { signatureUri?: string; type?: string } | undefined;
+    //         if (params?.signatureUri && params?.type) {
+    //             if (params.type === "nominee") setNomineeSignatureUri(params.signatureUri);
+    //             else if (params.type === "witness") setWitnessSignatureUri(params.signatureUri);
+    //         }
+    //     }, [route.params])
+    // );
+
+    useFocusEffect(
+        React.useCallback(() => {
+
+            const params = route.params as { signatureUri?: string; type?: string, index?: number } | undefined;
+
+            if (params?.signatureUri && params?.type) {
+                console.log("🖋️ Received Signature URI:", params.signatureUri);
+                console.log("📄 Signature Type:", params.type);
+
+                // ✅ Fixed line — using plain 'base64' instead of EncodingType
+                FileSystem.readAsStringAsync(params.signatureUri, {
+                    encoding: 'base64',
+                })
+                    .then((base64Data) => {
+                        const base64Image = `data:image/png;base64,${base64Data}`;
+                        console.log("✅ Base64 Image:", base64Image.substring(0, 100) + "...");
+
+                        // Convert Base64 → Blob for multipart upload
+                        const base64ToBlob = (base64, type = "image/png") => {
+                            const byteCharacters = atob(base64.split(",")[1]);
+                            const byteNumbers = new Array(byteCharacters.length);
+                            for (let i = 0; i < byteCharacters.length; i++) {
+                                byteNumbers[i] = byteCharacters.charCodeAt(i);
+                            }
+                            const byteArray = new Uint8Array(byteNumbers);
+                            return new Blob([byteArray], { type });
+                        };
+
+                        const imageBlob = base64ToBlob(base64Image, "image/png");
+                        console.log("📦 Converted Blob:", imageBlob);
+                        console.log("📏 Blob Size:", imageBlob.size);
+
+                        const formData = new FormData();
+
+                        console.log("✅ FormData Ready for Upload");
+                    })
+                    .catch((err) => console.error("❌ Error reading file:", err));
+
+                if (params.type === "nominee") {
+                    setNomineeSignatureUri((prev) => {
+                        const updated = [...(prev || [])];
+                        updated[params?.index] = params.signatureUri;
+                        return updated;
+                    });
+                } else if (params.type === "witness") {
+                    setWitnessSignatureUri((prev) => {
+                        const updated = [...(prev || [])];
+                        updated[params?.index] = params.signatureUri;
+                        return updated;
+                    });
+                }
+            }
+        }, [route.params])
+    );
+
 
     const handleSubmit = async () => {
-        if (!isFormValid()) {
-            Alert.alert(
-                "Validation Error",
-                "Please fix all validation errors before submitting."
-            );
-            return;
-        }
+        debugger
+        console.log("📦 Received from context:", formData);
+
+        setIsSubmitting(true);
 
         if (!isAgreementAccepted) {
             Alert.alert(
-                "Agreement Required",
+                "Agreement",
                 "Please read and accept the agreement terms before submitting."
             );
             return;
         }
 
-        // Your existing submit logic here...
-        console.log("Form is valid, proceeding with submission...");
-        setIsSubmitting(true);
-
-
         try {
             const requestData = new FormData();
 
-            // Append main contextual data
+            // 🔹 Append main contextual data first
             requestData.append("CenterTargetId", formData?.selectedCenterTarget || "");
             requestData.append("FarmerDistributionId", formData?.Farmerdistribution || "");
             requestData.append("FarmerId", formData?.selectedFarmer || "");
@@ -755,17 +632,17 @@ const AgreementSecond: React.FC = () => {
             requestData.append("DuringYear", formData?.Year?.toString() || "");
             requestData.append("SeedClass", formData?.seeds?.toString() || "");
             requestData.append("CommodityId", formData?.selectedCommodityType?.toString() || "");
-            requestData.append("PlantingMaterial", formData?.produceseeds?.toString() || "");
+            requestData.append("PlantingMaterial", "SEED");
             requestData.append("Area", formData?.Area || "0");
 
-            // Append Agreement form fields
+            // 🔹 Append Agreement form fields
             requestData.append("AuthorizedName", state.form.authorizedSignatory || "");
             requestData.append("BillNumber", state.form.BillNumber || "");
             requestData.append("TagNumber", state.form.TagNumber || "");
             requestData.append("LotNumber", state.form.LotNumber || "");
             requestData.append("DuringYear", state.form.DuringYear || "");
 
-            // Append captured images
+            // 🔹 Append captured images
             if (signaturePhoto) {
                 requestData.append("Signature", {
                     uri: signaturePhoto,
@@ -782,17 +659,33 @@ const AgreementSecond: React.FC = () => {
                 } as any);
             }
 
-            // Append nominees
+            // 🔹 Append nominees
             nominees.forEach((nominee, index) => {
                 Object.keys(nominee).forEach((key) => {
                     const value = nominee[key as keyof NomineeType];
-                    if (key === "signature" && value) {
-                        requestData.append(`NomiNee[${index}][signature]`, {
-                            uri: value,
-                            type: "image/jpeg",
-                            name: `nominee_signature_${index}.jpg`,
-                        } as any);
+
+                    if (key === "signature" && nomineeSignatureUri?.length > 0) {
+                        debugger
+                        // 🔹 Send nominee signature image
+
+                        const base64String = nomineeSignatureUri[index].replace(/^data:image\/\w+;base64,/, "");
+
+                        requestData.append(`NomiNee[${index}][signature]`, base64String);
+                        requestData.append(`NomiNee[${index}][signature_extension]`, "png");
+                        requestData.append(`NomiNee[${index}][is_base64]`, "true");
+
+                        // requestData.append(`NomiNee[${index}][signature]`, {
+                        //     uri: nomineeSignatureUri[index],
+                        //     type: "image/jpeg",
+                        //     name: `nominee_signature_${index}.jpg`,
+                        // } as any);
+                        // requestData.append(`NomiNee[${index}][profdocument]`, {
+                        //     uri: nomineeSignatureUri[index],
+                        //     type: "image/jpeg",
+                        //     name: `nominee_profdocument_${index}.jpg`,
+                        // } as any);
                     } else {
+                        // 🔹 Append normal text fields
                         requestData.append(
                             `NomiNee[${index}][${key}]`,
                             value?.toString() || ""
@@ -801,21 +694,44 @@ const AgreementSecond: React.FC = () => {
                 });
             });
 
-            // Append witnesses
+
+            // 🔹 Append witnesses
             witnesses.forEach((witness, index) => {
                 Object.keys(witness).forEach((key) => {
-                    requestData.append(
-                        `Witness[${index}][${key}]`,
-                        witness[key as keyof WitnessType]?.toString() || ""
-                    );
+                    const value = witness[key as keyof WitnessType];
+
+                    if (key === "signature" && witnessSignatureUri?.length > 0) {
+                        debugger
+                        // 🔹 Send nominee signature image
+                        requestData.append(`Witness[${index}][signature]`, {
+                            uri: witnessSignatureUri[index],
+                            type: "image/jpeg",
+                            name: `witness_signature_${index}.jpg`,
+                        } as any);
+                        requestData.append(`Witness[${index}][profdocument]`, {
+                            uri: witnessSignatureUri[index],
+                            type: "image/jpeg",
+                            name: `witness_profdocument_${index}.jpg`,
+                        } as any);
+                    } else {
+                        // 🔹 Append normal text fields
+                        requestData.append(
+                            `Witness[${index}][${key}]`,
+                            value?.toString() || ""
+                        );
+                    }
                 });
             });
 
-            // Log everything before sending
+            // 🔹 Log everything before sending
             console.log("🚀 Sending this FormData:");
             for (let [key, value] of (requestData as any).entries()) {
                 console.log(`➡️ ${key}:`, value);
             }
+
+            // alert("Submitting form data... Check console for details.");
+            // setIsSubmitting(false);
+            // return;
 
             const token = await retrieveToken();
 
@@ -827,6 +743,7 @@ const AgreementSecond: React.FC = () => {
             });
 
             if (response.status === 200 || response.status === 201) {
+                setIsSubmitting(false);
                 Alert.alert("✅ Success", "Agreement submitted successfully.", [
                     {
                         text: "OK",
@@ -841,32 +758,190 @@ const AgreementSecond: React.FC = () => {
                     },
                 ]);
             } else {
+                setIsSubmitting(false);
                 Alert.alert("❌ Error", "Submission failed.");
             }
-        }
-        catch (error) {
-            console.error("Submit error:", error);
-            Alert.alert("Error", "Submission failed");
-        } finally {
+        } catch (error: any) {
             setIsSubmitting(false);
+            console.error("❌ Submit error:", error);
+            Alert.alert(
+                "Error",
+                error.response?.data?.message || "Something went wrong."
+            );
         }
     };
 
-    const formatDate = (date: Date) => {
-        const d = date.getDate().toString().padStart(2, "0");
-        const m = (date.getMonth() + 1).toString().padStart(2, "0");
-        const y = date.getFullYear();
-        return `${d}-${m}-${y}`;
-    };
+
+
+
+
+    //   const handleSubmit = async () => {
+    //   console.log("📦 Received from context:", formData);
+    //   setIsSubmitting(true);
+
+    //   if (!isAgreementAccepted) {
+    //     Alert.alert(
+    //       "Agreement",
+    //       "Please read and accept the agreement terms before submitting."
+    //     );
+    //     return;
+    //   }
+
+    //   try {
+    //     const FS: any = FileSystem; // ✅ TypeScript ke liye fix
+    //     const requestData = new FormData();
+
+    //     // 🔹 Append main contextual data
+    //     requestData.append("CenterTargetId", formData?.selectedCenterTarget || "");
+    //     requestData.append("FarmerDistributionId", formData?.Farmerdistribution || "");
+    //     requestData.append("FarmerId", formData?.selectedFarmer || "");
+    //     requestData.append("VarietyId", formData?.selectedVariety || "");
+    //     requestData.append("DuringYear", formData?.Year?.toString() || "");
+    //     requestData.append("SeedClass", formData?.seeds?.toString() || "");
+    //     requestData.append("CommodityId", formData?.selectedCommodityType?.toString() || "");
+    //     requestData.append("PlantingMaterial", "SEED");
+    //     requestData.append("Area", formData?.Area || "0");
+
+    //     requestData.append("CertificateNo" , formData?.Certificate|| "");  
+    //         requestData.append("LandDetailId" , formData?.selectedLandId|| "");
+    //     requestData.append("SurveyNo" , formData?.Survey || "");
+
+    //     // 🔹 Append Agreement form fields
+    //     requestData.append("AuthorizedName", state.form.authorizedSignatory || "");
+    //     requestData.append("BillNumber", state.form.BillNumber || "");
+    //     requestData.append("TagNumber", state.form.TagNumber || "");
+    //     requestData.append("LotNumber", state.form.LotNumber || "");
+    //     requestData.append("DuringYear", state.form.DuringYear || "");
+
+    //     // 🔹 Append captured images (Profile + Signature)
+    //     if (signaturePhoto) {
+    //       requestData.append("Signature", {
+    //         uri: signaturePhoto,
+    //         type: "image/jpeg",
+    //         name: "signature.jpg",
+    //       } as any);
+    //     }
+
+    //     if (profilePhoto) {
+    //       requestData.append("ProfFile", {
+    //         uri: profilePhoto,
+    //         type: "image/jpeg",
+    //         name: "profile.jpg",
+    //       } as any);
+    //     }
+
+    //     // ✅ Helper to convert base64 to file URI
+    //     const convertBase64ToFile = async (base64Uri: string, name: string) => {
+    //       if (!base64Uri.startsWith("data:image")) return base64Uri; // Already file URI
+
+    //       const base64Data = base64Uri.split(",")[1];
+    //       const filePath = FS.cacheDirectory + `${name}.jpg`;
+    //       await FS.writeAsStringAsync(filePath, base64Data, {
+    //         encoding: FS.EncodingType.Base64,
+    //       });
+    //       return filePath;
+    //     };
+
+    //     // 🔹 Append nominees
+    //     for (let index = 0; index < nominees.length; index++) {
+    //       const nominee = nominees[index];
+
+    //       for (const key of Object.keys(nominee)) {
+    //         const value = nominee[key as keyof NomineeType];
+
+    //         if (key === "signature" && value) {
+    //           const fileUri = await convertBase64ToFile(
+    //             value,
+    //             `nominee_signature_${index}`
+    //           );
+
+    //           requestData.append(`NomiNee[${index}][signature]`, {
+    //             uri: fileUri,
+    //             type: "image/jpeg",
+    //             name: `nominee_signature_${index}.jpg`,
+    //           } as any);
+    //         } else {
+    //           requestData.append(
+    //             `NomiNee[${index}][${key}]`,
+    //             value?.toString() || ""
+    //           );
+    //         }
+    //       }
+    //     }
+
+    //     // 🔹 Append witnesses
+    //     for (let index = 0; index < witnesses.length; index++) {
+    //       const witness = witnesses[index];
+
+    //       for (const key of Object.keys(witness)) {
+    //         const value = witness[key as keyof WitnessType];
+
+    //         if (key === "signature" && value) {
+    //           const fileUri = await convertBase64ToFile(
+    //             value,
+    //             `witness_signature_${index}`
+    //           );
+
+    //           requestData.append(`Witness[${index}][signature]`, {
+    //             uri: fileUri,
+    //             type: "image/jpeg",
+    //             name: `witness_signature_${index}.jpg`,
+    //           } as any);
+    //         } else {
+    //           requestData.append(
+    //             `Witness[${index}][${key}]`,
+    //             value?.toString() || ""
+    //           );
+    //         }
+    //       }
+    //     }
+
+    //     // 🔹 Debugging
+    //     console.log("🚀 Sending this FormData:");
+    //     for (let [key, value] of (requestData as any).entries()) {
+    //       console.log(`➡️ ${key}:`, value);
+    //     }
+
+    //     // 🔹 API Call
+    //     const token = await retrieveToken();
+    //     const response = await apiClient.post("/api/mobile/agreement", requestData, {
+    //       headers: {
+    //         "Content-Type": "multipart/form-data",
+    //         Authorization: `Bearer ${token}`,
+    //       },
+    //     });
+
+    //     if (response.status === 200 || response.status === 201) {
+    //       Alert.alert("✅ Success", "Agreement submitted successfully.", [
+    //         {
+    //           text: "OK",
+    //           onPress: () => {
+    //             navigation.dispatch(
+    //               CommonActions.reset({
+    //                 index: 0,
+    //                 routes: [{ name: "Dashboard" }],
+    //               })
+    //             );
+    //           },
+    //         },
+    //       ]);
+    //     } else {
+    //       Alert.alert("❌ Error", "Submission failed.");
+    //     }
+    //   } catch (error: any) {
+    //     console.error("❌ Submit error:", error);
+    //     Alert.alert("Error", error.response?.data?.message || "Something went wrong.");
+    //   }
+    // };
+
+
+
 
     const calculateAge = (dob: string) => {
-        const [day, month, year] = dob.split("-").map(Number);
-        const birthDate = new Date(year, month - 1, day);
-
+        const birthDate = new Date(dob);
         const today = new Date();
         let age = today.getFullYear() - birthDate.getFullYear();
         const m = today.getMonth() - birthDate.getMonth();
-
         if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
             age--;
         }
@@ -875,10 +950,35 @@ const AgreementSecond: React.FC = () => {
 
 
 
-    // Rest of the component code (renderCommodityDropdown, return JSX, etc.) remains the same...
-    // Render commodity dropdown (existing function)
+
+
+
+
+
+
+    // useFocusEffect(
+    //     React.useCallback(() => {
+    //         const params = route.params as { signature?: string; type?: string, index?:number } | undefined;
+    //         if (params?.signature && params?.type) {
+    //             if (params.type === "nominee") {
+    //                 setNomineeSignatureUri((prev) => {
+    //                     const updated = [...(prev || [])];
+    //                     updated[params?.index] = params.signature;
+    //                     return updated;
+    //                 });
+
+    //             } else if (params.type === "witness") {
+    //                 setWitnessSignatureUri(params.signature);
+    //             }
+    //         }
+    //     }, [route.params])
+    // );
+
+
+    // Function to render commodity-specific dropdown
     const renderCommodityDropdown = () => {
         const selectedCommodity = state.form.commodity;
+
         switch (selectedCommodity) {
             case "onion":
                 return (
@@ -895,6 +995,7 @@ const AgreementSecond: React.FC = () => {
                         </Card.Content>
                     </Card>
                 );
+
             case "Garlic":
                 return (
                     <Card style={styles.sectionCard}>
@@ -910,6 +1011,7 @@ const AgreementSecond: React.FC = () => {
                         </Card.Content>
                     </Card>
                 );
+
             case "Potato":
                 return (
                     <Card style={styles.sectionCard}>
@@ -925,14 +1027,12 @@ const AgreementSecond: React.FC = () => {
                         </Card.Content>
                     </Card>
                 );
-            default:
-                return null;
         }
     };
 
     return (
         <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
-            {/* Header */}
+            {/* 🔹 Custom Header */}
             <View style={styles.headerContainer}>
                 <TouchableOpacity
                     style={styles.backButton}
@@ -941,29 +1041,32 @@ const AgreementSecond: React.FC = () => {
                 >
                     <MaterialIcons name="arrow-back" size={24} color="#fff" />
                 </TouchableOpacity>
-                <Text style={styles.headerText}>Nominee & Witness Details</Text>
+                <Text style={styles.headerText}>Nominee details</Text>
                 <View style={{ width: 24 }} />
             </View>
 
+            {/* 🔹 Content */}
             <KeyboardAwareScrollView
                 style={styles.container}
                 contentContainerStyle={styles.scrollContent}
                 enableOnAndroid={true}
                 extraScrollHeight={100}
                 keyboardShouldPersistTaps="handled"
+                enableAutomaticScroll={false}   // 👈 Disable automatic scroll
                 showsVerticalScrollIndicator={false}
             >
+
+
+
+
                 {/* Nominee Section */}
                 <Card style={styles.sectionCard}>
                     <Text style={styles.sectionTitle}>Nominee Details</Text>
                     {nominees.map((nominee, index) => (
-                        <Card key={index} style={styles.innerCard}>
+                        <Card key={index} style={styles.sectionCard}>
                             <Card.Content>
                                 <Text style={styles.sectionSubTitle}>Nominee {index + 1}</Text>
 
-
-
-                                <Text style={styles.label}>Name</Text>
                                 <TextInput
                                     mode="outlined"
                                     label="Full Name"
@@ -971,17 +1074,12 @@ const AgreementSecond: React.FC = () => {
                                     onChangeText={(text) => updateNominee(index, "nomineename", text)}
                                     style={styles.input}
                                     maxLength={25}
-                                    error={!!nomineeErrors[index]?.nomineename}
                                 />
-                                {nomineeErrors[index]?.nomineename ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.nomineename}>
-                                        {nomineeErrors[index]?.nomineename}
-                                    </HelperText>
-                                ) : null}
 
-                                <Text style={styles.label}>Gender</Text>
+
+
                                 <Dropdown
-                                    style={[styles.dropdown, nomineeErrors[index]?.gender && styles.dropdownError]}
+                                    style={styles.dropdown}
                                     placeholderStyle={styles.placeholderStyle}
                                     selectedTextStyle={styles.selectedTextStyle}
                                     data={[
@@ -995,81 +1093,88 @@ const AgreementSecond: React.FC = () => {
                                     value={nominee.gender}
                                     onChange={(item) => updateNominee(index, "gender", item.value)}
                                 />
-                                {nomineeErrors[index]?.gender ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.gender}>
-                                        {nomineeErrors[index]?.gender}
-                                    </HelperText>
-                                ) : null}
 
-                                <Text style={styles.label}>Year</Text>
+
+
                                 <YearPickerInput
                                     value={nominee.year}
                                     onChange={(year) => updateNominee(index, "year", year)}
                                 />
-                                {nomineeErrors[index]?.year ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.year}>
-                                        {nomineeErrors[index]?.year}
-                                    </HelperText>
-                                ) : null}
+
+
 
                                 <Text style={styles.label}>Date of Birth</Text>
                                 <CustomDateTimePicker
-                                    value={
-                                        nominee.dob
-                                            ? new Date(nominee.dob.split("-").reverse().join("-"))
-                                            : null
-                                    }
+                                    value={nominee.dob ? new Date(nominee.dob) : new Date()}
                                     onChange={(date) => {
-                                        const formatted = formatDate(date); // DD-MM-YYYY
-                                        updateNominee(index, "dob", formatted);
+                                        const formattedDate = date.toISOString(); // ✅ ISO format with time
+                                        console.log("Selected DOB (ISO):", formattedDate);
 
-                                        const age = calculateAge(formatted);
+                                        updateNominee(index, "dob", formattedDate);
+
+                                        // ✅ Calculate and update age too
+                                        const age = calculateAge(formattedDate);
                                         updateNominee(index, "age", age.toString());
                                     }}
                                     mode="date"
                                 />
 
-
-
-
-
-                                <Text style={styles.label}>Mobile number</Text>
                                 <TextInput
                                     mode="outlined"
-                                    label="Mobile Number"
+                                    label="Nominee Mobile No"
                                     keyboardType="phone-pad"
                                     value={nominee.mobileno}
                                     onChangeText={(text) => {
                                         const numericText = text.replace(/[^0-9]/g, "");
                                         updateNominee(index, "mobileno", numericText);
+                                        validateMobile(numericText, "nominee", index);
                                     }}
                                     style={styles.input}
                                     maxLength={10}
-                                    error={!!nomineeErrors[index]?.mobileno}
+                                    error={!!nomineeMobileErrors[index]}
                                 />
-                                {nomineeErrors[index]?.mobileno ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.mobileno}>
-                                        {nomineeErrors[index]?.mobileno}
-                                    </HelperText>
-                                ) : null}
-                                <Text style={styles.label}>Email Adresss</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    label="Email Address"
-                                    keyboardType="email-address"
-                                    value={nominee.email}
-                                    onChangeText={(text) => updateNominee(index, "email", text)}
-                                    style={styles.input}
-                                    maxLength={50}
-                                    error={!!nomineeErrors[index]?.email}
-                                />
-                                {nomineeErrors[index]?.email ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.email}>
-                                        {nomineeErrors[index]?.email}
+
+                                {nomineeMobileErrors[index] ? (
+                                    <HelperText type="error" visible={!!nomineeMobileErrors[index]}>
+                                        {nomineeMobileErrors[index]}
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>Relation</Text>
+
+
+                                <TextInput
+                                    mode="outlined"
+                                    label="Email"
+                                    keyboardType="email-address"
+                                    value={nominee.email}
+                                    onChangeText={(text) => {
+                                        updateNominee(index, "email", text);
+
+                                        // 🔹 Real-time validation per nominee
+                                        const updatedErrors = [...nomineeEmailErrors];
+
+                                        if (text.length === 0) {
+                                            updatedErrors[index] = ""; // no error if empty
+                                        } else if (!isValidEmail(text)) {
+                                            updatedErrors[index] = "Please enter a valid email address";
+                                        } else {
+                                            updatedErrors[index] = "";
+                                        }
+
+                                        setNomineeEmailErrors(updatedErrors);
+                                    }}
+                                    style={styles.input}
+                                    maxLength={50}
+                                    error={!!nomineeEmailErrors[index]}
+                                />
+
+                                {nomineeEmailErrors[index] ? (
+                                    <HelperText type="error" visible={!!nomineeEmailErrors[index]}>
+                                        {nomineeEmailErrors[index]}
+                                    </HelperText>
+                                ) : null}
+
+
                                 <TextInput
                                     mode="outlined"
                                     label="Relation"
@@ -1077,34 +1182,29 @@ const AgreementSecond: React.FC = () => {
                                     onChangeText={(text) => updateNominee(index, "relation", text)}
                                     style={styles.input}
                                     maxLength={15}
-                                    error={!!nomineeErrors[index]?.relation}
                                 />
-                                {nomineeErrors[index]?.relation ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.relation}>
-                                        {nomineeErrors[index]?.relation}
-                                    </HelperText>
-                                ) : null}
 
 
-
-                                <Text style={styles.label}>Address Line</Text>
                                 <TextInput
                                     mode="outlined"
                                     label="Address Line"
                                     value={nominee.addrline}
-                                    onChangeText={(text) => updateNominee(index, "addrline", text)}
+                                    onChangeText={(text) => {
+                                        updateNominee(index, "addrline", text);
+                                        validateAddress(text, "nominee", index);
+                                    }}
                                     style={styles.input}
                                     maxLength={50}
-                                    error={!!nomineeErrors[index]?.addrline}
+                                    error={!!nomineeAddressErrors[index]}
                                 />
-                                {nomineeErrors[index]?.addrline ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.addrline}>
-                                        {nomineeErrors[index]?.addrline}
+
+                                {nomineeAddressErrors[index] ? (
+                                    <HelperText type="error" visible={!!nomineeAddressErrors[index]}>
+                                        {nomineeAddressErrors[index]}
                                     </HelperText>
                                 ) : null}
 
 
-                                <Text style={styles.label}>Village Name</Text>
                                 <TextInput
                                     mode="outlined"
                                     label="Village Name"
@@ -1112,15 +1212,8 @@ const AgreementSecond: React.FC = () => {
                                     onChangeText={(text) => updateNominee(index, "villagename", text)}
                                     style={styles.input}
                                     maxLength={25}
-                                    error={!!nomineeErrors[index]?.villagename}
                                 />
-                                {nomineeErrors[index]?.villagename ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.villagename}>
-                                        {nomineeErrors[index]?.villagename}
-                                    </HelperText>
-                                ) : null}
 
-                                <Text style={styles.label}>Pincode</Text>
                                 <TextInput
                                     mode="outlined"
                                     label="Pincode"
@@ -1129,55 +1222,40 @@ const AgreementSecond: React.FC = () => {
                                     onChangeText={(text) => updateNominee(index, "pincode", text)}
                                     style={styles.input}
                                     maxLength={6}
-                                    error={!!nomineeErrors[index]?.pincode}
                                 />
-                                {nomineeErrors[index]?.pincode ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.pincode}>
-                                        {nomineeErrors[index]?.pincode}
-                                    </HelperText>
-                                ) : null}
 
-                                <Text style={styles.label}>State</Text>
+
                                 <CommonPicker
+                                    label="States"
                                     selectedValue={nominee.stateid || ""}
                                     onValueChange={(value) => handleStateChange(value, "Nominee", index)}
                                     items={statesList}
                                 />
-                                {nomineeErrors[index]?.stateid ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.stateid}>
-                                        {nomineeErrors[index]?.stateid}
-                                    </HelperText>
-                                ) : null}
 
-                                <Text style={styles.label}>District</Text>
+
                                 <CommonPicker
+                                    label="District"
                                     selectedValue={nominee.districtid || ""}
                                     onValueChange={(value) => handleDistrictChange(value, "Nominee", index)}
                                     items={nomineeDistrictsList[index] || []}
                                 />
-                                {nomineeErrors[index]?.districtid ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.districtid}>
-                                        {nomineeErrors[index]?.districtid}
-                                    </HelperText>
-                                ) : null}
 
-                                <Text style={styles.label}>City</Text>
+
+
+
                                 <CommonPicker
+                                    label="City"
                                     selectedValue={nominee.subdistrictid || ""}
                                     onValueChange={(value) => handleCityChange(value, "Nominee", index)}
                                     items={nomineeCitiesList[index] || []}
                                 />
-                                {nomineeErrors[index]?.subdistrictid ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.subdistrictid}>
-                                        {nomineeErrors[index]?.subdistrictid}
-                                    </HelperText>
-                                ) : null}
 
-                                {nomineeSignatureUri && (
+
+                                {nomineeSignatureUri?.length > 0 && (
                                     <View style={{ marginVertical: 10, alignItems: "center" }}>
                                         <Text style={{ fontWeight: "bold" }}>Signature Preview:</Text>
                                         <Image
-                                            source={{ uri: nomineeSignatureUri }}
+                                            source={{ uri: nomineeSignatureUri[index] }}
                                             style={{ width: 250, height: 100, borderWidth: 1, borderColor: "#ccc", marginTop: 5 }}
                                             resizeMode="contain"
                                         />
@@ -1186,11 +1264,12 @@ const AgreementSecond: React.FC = () => {
 
                                 <TouchableOpacity
                                     style={styles.iconButton}
-                                    onPress={() => navigation.navigate("Signature", { type: "nominee" })}
+                                    onPress={() => navigation.navigate("Signature", { type: "nominee", index })}
                                 >
                                     <MaterialCommunityIcons name="signature-freehand" size={26} color="#2C5EFF" />
                                     <Text>Add Nominee Signature</Text>
                                 </TouchableOpacity>
+
 
                                 <Button
                                     mode="outlined"
@@ -1201,6 +1280,8 @@ const AgreementSecond: React.FC = () => {
                                 >
                                     Delete Nominee
                                 </Button>
+
+
                             </Card.Content>
                         </Card>
                     ))}
@@ -1208,19 +1289,22 @@ const AgreementSecond: React.FC = () => {
                     <Button mode="outlined" onPress={addNominee} style={{ marginVertical: 10 }}>
                         Add Another Nominee
                     </Button>
+
+
+
                 </Card>
 
                 {/* Witness Section */}
                 <Card style={styles.sectionCard}>
+                    {/* ----------------- Witnesses ----------------- */}
                     <Text style={styles.sectionTitle}>Witness Details</Text>
                     {witnesses.map((witness, index) => (
-                        <Card key={index} style={styles.innerCard}>
+                        <Card key={index} style={styles.sectionCard}>
                             <Card.Content>
                                 <Text style={styles.sectionSubTitle}>Witness {index + 1}</Text>
 
 
-
-                                <Text style={styles.label}>Name</Text>
+                                <Text style={styles.label}>Full Name</Text>
                                 <TextInput
                                     mode="outlined"
                                     label="Full Name"
@@ -1228,69 +1312,81 @@ const AgreementSecond: React.FC = () => {
                                     onChangeText={(text) => updateWitness(index, "witnessname", text)}
                                     style={styles.input}
                                     maxLength={25}
-                                    error={!!witnessErrors[index]?.witnessname}
                                 />
-                                {witnessErrors[index]?.witnessname ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.witnessname}>
-                                        {witnessErrors[index]?.witnessname}
-                                    </HelperText>
-                                ) : null}
 
 
-                                <Text style={styles.label}>Mobile Number</Text>
                                 <TextInput
                                     mode="outlined"
-                                    label="Mobile Number"
+                                    label="Witness Mobile No"
                                     keyboardType="phone-pad"
                                     value={witness.witnessmobileno}
                                     onChangeText={(text) => {
                                         const numericText = text.replace(/[^0-9]/g, "");
                                         updateWitness(index, "witnessmobileno", numericText);
+                                        validateMobile(numericText, "witness", index);
                                     }}
                                     style={styles.input}
                                     maxLength={10}
-                                    error={!!witnessErrors[index]?.witnessmobileno}
+                                    error={!!witnessMobileErrors[index]}
                                 />
-                                {witnessErrors[index]?.witnessmobileno ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.witnessmobileno}>
-                                        {witnessErrors[index]?.witnessmobileno}
+
+                                {witnessMobileErrors[index] ? (
+                                    <HelperText type="error" visible={!!witnessMobileErrors[index]}>
+                                        {witnessMobileErrors[index]}
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>Email Address</Text>
+
                                 <TextInput
                                     mode="outlined"
-                                    label="Email Address"
+                                    label="Email"
                                     keyboardType="email-address"
                                     value={witness.witnessemail}
-                                    onChangeText={(text) => updateWitness(index, "witnessemail", text)}
+                                    onChangeText={(text) => {
+                                        updateWitness(index, "witnessemail", text);
+
+                                        // 🔹 Real-time validation for this witness
+                                        const updatedErrors = [...witnessEmailErrors];
+
+                                        if (text.length === 0) {
+                                            updatedErrors[index] = ""; // no error if empty
+                                        } else if (!isWitnessEmail(text)) {
+                                            updatedErrors[index] = "Please enter a valid email address";
+                                        } else {
+                                            updatedErrors[index] = "";
+                                        }
+
+                                        setWitnessEmailErrors(updatedErrors);
+                                    }}
                                     style={styles.input}
-                                    maxLength={50}
-                                    error={!!witnessErrors[index]?.witnessemail}
+                                    maxLength={25}
                                 />
-                                {witnessErrors[index]?.witnessemail ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.witnessemail}>
-                                        {witnessErrors[index]?.witnessemail}
+
+                                {witnessEmailErrors[index] ? (
+                                    <HelperText type="error" visible={!!witnessEmailErrors[index]}>
+                                        {witnessEmailErrors[index]}
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>Address</Text>
                                 <TextInput
                                     mode="outlined"
                                     label="Address Line"
                                     value={witness.addrline}
-                                    onChangeText={(text) => updateWitness(index, "addrline", text)}
+                                    onChangeText={(text) => {
+                                        updateWitness(index, "addrline", text);
+                                        validateAddress(text, "witness", index);
+                                    }}
                                     style={styles.input}
                                     maxLength={50}
-                                    error={!!witnessErrors[index]?.addrline}
+                                    error={!!witnessAddressErrors[index]}
                                 />
-                                {witnessErrors[index]?.addrline ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.addrline}>
-                                        {witnessErrors[index]?.addrline}
+
+                                {witnessAddressErrors[index] ? (
+                                    <HelperText type="error" visible={!!witnessAddressErrors[index]}>
+                                        {witnessAddressErrors[index]}
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>Pincode</Text>
                                 <TextInput
                                     mode="outlined"
                                     label="Pincode"
@@ -1299,50 +1395,36 @@ const AgreementSecond: React.FC = () => {
                                     onChangeText={(text) => updateWitness(index, "pincode", text)}
                                     style={styles.input}
                                     maxLength={6}
-                                    error={!!witnessErrors[index]?.pincode}
                                 />
-                                {witnessErrors[index]?.pincode ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.pincode}>
-                                        {witnessErrors[index]?.pincode}
-                                    </HelperText>
-                                ) : null}
+
 
                                 <Text style={styles.label}>State</Text>
                                 <CommonPicker
                                     selectedValue={witness.stateid || ""}
+
                                     onValueChange={(value) => handleStateChange(value, "Witness", index)}
                                     items={statesList}
                                 />
-                                {witnessErrors[index]?.stateid ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.stateid}>
-                                        {witnessErrors[index]?.stateid}
-                                    </HelperText>
-                                ) : null}
 
+
+
+                                {/* 🏢 District Dropdown */}
                                 <Text style={styles.label}>District</Text>
                                 <CommonPicker
                                     selectedValue={witness.districtid || ""}
                                     onValueChange={(value) => handleDistrictChange(value, "Witness", index)}
                                     items={witnessDistrictsList[index] || []}
                                 />
-                                {witnessErrors[index]?.districtid ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.districtid}>
-                                        {witnessErrors[index]?.districtid}
-                                    </HelperText>
-                                ) : null}
 
+
+                                {/* ✅ City Dropdown */}
                                 <Text style={styles.label}>City</Text>
                                 <CommonPicker
                                     selectedValue={witness.subdistrictid || ""}
                                     onValueChange={(value) => handleCityChange(value, "Witness", index)}
                                     items={witnessCitiesList[index] || []}
                                 />
-                                {witnessErrors[index]?.subdistrictid ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.subdistrictid}>
-                                        {witnessErrors[index]?.subdistrictid}
-                                    </HelperText>
-                                ) : null}
-                                <Text style={styles.label}>Village name</Text>
+
                                 <TextInput
                                     mode="outlined"
                                     label="Village Name"
@@ -1350,19 +1432,13 @@ const AgreementSecond: React.FC = () => {
                                     onChangeText={(text) => updateWitness(index, "villagename", text)}
                                     style={styles.input}
                                     maxLength={25}
-                                    error={!!witnessErrors[index]?.villagename}
                                 />
-                                {witnessErrors[index]?.villagename ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.villagename}>
-                                        {witnessErrors[index]?.villagename}
-                                    </HelperText>
-                                ) : null}
 
-                                {witnessSignatureUri && (
+                                {witnessSignatureUri?.length > 0 && (
                                     <View style={{ marginVertical: 10, alignItems: "center" }}>
                                         <Text style={{ fontWeight: "bold" }}>Signature Preview:</Text>
                                         <Image
-                                            source={{ uri: witnessSignatureUri }}
+                                            source={{ uri: witnessSignatureUri[index] }}
                                             style={{ width: 250, height: 100, borderWidth: 1, borderColor: "#ccc", marginTop: 5 }}
                                             resizeMode="contain"
                                         />
@@ -1371,7 +1447,7 @@ const AgreementSecond: React.FC = () => {
 
                                 <TouchableOpacity
                                     style={styles.iconButton}
-                                    onPress={() => navigation.navigate("Signature", { type: "witness" })}
+                                    onPress={() => navigation.navigate("Signature", { type: "witness", index })}
                                 >
                                     <MaterialCommunityIcons name="signature-freehand" size={26} color="#2C5EFF" />
                                     <Text>Add Witness Signature</Text>
@@ -1386,6 +1462,8 @@ const AgreementSecond: React.FC = () => {
                                 >
                                     Delete Witness
                                 </Button>
+
+
                             </Card.Content>
                         </Card>
                     ))}
@@ -1394,13 +1472,26 @@ const AgreementSecond: React.FC = () => {
                     </Button>
                 </Card>
 
-                {/* Signature & Profile Section */}
+
+
+
+
+
+
+
+
+
+                {/* Dynamic Commodity-Specific Dropdown */}
+                {renderCommodityDropdown()}
+
+
                 <Card style={styles.signatureCard}>
                     <Card.Content>
                         <Text style={styles.cardTitle}>Signature & Profile Verification</Text>
                         <Divider style={styles.divider} />
 
                         <View style={styles.photoGrid}>
+                            {/* ✅ Signature Capture */}
                             <View style={styles.photoBlock}>
                                 <View style={styles.photoHeader}>
                                     <MaterialIcons name="gesture" size={22} color="#007AFF" />
@@ -1427,6 +1518,7 @@ const AgreementSecond: React.FC = () => {
                                 </Button>
                             </View>
 
+                            {/* ✅ Profile Capture */}
                             <View style={styles.photoBlock}>
                                 <View style={styles.photoHeader}>
                                     <MaterialIcons name="person" size={22} color="#007AFF" />
@@ -1456,96 +1548,60 @@ const AgreementSecond: React.FC = () => {
                     </Card.Content>
                 </Card>
 
-                {/* Commodity Dropdown */}
-                {renderCommodityDropdown()}
 
                 {/* NHRDF Authorized Signatory Section */}
                 <Card style={styles.sectionCard}>
                     <Card.Content>
                         <Text style={styles.sectionTitle}>NHRDF Authorized Signatory</Text>
 
-
-
+                        {/* Authorized Signatory Name */}
                         <Text style={styles.label}>Authorized Signatory Name</Text>
                         <TextInput
                             mode="outlined"
-                            label="Authorized Signatory Name"
                             value={state.form.authorizedSignatory || ""}
-                            onChangeText={(text) => {
-                                updateState({ ...state, form: { ...state.form, authorizedSignatory: text } });
-                                validateFormField('authorizedSignatory', text);
-                            }}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, authorizedSignatory: text } })}
                             style={styles.input}
+                            placeholder="Enter authorized signatory name"
                             maxLength={20}
-                            error={!!formErrors.authorizedSignatory}
                         />
-                        {formErrors.authorizedSignatory ? (
-                            <HelperText type="error" visible={!!formErrors.authorizedSignatory}>
-                                {formErrors.authorizedSignatory}
-                            </HelperText>
-                        ) : null}
-
-
 
 
                         <Text style={styles.label}>Lot Number</Text>
                         <TextInput
                             mode="outlined"
-                            label="Lot Number"
                             value={state.form.LotNumber || ""}
-                            onChangeText={(text) => {
-                                updateState({ ...state, form: { ...state.form, LotNumber: text } });
-                                validateFormField('LotNumber', text);
-                            }}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, LotNumber: text } })}
                             style={styles.input}
-                            maxLength={50}
-                            error={!!formErrors.LotNumber}
+                            placeholder="Enter Lot number"
+                            maxLength={5}
                         />
-                        {formErrors.LotNumber ? (
-                            <HelperText type="error" visible={!!formErrors.LotNumber}>
-                                {formErrors.LotNumber}
-                            </HelperText>
-                        ) : null}
+
+
 
                         <Text style={styles.label}>Tag Number</Text>
                         <TextInput
                             mode="outlined"
-                            label="Tag Number"
                             value={state.form.TagNumber || ""}
-                            onChangeText={(text) => {
-                                updateState({ ...state, form: { ...state.form, TagNumber: text } });
-                                validateFormField('TagNumber', text);
-                            }}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, TagNumber: text } })}
                             style={styles.input}
-                            maxLength={50}
-                            error={!!formErrors.TagNumber}
+                            placeholder="Enter Tag number"
+                            maxLength={5}
                         />
-                        {formErrors.TagNumber ? (
-                            <HelperText type="error" visible={!!formErrors.TagNumber}>
-                                {formErrors.TagNumber}
-                            </HelperText>
-                        ) : null}
-
 
 
                         <Text style={styles.label}>Bill Number</Text>
                         <TextInput
                             mode="outlined"
-                            label="Bill Number"
                             value={state.form.BillNumber || ""}
-                            onChangeText={(text) => {
-                                updateState({ ...state, form: { ...state.form, BillNumber: text } });
-                                validateFormField('BillNumber', text);
-                            }}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, BillNumber: text } })}
                             style={styles.input}
-                            maxLength={50}
-                            error={!!formErrors.BillNumber}
+                            placeholder="Enter Bill number"
+                            maxLength={5}
                         />
-                        {formErrors.BillNumber ? (
-                            <HelperText type="error" visible={!!formErrors.BillNumber}>
-                                {formErrors.BillNumber}
-                            </HelperText>
-                        ) : null}
+
+
+
+
                     </Card.Content>
                 </Card>
 
@@ -1557,18 +1613,26 @@ const AgreementSecond: React.FC = () => {
                         <ScrollView style={styles.agreementContainer} nestedScrollEnabled={true}>
                             <Text style={styles.agreementText}>
                                 <Text style={styles.agreementHeading}>Important Terms:{'\n\n'}</Text>
+
                                 • The NHRDF reserves the right to terminate this Contract Agreement without giving any notice under circumstances beyond their control.{'\n\n'}
+
                                 • In case of termination, the Grower will be fully responsible for disposal of seeds/bulbs/tubers produced.{'\n\n'}
+
                                 • This Agreement has been read & explained to the Grower in his/her own mother tongue.{'\n\n'}
+
                                 • The Grower hereby declares that he/she has understood fully the contents thereof.{'\n\n'}
+
                                 • This Agreement is signed and implemented as it is mutually understood and agreed by Grower and the NHRDF.{'\n\n'}
+
                                 • If any dispute arises in this matter as per this Agreement, jurisdiction will be Delhi Court, Delhi, India only.{'\n\n'}
+
                                 <Text style={styles.agreementNote}>
                                     Note: The Grower is not allowed to sell the produce other than those approved under the programmes or from the fields not inspected by the NHRDF.
                                 </Text>
                             </Text>
                         </ScrollView>
 
+                        {/* Agreement Acceptance Checkbox */}
                         <View style={styles.checkboxContainer}>
                             <Checkbox.Android
                                 status={isAgreementAccepted ? 'checked' : 'unchecked'}
@@ -1579,11 +1643,6 @@ const AgreementSecond: React.FC = () => {
                                 I have read and understood all the terms and conditions of this agreement and hereby accept them.
                             </Text>
                         </View>
-                        {!isAgreementAccepted && (
-                            <HelperText type="error" visible={!isAgreementAccepted}>
-                                Please accept the agreement terms to continue
-                            </HelperText>
-                        )}
                     </Card.Content>
                 </Card>
 
@@ -1592,11 +1651,11 @@ const AgreementSecond: React.FC = () => {
                     onPress={handleSubmit}
                     style={[
                         styles.submitButton,
-                        (!isFormValid() || isSubmitting) && styles.submitButtonDisabled,
+                        (!isAgreementAccepted || isSubmitting) && styles.submitButtonDisabled,
                     ]}
                     contentStyle={styles.submitButtonContent}
                     icon="check"
-                    disabled={!isFormValid() || isSubmitting}
+                    disabled={!isAgreementAccepted || isSubmitting} // ✅ disable during submit
                 >
                     {isSubmitting ? "Submitting..." : "Submit Agreement"}
                 </Button>
@@ -1604,6 +1663,8 @@ const AgreementSecond: React.FC = () => {
         </View>
     );
 };
+
+export default AgreementSecond;
 
 const styles = StyleSheet.create({
     headerContainer: {
@@ -1614,18 +1675,7 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         justifyContent: "space-between",
     },
-    sectionSubTitle: {
-        fontSize: 16,
-        fontWeight: "600",
-        marginBottom: 10,
-        color: "#455A64"
-    },
-    innerCard: {
-        marginBottom: 12,
-        borderRadius: 8,
-        elevation: 1,
-        backgroundColor: "#fff",
-    },
+    sectionSubTitle: { fontSize: 16, fontWeight: "600", marginBottom: 10 },
     backButton: {
         paddingHorizontal: 14,
         paddingVertical: 20,
@@ -1641,6 +1691,12 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: "#f5f5f5",
     },
+    image: {
+        width: 200,
+        height: 200,
+        marginVertical: 10,
+        borderRadius: 10,
+    },
     scrollContent: {
         padding: 16,
         paddingBottom: 30,
@@ -1650,6 +1706,188 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         elevation: 2,
         backgroundColor: "white",
+    },
+    iconButton: {
+        backgroundColor: "#EAF0FF",
+        paddingVertical: 8,
+        paddingHorizontal: 10,
+        borderRadius: 10,
+        elevation: 2,
+        justifyContent: "center",
+        alignItems: "center",
+    },
+    iconText: {
+        marginTop: 4,
+        fontSize: 12,
+        color: "#2C5EFF",
+        fontWeight: "600",
+    },
+
+
+    infoContainer: {
+        marginTop: 12,
+        backgroundColor: "#F8F9FA",
+        borderRadius: 10,
+        padding: 12,
+        borderLeftWidth: 4,
+        borderLeftColor: "#70B04F",
+    },
+
+    subTitle: {
+        fontSize: 16,
+        fontWeight: "600",
+        color: "#007BFF",
+        marginBottom: 6,
+    },
+
+    description: {
+        fontSize: 14,
+        color: "#333",
+        lineHeight: 20,
+        textAlign: "justify",
+    },
+    sectionTitle: {
+        fontSize: 16,
+        fontWeight: "bold",
+        color: "#70B04F",
+        marginBottom: 16,
+        textAlign: "center",
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: "#455A64",
+        marginBottom: 8,
+        marginTop: 4,
+
+    },
+    input: {
+        marginBottom: 12,
+        backgroundColor: "white",
+        height: 38,
+        fontSize: 14,
+        paddingHorizontal: 10,
+
+    },
+    multilineinput: {
+        backgroundColor: '#fff',
+        marginBottom: 12,
+        fontSize: 14,
+
+    },
+    row: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginBottom: 8,
+    },
+    halfInput: {
+        width: "48%",
+    },
+    submitButton: {
+        marginTop: 8,
+        marginBottom: 30,
+        paddingVertical: 8,
+        backgroundColor: "#2196F3",
+        borderRadius: 8,
+        elevation: 4,
+    },
+
+    photoContainer: {
+        flexDirection: 'column',
+        gap: 20,
+        alignItems: 'center',   // centers horizontally
+        justifyContent: 'center', // centers vertically
+    },
+    captureSection: {
+        alignItems: 'center',
+    },
+    captureButton: {
+        borderRadius: 10,
+        backgroundColor: '#1976D2',
+        width: '80%',
+    },
+    captureButtonAlt: {
+        borderRadius: 10,
+        backgroundColor: '#0288D1',
+        width: '80%',
+    },
+    captureButtonContent: {
+        height: 45,
+    },
+    previewImage: {
+        width: 123,
+        height: 140,
+        borderRadius: 12,
+        marginTop: 12,
+        borderWidth: 2,
+        borderColor: '#ddd',
+    },
+    submitButtonDisabled: {
+        backgroundColor: "#BDBDBD",
+    },
+    submitButtonContent: {
+        paddingVertical: 6,
+    },
+    agreementContainer: {
+        maxHeight: 300,
+        borderWidth: 1,
+        borderColor: "#E0E0E0",
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 16,
+        backgroundColor: "#FAFAFA",
+    },
+    agreementText: {
+        fontSize: 12,
+        lineHeight: 18,
+        color: "#455A64",
+    },
+    agreementHeading: {
+        fontSize: 14,
+        fontWeight: "bold",
+        color: "#D32F2F",
+    },
+    agreementNote: {
+        fontStyle: "italic",
+        color: "#FF9800",
+        fontWeight: "600",
+    },
+    checkboxContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        marginTop: 8,
+    },
+    checkboxLabel: {
+        flex: 1,
+        marginLeft: 8,
+        fontSize: 14,
+        color: "#455A64",
+    },
+    signatureBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        padding: 10,
+        borderWidth: 1,
+        borderColor: "#2C5EFF",
+        borderRadius: 5,
+        marginTop: 10,
+    },
+    dropdown: {
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        backgroundColor: '#fff',
+        marginBottom: 10,
+    },
+    placeholderStyle: {
+        fontSize: 14,
+        color: '#000',
+    },
+    selectedTextStyle: {
+        fontSize: 14,
+        color: '#000',
     },
     signatureCard: {
         borderRadius: 16,
@@ -1695,12 +1933,7 @@ const styles = StyleSheet.create({
         fontWeight: "600",
         color: "#333",
     },
-    previewImage: {
-        width: "100%",
-        height: 140,
-        borderRadius: 10,
-        marginBottom: 8,
-    },
+
     emptyBox: {
         width: "100%",
         height: 140,
@@ -1727,105 +1960,5 @@ const styles = StyleSheet.create({
     buttonContent: {
         height: 44,
     },
-    iconButton: {
-        backgroundColor: "#EAF0FF",
-        paddingVertical: 8,
-        paddingHorizontal: 10,
-        borderRadius: 10,
-        elevation: 2,
-        justifyContent: "center",
-        alignItems: "center",
-        marginVertical: 10,
-    },
-    dropdown: {
-        height: 40,
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        backgroundColor: '#fff',
-        marginBottom: 10,
-    },
-    dropdownError: {
-        borderColor: '#B00020',
-    },
-    placeholderStyle: {
-        fontSize: 14,
-        color: '#000',
-    },
-    selectedTextStyle: {
-        fontSize: 14,
-        color: '#000',
-    },
-    input: {
-        marginBottom: 12,
-        backgroundColor: "white",
-        height: 38,
-        fontSize: 14,
-        paddingHorizontal: 10,
-    },
-    label: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#455A64",
-        marginBottom: 8,
-        marginTop: 4,
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: "bold",
-        color: "#70B04F",
-        marginBottom: 16,
-        textAlign: "center",
-    },
-    submitButton: {
-        marginTop: 8,
-        marginBottom: 30,
-        paddingVertical: 8,
-        backgroundColor: "#2196F3",
-        borderRadius: 8,
-        elevation: 4,
-    },
-    submitButtonDisabled: {
-        backgroundColor: "#BDBDBD",
-    },
-    submitButtonContent: {
-        paddingVertical: 6,
-    },
-    agreementContainer: {
-        maxHeight: 300,
-        borderWidth: 1,
-        borderColor: "#E0E0E0",
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 16,
-        backgroundColor: "#FAFAFA",
-    },
-    agreementText: {
-        fontSize: 12,
-        lineHeight: 18,
-        color: "#455A64",
-    },
-    agreementHeading: {
-        fontSize: 14,
-        fontWeight: "bold",
-        color: "#D32F2F",
-    },
-    agreementNote: {
-        fontStyle: "italic",
-        color: "#FF9800",
-        fontWeight: "600",
-    },
-    checkboxContainer: {
-        flexDirection: "row",
-        alignItems: "center",
-        marginTop: 8,
-    },
-    checkboxLabel: {
-        flex: 1,
-        marginLeft: 8,
-        fontSize: 14,
-        color: "#455A64",
-    },
-});
-export default AgreementSecond;
+
+}); 

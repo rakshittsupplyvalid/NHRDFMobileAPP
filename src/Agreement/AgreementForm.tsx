@@ -341,7 +341,7 @@ const handlePickerBlur = (field: string) => {
     >
       <Card style={styles.sectionCard}>
         <Card.Content>
-          <Text style={styles.label}>Commodity Type *</Text>
+          <Text style={styles.label}>Commodity Types *</Text>
           <CommonPicker
             selectedValue={selectedCommodityType}
             onValueChange={(value) => handleFieldChange('selectedCommodityType', value)}
