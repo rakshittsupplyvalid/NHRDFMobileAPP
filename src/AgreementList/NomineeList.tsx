@@ -1,11 +1,12 @@
-import React, { useEffect, useState ,  useCallback  } from "react";
-import { View, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import { View, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity, Image } from "react-native";
 import { Card, Text, Avatar, Divider } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import {  useFocusEffect,  useRoute, RouteProp, useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import { BackHandler } from 'react-native';
 import apiClient from "../Service/apiInterceptors";
 import { DrawerParamList } from "../Type/type";
+import GlobalImageViewer from "../common/lib/GlobalMediaViewer";
 
 
 type NomineeScreenRouteProp = RouteProp<DrawerParamList, "NomineeScreen">;
@@ -20,6 +21,7 @@ type Nominee = {
   dob: string;
   age: number;
   isactive: boolean;
+  signature: string | null;
 };
 
 const NomineeScreen = () => {
@@ -30,26 +32,35 @@ const NomineeScreen = () => {
   const [nominees, setNominees] = useState<Nominee[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [selectedUri, setSelectedUri] = useState<string | null>(null);
+
+  const openViewer = (uri: string) => {
+    setSelectedUri(uri);
+    setViewerVisible(true);
+  };
 
 
-  
-    useFocusEffect(
-      useCallback(() => {
-        const onBackPress = () => {
-          navigation.navigate("Agreement List" as never);
-          return true; // prevent default behavior
-        };
-  
-        // ✅ Add the event listener
-        const subscription = BackHandler.addEventListener(
-          "hardwareBackPress",
-          onBackPress
-        );
-  
-        // ✅ Clean up correctly
-        return () => subscription.remove();
-      }, [navigation])
-    );
+
+
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate("Agreement List" as never);
+        return true; // prevent default behavior
+      };
+
+      // ✅ Add the event listener
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
+      );
+
+      // ✅ Clean up correctly
+      return () => subscription.remove();
+    }, [navigation])
+  );
 
 
 
@@ -61,6 +72,7 @@ const NomineeScreen = () => {
     try {
       const response = await apiClient.get(`/api/mobile/nominees/by/agreement/${agreementId}`);
       setNominees(response.data);
+      console.log(response.data)
     } catch (error) {
       console.log("Error fetching nominees:", error);
     } finally {
@@ -101,6 +113,27 @@ const NomineeScreen = () => {
               <Text style={styles.infoText}>{item.email}</Text>
             </View>
           ) : null}
+          {/* 👇 Signature Display */}
+
+          {item.signature && (
+            <TouchableOpacity
+              onPress={() =>
+                openViewer(item.signature)
+              }
+              style={styles.row}
+            >
+              <MaterialCommunityIcons name="image" size={18} color="#70B04F" />
+              <Text style={styles.viewText}>View</Text>
+            </TouchableOpacity>
+          )}
+          {/* 🖼 Global Viewer */}
+          <GlobalImageViewer
+            visible={viewerVisible}
+            uri={selectedUri}
+            onClose={() => setViewerVisible(false)}
+          />
+
+
         </View>
       </Card.Content>
     </Card>
@@ -118,9 +151,9 @@ const NomineeScreen = () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity 
-  onPress={() => navigation.navigate("Agreement List" as never)} 
-        style={styles.backButton}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("Agreement List" as never)}
+          style={styles.backButton}>
           <MaterialCommunityIcons name="arrow-left" size={28} color="#fff" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Nominees</Text>
@@ -145,6 +178,11 @@ const NomineeScreen = () => {
 };
 
 const styles = StyleSheet.create({
+  viewText: {
+    color: "#c62222ff",
+    fontSize: 14,
+    marginLeft: 6,
+  },
   container: { flex: 1, backgroundColor: "#f0f4f7" },
   header: {
     flexDirection: "row",

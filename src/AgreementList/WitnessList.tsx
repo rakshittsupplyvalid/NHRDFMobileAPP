@@ -1,4 +1,4 @@
-import React, { useEffect, useState ,  useCallback  } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   FlatList,
@@ -12,7 +12,8 @@ import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
 import apiClient from "../Service/apiInterceptors";
 import { DrawerParamList } from "../Type/type";
 import { BackHandler } from 'react-native';
-import { useFocusEffect  } from "@react-navigation/native";
+import { useFocusEffect } from "@react-navigation/native";
+import GlobalImageViewer from "../common/lib/GlobalMediaViewer";
 type Witness = {
   name: string;
   mobileno: string;
@@ -22,6 +23,7 @@ type Witness = {
   statename: string;
   districtname: string;
   villagename: string;
+  signature: string;
 };
 
 type NomineeScreenRouteProp = RouteProp<DrawerParamList, "NomineeScreen">;
@@ -34,25 +36,33 @@ const WitnessScreen = () => {
   const [witnesses, setWitnesses] = useState<Witness[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [selectedUri, setSelectedUri] = useState<string | null>(null);
 
-      useFocusEffect(
-        useCallback(() => {
-          const onBackPress = () => {
-            navigation.navigate("Agreement List" as never);
-            return true; // prevent default behavior
-          };
-    
-          // ✅ Add the event listener
-          const subscription = BackHandler.addEventListener(
-            "hardwareBackPress",
-            onBackPress
-          );
-    
-          // ✅ Clean up correctly
-          return () => subscription.remove();
-        }, [navigation])
+  const openViewer = (uri: string) => {
+    setSelectedUri(uri);
+    setViewerVisible(true);
+  };
+
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate("Agreement List" as never);
+        return true; // prevent default behavior
+      };
+
+      // ✅ Add the event listener
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
       );
-  
+
+      // ✅ Clean up correctly
+      return () => subscription.remove();
+    }, [navigation])
+  );
+
 
   useEffect(() => {
     fetchWitnesses();
@@ -113,6 +123,27 @@ const WitnessScreen = () => {
             <MaterialCommunityIcons name="map-marker-distance" size={18} color="#70B04F" />
             <Text style={styles.infoText}>Pincode: {item.pincode || "-"}</Text>
           </View>
+
+          {/* 👇 Signature Display */}
+
+          {item.signature && (
+            <TouchableOpacity
+              onPress={() =>
+                openViewer(item.signature)
+              }
+              style={styles.row}
+            >
+              <MaterialCommunityIcons name="image" size={18} color="#70B04F" />
+              <Text style={styles.viewText}>View</Text>
+            </TouchableOpacity>
+          )}
+          {/* 🖼 Global Viewer */}
+          <GlobalImageViewer
+            visible={viewerVisible}
+            uri={selectedUri}
+            onClose={() => setViewerVisible(false)}
+          />
+
         </View>
       </Card.Content>
     </Card>
@@ -164,6 +195,11 @@ const WitnessScreen = () => {
 export default WitnessScreen;
 
 const styles = StyleSheet.create({
+    viewText: {
+    color: "#c62222ff",
+    fontSize: 14,
+    marginLeft: 6,
+  },
   container: { flex: 1, backgroundColor: "#f0f4f7" },
   header: {
     flexDirection: "row",
