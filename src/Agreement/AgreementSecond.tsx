@@ -1,6 +1,17 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { StyleSheet, View, TouchableOpacity, ScrollView, Modal, PermissionsAndroid, Platform, Alert, Image } from "react-native";
-import { Button, Text, Card, TextInput, Checkbox, HelperText, Divider } from "react-native-paper";
+import {
+    StyleSheet,
+    View,
+    TouchableOpacity,
+    ScrollView,
+    Modal,
+    PermissionsAndroid,
+    Platform,
+    Alert,
+    Image,
+    TextInput as RNTextInput
+} from "react-native";
+import { Button, Text, Card, Checkbox, HelperText, Divider } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import CommonPicker from "../CommonComponent/CommonDropdown";
 import { Onion, Garlic, Potato } from "../Constants/constants";
@@ -140,14 +151,14 @@ const AgreementSecond: React.FC = () => {
         useCallback(() => {
             if (route.params?.signatureData) {
                 const { type, signatureUri, signaturePreview, index = 0 } = route.params.signatureData;
-                
-                console.log("📝 Received signature data:", { 
-                    type, 
-                    index, 
+
+                console.log("📝 Received signature data:", {
+                    type,
+                    index,
                     hasSignature: !!signatureUri,
-                    signatureLength: signatureUri?.length 
+                    signatureLength: signatureUri?.length
                 });
-                
+
                 if (type === 'nominee') {
                     setNominees(prevNominees => {
                         const updatedNominees = [...prevNominees];
@@ -167,7 +178,7 @@ const AgreementSecond: React.FC = () => {
                         return updatedWitnesses;
                     });
                 }
-                
+
                 // Clear params to avoid reprocessing
                 navigation.setParams({ signatureData: null });
             }
@@ -748,16 +759,16 @@ const AgreementSecond: React.FC = () => {
 
     // Signature navigation handlers
     const handleNomineeSignature = (index: number) => {
-        navigation.navigate("Signature", { 
-            type: "nominee", 
-            index 
+        navigation.navigate("Signature", {
+            type: "nominee",
+            index
         });
     };
 
     const handleWitnessSignature = (index: number) => {
-        navigation.navigate("Signature", { 
-            type: "witness", 
-            index 
+        navigation.navigate("Signature", {
+            type: "witness",
+            index
         });
     };
 
@@ -827,7 +838,7 @@ const AgreementSecond: React.FC = () => {
             // ✅ FIXED: Append nominees with PROPER signature handling
             nominees.forEach((nominee, index) => {
                 console.log(`📝 Processing nominee ${index} with signature:`, nominee.signature ? `YES (${nominee.signature.length} chars)` : "NO");
-                
+
                 // Append all regular fields
                 requestData.append(`NomiNee[${index}][nomineename]`, nominee.nomineename || "");
                 requestData.append(`NomiNee[${index}][gender]`, nominee.gender || "");
@@ -872,7 +883,7 @@ const AgreementSecond: React.FC = () => {
             // ✅ FIXED: Append witnesses with PROPER signature handling
             witnesses.forEach((witness, index) => {
                 console.log(`📝 Processing witness ${index} with signature:`, witness.signature ? `YES (${witness.signature.length} chars)` : "NO");
-                
+
                 // Append all regular fields
                 requestData.append(`Witness[${index}][witnessname]`, witness.witnessname || "");
                 requestData.append(`Witness[${index}][witnessmobileno]`, witness.witnessmobileno || "");
@@ -915,7 +926,7 @@ const AgreementSecond: React.FC = () => {
             console.log("Witnesses count:", witnesses.length);
             console.log("Main signature:", signaturePhoto ? "✅ Present" : "❌ Missing");
             console.log("Profile photo:", profilePhoto ? "✅ Present" : "❌ Missing");
-            
+
             const token = await retrieveToken();
             console.log("🔑 Token retrieved, making API call...");
 
@@ -924,7 +935,7 @@ const AgreementSecond: React.FC = () => {
                     "Content-Type": "multipart/form-data",
                     Authorization: `Bearer ${token}`,
                 },
-            
+
             });
 
             console.log("✅ API Response Status:", response.status);
@@ -951,9 +962,9 @@ const AgreementSecond: React.FC = () => {
             console.error("❌ Submit error:", error);
             console.error("❌ Error response:", error.response?.data);
             console.error("❌ Error message:", error.message);
-            
+
             Alert.alert(
-                "Submission Failed", 
+                "Submission Failed",
                 error.response?.data?.message || error.message || "Please check your connection and try again."
             );
         } finally {
@@ -1071,14 +1082,15 @@ const AgreementSecond: React.FC = () => {
                                 <Text style={styles.sectionSubTitle}>Nominee {index + 1}</Text>
 
                                 <Text style={styles.label}>Name</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    label="Full Name"
+                                <RNTextInput
+                                    placeholder="Full Name"
                                     value={nominee.nomineename}
                                     onChangeText={(text) => updateNominee(index, "nomineename", text)}
-                                    style={styles.input}
+                                    style={[
+                                        styles.simpleInput,
+                                        nomineeErrors[index]?.nomineename && styles.inputError
+                                    ]}
                                     maxLength={25}
-                                    error={!!nomineeErrors[index]?.nomineename}
                                 />
                                 {nomineeErrors[index]?.nomineename ? (
                                     <HelperText type="error" visible={!!nomineeErrors[index]?.nomineename}>
@@ -1136,18 +1148,19 @@ const AgreementSecond: React.FC = () => {
                                 />
 
                                 <Text style={styles.label}>Mobile number</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    label="Mobile Number"
+                                <RNTextInput
+                                    placeholder="Mobile Number"
                                     keyboardType="phone-pad"
                                     value={nominee.mobileno}
                                     onChangeText={(text) => {
                                         const numericText = text.replace(/[^0-9]/g, "");
                                         updateNominee(index, "mobileno", numericText);
                                     }}
-                                    style={styles.input}
+                                    style={[
+                                        styles.simpleInput,
+                                        nomineeErrors[index]?.mobileno && styles.inputError
+                                    ]}
                                     maxLength={10}
-                                    error={!!nomineeErrors[index]?.mobileno}
                                 />
                                 {nomineeErrors[index]?.mobileno ? (
                                     <HelperText type="error" visible={!!nomineeErrors[index]?.mobileno}>
@@ -1156,15 +1169,16 @@ const AgreementSecond: React.FC = () => {
                                 ) : null}
 
                                 <Text style={styles.label}>Email Address</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    label="Email Address"
+                                <RNTextInput
+                                    placeholder="Email Address"
                                     keyboardType="email-address"
                                     value={nominee.email}
                                     onChangeText={(text) => updateNominee(index, "email", text)}
-                                    style={styles.input}
+                                    style={[
+                                        styles.simpleInput,
+                                        nomineeErrors[index]?.email && styles.inputError
+                                    ]}
                                     maxLength={50}
-                                    error={!!nomineeErrors[index]?.email}
                                 />
                                 {nomineeErrors[index]?.email ? (
                                     <HelperText type="error" visible={!!nomineeErrors[index]?.email}>
@@ -1173,14 +1187,15 @@ const AgreementSecond: React.FC = () => {
                                 ) : null}
 
                                 <Text style={styles.label}>Relation</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    label="Relation"
+                                <RNTextInput
+                                    placeholder="Relation"
                                     value={nominee.relation}
                                     onChangeText={(text) => updateNominee(index, "relation", text)}
-                                    style={styles.input}
+                                    style={[
+                                        styles.simpleInput,
+                                        nomineeErrors[index]?.relation && styles.inputError
+                                    ]}
                                     maxLength={15}
-                                    error={!!nomineeErrors[index]?.relation}
                                 />
                                 {nomineeErrors[index]?.relation ? (
                                     <HelperText type="error" visible={!!nomineeErrors[index]?.relation}>
@@ -1189,14 +1204,15 @@ const AgreementSecond: React.FC = () => {
                                 ) : null}
 
                                 <Text style={styles.label}>Address Line</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    label="Address Line"
+                                <RNTextInput
+                                    placeholder="Address Line"
                                     value={nominee.addrline}
                                     onChangeText={(text) => updateNominee(index, "addrline", text)}
-                                    style={styles.input}
+                                    style={[
+                                        styles.simpleInput,
+                                        nomineeErrors[index]?.addrline && styles.inputError
+                                    ]}
                                     maxLength={50}
-                                    error={!!nomineeErrors[index]?.addrline}
                                 />
                                 {nomineeErrors[index]?.addrline ? (
                                     <HelperText type="error" visible={!!nomineeErrors[index]?.addrline}>
@@ -1205,14 +1221,15 @@ const AgreementSecond: React.FC = () => {
                                 ) : null}
 
                                 <Text style={styles.label}>Village Name</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    label="Village Name"
+                                <RNTextInput
+                                    placeholder="Village Name"
                                     value={nominee.villagename}
                                     onChangeText={(text) => updateNominee(index, "villagename", text)}
-                                    style={styles.input}
+                                    style={[
+                                        styles.simpleInput,
+                                        nomineeErrors[index]?.villagename && styles.inputError
+                                    ]}
                                     maxLength={25}
-                                    error={!!nomineeErrors[index]?.villagename}
                                 />
                                 {nomineeErrors[index]?.villagename ? (
                                     <HelperText type="error" visible={!!nomineeErrors[index]?.villagename}>
@@ -1221,15 +1238,16 @@ const AgreementSecond: React.FC = () => {
                                 ) : null}
 
                                 <Text style={styles.label}>Pincode</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    label="Pincode"
+                                <RNTextInput
+                                    placeholder="Pincode"
                                     keyboardType="numeric"
                                     value={nominee.pincode}
                                     onChangeText={(text) => updateNominee(index, "pincode", text)}
-                                    style={styles.input}
+                                    style={[
+                                        styles.simpleInput,
+                                        nomineeErrors[index]?.pincode && styles.inputError
+                                    ]}
                                     maxLength={6}
-                                    error={!!nomineeErrors[index]?.pincode}
                                 />
                                 {nomineeErrors[index]?.pincode ? (
                                     <HelperText type="error" visible={!!nomineeErrors[index]?.pincode}>
@@ -1279,10 +1297,10 @@ const AgreementSecond: React.FC = () => {
                                     {nominee.signature ? (
                                         <Image
                                             source={{ uri: `data:image/png;base64,${nominee.signature}` }}
-                                            style={{ 
-                                                width: 200, 
-                                                height: 80, 
-                                                borderWidth: 1, 
+                                            style={{
+                                                width: 200,
+                                                height: 80,
+                                                borderWidth: 1,
                                                 borderColor: "#ccc",
                                                 backgroundColor: 'white'
                                             }}
@@ -1330,14 +1348,15 @@ const AgreementSecond: React.FC = () => {
                                 <Text style={styles.sectionSubTitle}>Witness {index + 1}</Text>
 
                                 <Text style={styles.label}>Name</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    label="Full Name"
+                                <RNTextInput
+                                    placeholder="Full Name"
                                     value={witness.witnessname}
                                     onChangeText={(text) => updateWitness(index, "witnessname", text)}
-                                    style={styles.input}
+                                    style={[
+                                        styles.simpleInput,
+                                        witnessErrors[index]?.witnessname && styles.inputError
+                                    ]}
                                     maxLength={25}
-                                    error={!!witnessErrors[index]?.witnessname}
                                 />
                                 {witnessErrors[index]?.witnessname ? (
                                     <HelperText type="error" visible={!!witnessErrors[index]?.witnessname}>
@@ -1346,18 +1365,19 @@ const AgreementSecond: React.FC = () => {
                                 ) : null}
 
                                 <Text style={styles.label}>Mobile Number</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    label="Mobile Number"
+                                <RNTextInput
+                                    placeholder="Mobile Number"
                                     keyboardType="phone-pad"
                                     value={witness.witnessmobileno}
                                     onChangeText={(text) => {
                                         const numericText = text.replace(/[^0-9]/g, "");
                                         updateWitness(index, "witnessmobileno", numericText);
                                     }}
-                                    style={styles.input}
+                                    style={[
+                                        styles.simpleInput,
+                                        witnessErrors[index]?.witnessmobileno && styles.inputError
+                                    ]}
                                     maxLength={10}
-                                    error={!!witnessErrors[index]?.witnessmobileno}
                                 />
                                 {witnessErrors[index]?.witnessmobileno ? (
                                     <HelperText type="error" visible={!!witnessErrors[index]?.witnessmobileno}>
@@ -1366,15 +1386,16 @@ const AgreementSecond: React.FC = () => {
                                 ) : null}
 
                                 <Text style={styles.label}>Email Address</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    label="Email Address"
+                                <RNTextInput
+                                    placeholder="Email Address"
                                     keyboardType="email-address"
                                     value={witness.witnessemail}
                                     onChangeText={(text) => updateWitness(index, "witnessemail", text)}
-                                    style={styles.input}
+                                    style={[
+                                        styles.simpleInput,
+                                        witnessErrors[index]?.witnessemail && styles.inputError
+                                    ]}
                                     maxLength={50}
-                                    error={!!witnessErrors[index]?.witnessemail}
                                 />
                                 {witnessErrors[index]?.witnessemail ? (
                                     <HelperText type="error" visible={!!witnessErrors[index]?.witnessemail}>
@@ -1383,14 +1404,15 @@ const AgreementSecond: React.FC = () => {
                                 ) : null}
 
                                 <Text style={styles.label}>Address</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    label="Address Line"
+                                <RNTextInput
+                                    placeholder="Address Line"
                                     value={witness.addrline}
                                     onChangeText={(text) => updateWitness(index, "addrline", text)}
-                                    style={styles.input}
+                                    style={[
+                                        styles.simpleInput,
+                                        witnessErrors[index]?.addrline && styles.inputError
+                                    ]}
                                     maxLength={50}
-                                    error={!!witnessErrors[index]?.addrline}
                                 />
                                 {witnessErrors[index]?.addrline ? (
                                     <HelperText type="error" visible={!!witnessErrors[index]?.addrline}>
@@ -1399,15 +1421,16 @@ const AgreementSecond: React.FC = () => {
                                 ) : null}
 
                                 <Text style={styles.label}>Pincode</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    label="Pincode"
+                                <RNTextInput
+                                    placeholder="Pincode"
                                     keyboardType="numeric"
                                     value={witness.pincode}
                                     onChangeText={(text) => updateWitness(index, "pincode", text)}
-                                    style={styles.input}
+                                    style={[
+                                        styles.simpleInput,
+                                        witnessErrors[index]?.pincode && styles.inputError
+                                    ]}
                                     maxLength={6}
-                                    error={!!witnessErrors[index]?.pincode}
                                 />
                                 {witnessErrors[index]?.pincode ? (
                                     <HelperText type="error" visible={!!witnessErrors[index]?.pincode}>
@@ -1452,14 +1475,15 @@ const AgreementSecond: React.FC = () => {
                                 ) : null}
 
                                 <Text style={styles.label}>Village name</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    label="Village Name"
+                                <RNTextInput
+                                    placeholder="Village Name"
                                     value={witness.villagename}
                                     onChangeText={(text) => updateWitness(index, "villagename", text)}
-                                    style={styles.input}
+                                    style={[
+                                        styles.simpleInput,
+                                        witnessErrors[index]?.villagename && styles.inputError
+                                    ]}
                                     maxLength={25}
-                                    error={!!witnessErrors[index]?.villagename}
                                 />
                                 {witnessErrors[index]?.villagename ? (
                                     <HelperText type="error" visible={!!witnessErrors[index]?.villagename}>
@@ -1473,10 +1497,10 @@ const AgreementSecond: React.FC = () => {
                                     {witness.signature ? (
                                         <Image
                                             source={{ uri: `data:image/png;base64,${witness.signature}` }}
-                                            style={{ 
-                                                width: 200, 
-                                                height: 80, 
-                                                borderWidth: 1, 
+                                            style={{
+                                                width: 200,
+                                                height: 80,
+                                                borderWidth: 1,
                                                 borderColor: "#ccc",
                                                 backgroundColor: 'white'
                                             }}
@@ -1585,17 +1609,18 @@ const AgreementSecond: React.FC = () => {
                         <Text style={styles.sectionTitle}>NHRDF Authorized Signatory</Text>
 
                         <Text style={styles.label}>Authorized Signatory Name</Text>
-                        <TextInput
-                            mode="outlined"
-                            label="Authorized Signatory Name"
+                        <RNTextInput
+                            placeholder="Authorized Signatory Name"
                             value={state.form.authorizedSignatory || ""}
                             onChangeText={(text) => {
                                 updateState({ ...state, form: { ...state.form, authorizedSignatory: text } });
                                 validateFormField('authorizedSignatory', text);
                             }}
-                            style={styles.input}
+                            style={[
+                                styles.simpleInput,
+                                formErrors.authorizedSignatory && styles.inputError
+                            ]}
                             maxLength={20}
-                            error={!!formErrors.authorizedSignatory}
                         />
                         {formErrors.authorizedSignatory ? (
                             <HelperText type="error" visible={!!formErrors.authorizedSignatory}>
@@ -1604,17 +1629,18 @@ const AgreementSecond: React.FC = () => {
                         ) : null}
 
                         <Text style={styles.label}>Lot Number</Text>
-                        <TextInput
-                            mode="outlined"
-                            label="Lot Number"
+                        <RNTextInput
+                            placeholder="Lot Number"
                             value={state.form.LotNumber || ""}
                             onChangeText={(text) => {
                                 updateState({ ...state, form: { ...state.form, LotNumber: text } });
                                 validateFormField('LotNumber', text);
                             }}
-                            style={styles.input}
+                            style={[
+                                styles.simpleInput,
+                                formErrors.LotNumber && styles.inputError
+                            ]}
                             maxLength={50}
-                            error={!!formErrors.LotNumber}
                         />
                         {formErrors.LotNumber ? (
                             <HelperText type="error" visible={!!formErrors.LotNumber}>
@@ -1623,17 +1649,18 @@ const AgreementSecond: React.FC = () => {
                         ) : null}
 
                         <Text style={styles.label}>Tag Number</Text>
-                        <TextInput
-                            mode="outlined"
-                            label="Tag Number"
+                        <RNTextInput
+                            placeholder="Tag Number"
                             value={state.form.TagNumber || ""}
                             onChangeText={(text) => {
                                 updateState({ ...state, form: { ...state.form, TagNumber: text } });
                                 validateFormField('TagNumber', text);
                             }}
-                            style={styles.input}
+                            style={[
+                                styles.simpleInput,
+                                formErrors.TagNumber && styles.inputError
+                            ]}
                             maxLength={50}
-                            error={!!formErrors.TagNumber}
                         />
                         {formErrors.TagNumber ? (
                             <HelperText type="error" visible={!!formErrors.TagNumber}>
@@ -1642,17 +1669,18 @@ const AgreementSecond: React.FC = () => {
                         ) : null}
 
                         <Text style={styles.label}>Bill Number</Text>
-                        <TextInput
-                            mode="outlined"
-                            label="Bill Number"
+                        <RNTextInput
+                            placeholder="Bill Number"
                             value={state.form.BillNumber || ""}
                             onChangeText={(text) => {
                                 updateState({ ...state, form: { ...state.form, BillNumber: text } });
                                 validateFormField('BillNumber', text);
                             }}
-                            style={styles.input}
+                            style={[
+                                styles.simpleInput,
+                                formErrors.BillNumber && styles.inputError
+                            ]}
                             maxLength={50}
-                            error={!!formErrors.BillNumber}
                         />
                         {formErrors.BillNumber ? (
                             <HelperText type="error" visible={!!formErrors.BillNumber}>
@@ -1871,12 +1899,18 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#000',
     },
-    input: {
+    // Simple TextInput styles
+    simpleInput: {
         marginBottom: 12,
-        backgroundColor: "white",
         height: 38,
-        fontSize: 14,
-        paddingHorizontal: 10,
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+        borderRadius: 10,   // ✅ Add this line
+        paddingHorizontal: 17,
+        backgroundColor: '#FFFFFF',
+    },
+    inputError: {
+        borderColor: "#f44336",
     },
     label: {
         fontSize: 14,
