@@ -22,6 +22,8 @@ import CustomDateTimePicker from "../CommonComponent/DateTimePicker";
 import { launchCamera, CameraOptions } from 'react-native-image-picker';
 import * as FileSystem from "expo-file-system";
 import axios from "axios";
+import RNFS from 'react-native-fs';
+
 
 interface NomineeType {
     nomineename: string;
@@ -91,7 +93,7 @@ const AgreementSecond: React.FC = () => {
     const [witnessDistrictsList, setWitnessDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
     const [witnessCitiesList, setWitnessCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
 
-    
+
 
 
 
@@ -541,16 +543,6 @@ const AgreementSecond: React.FC = () => {
     };
 
 
-    // useFocusEffect(
-    //     React.useCallback(() => {
-    //         const params = route.params as { signatureUri?: string; type?: string } | undefined;
-    //         if (params?.signatureUri && params?.type) {
-    //             if (params.type === "nominee") setNomineeSignatureUri(params.signatureUri);
-    //             else if (params.type === "witness") setWitnessSignatureUri(params.signatureUri);
-    //         }
-    //     }, [route.params])
-    // );
-
     useFocusEffect(
         React.useCallback(() => {
             debugger
@@ -607,10 +599,31 @@ const AgreementSecond: React.FC = () => {
     );
 
 
-    const handleSubmit = async () => {
-        debugger
-        console.log("📦 Received from context:", formData);
+    // Base64 string ko file me convert karo
+    const base64ToFile = async (base64String: any, fileName: any) => {
+        try {
+            // Remove data:image prefix if exists
+            const base64Data = base64String.replace(/^data:image\/\w+;base64,/, '');
 
+            // File path
+            const filePath = `${RNFS.CachesDirectoryPath}/${fileName}`;
+
+            // Write file
+            await RNFS.writeFile(filePath, base64Data, 'base64');
+
+            return {
+                uri: `file://${filePath}`,
+                type: 'image/png',
+                name: fileName
+            };
+        } catch (error) {
+            console.error('Base64 to File Error:', error);
+            throw error;
+        }
+    };
+
+
+    const handleSubmit = async () => {
         setIsSubmitting(true);
 
         if (!isAgreementAccepted) {
@@ -659,62 +672,91 @@ const AgreementSecond: React.FC = () => {
                 } as any);
             }
 
-            // 🔹 Append nominees
-            nominees.forEach((nominee, index) => {
-                Object.keys(nominee).forEach((key) => {
-                    const value = nominee[key as keyof NomineeType];
+            let nominees_update = nominees?.map((x, i) => ({
+                ...x,
+                signature: nomineeSignatureUri[i]
+            }))
 
-                    if (key === "signature" && nomineeSignatureUri?.length > 0) {
-                        debugger
-                        // 🔹 Send nominee signature image
-                        requestData.append(`NomiNee[${index}][signature]`, {
-                            uri: nomineeSignatureUri[index],
-                            type: "image/jpeg",
-                            name: `nominee_signature_${index}.jpg`,
-                        } as any);
-                        requestData.append(`NomiNee[${index}][profdocument]`, {
-                            uri: nomineeSignatureUri[index],
-                            type: "image/jpeg",
-                            name: `nominee_profdocument_${index}.jpg`,
-                        } as any);
-                    } else {
-                        // 🔹 Append normal text fields
-                        requestData.append(
-                            `NomiNee[${index}][${key}]`,
-                            value?.toString() || ""
-                        );
-                    }
-                });
+            // ========== NOMINEES - Array Index Format ==========
+            nominees_update.forEach(async (nominee, index) => {
+                requestData.append(`NomiNee[${index}].nomineename`, nominee.nomineename || '');
+                requestData.append(`NomiNee[${index}].gender`, nominee.gender || 'NONE');
+                requestData.append(`NomiNee[${index}].mobileno`, nominee.mobileno || '');
+                requestData.append(`NomiNee[${index}].email`, nominee.email || '');
+                requestData.append(`NomiNee[${index}].age`, String(nominee.age || 0));
+                requestData.append(`NomiNee[${index}].year`, String(nominee.year || 0));
+                requestData.append(`NomiNee[${index}].dob`, nominee.dob || '');
+                requestData.append(`NomiNee[${index}].addrline`, nominee.addrline || '');
+                requestData.append(`NomiNee[${index}].pincode`, nominee.pincode || '');
+                requestData.append(`NomiNee[${index}].villageid`, String(nominee.villageid || 0));
+                requestData.append(`NomiNee[${index}].villagename`, nominee.villagename || '');
+                requestData.append(`NomiNee[${index}].districtid`, String(nominee.districtid || 0));
+                requestData.append(`NomiNee[${index}].districtname`, nominee.districtname || '');
+                requestData.append(`NomiNee[${index}].subdistrictid`, String(nominee.subdistrictid || 0));
+                requestData.append(`NomiNee[${index}].subdistrictname`, nominee.subdistrictname || '');
+                requestData.append(`NomiNee[${index}].stateid`, String(nominee.stateid || 0));
+                requestData.append(`NomiNee[${index}].statename`, nominee.statename || '');
+                requestData.append(`NomiNee[${index}].relation`, nominee.relation || '');
+                requestData.append(`NomiNee[${index}].profdocument`, nominee.profdocument || '');
+                // requestData.append(`NomiNee[${index}].signature`, nominee.signature || ''); // Base64 string
+
+                // Signature - Convert base64 to file
+                if (nominee.signature) {
+                    const signatureFile = await base64ToFile(
+                        nominee.signature,
+                        `nominee_${index}_signature.png`
+                    );
+
+                    requestData.append(`NomiNee[${index}].signature`, signatureFile as any);
+                    console.log(`✅ Nominee ${index} signature converted to file`);
+                } else {
+                    requestData.append(`NomiNee[${index}].signature`, '');
+                }
+
+                console.log(`✅ Nominee ${index} added:`, nominee.nomineename);
             });
 
 
-            // 🔹 Append witnesses
-            witnesses.forEach((witness, index) => {
-                Object.keys(witness).forEach((key) => {
-                    const value = witness[key as keyof WitnessType];
+            let witnesses_update = witnesses?.map((x, i) => ({
+                ...x,
+                signature: witnessSignatureUri[i]
+            }))
 
-                    if (key === "signature" && witnessSignatureUri?.length > 0) {
-                        debugger
-                        // 🔹 Send nominee signature image
-                        requestData.append(`Witness[${index}][signature]`, {
-                            uri: witnessSignatureUri[index],
-                            type: "image/jpeg",
-                            name: `witness_signature_${index}.jpg`,
-                        } as any);
-                        requestData.append(`Witness[${index}][profdocument]`, {
-                            uri: witnessSignatureUri[index],
-                            type: "image/jpeg",
-                            name: `witness_profdocument_${index}.jpg`,
-                        } as any);
-                    } else {
-                        // 🔹 Append normal text fields
-                        requestData.append(
-                            `Witness[${index}][${key}]`,
-                            value?.toString() || ""
-                        );
-                    }
-                });
+            // ========== WITNESSES - Array Index Format ==========
+            witnesses_update.forEach(async (witness, index) => {
+                requestData.append(`Witness[${index}].witnessname`, witness.witnessname || '');
+                requestData.append(`Witness[${index}].witnessmobileno`, witness.witnessmobileno || '');
+                requestData.append(`Witness[${index}].witnessemail`, witness.witnessemail || '');
+                requestData.append(`Witness[${index}].addrline`, witness.addrline || '');
+                requestData.append(`Witness[${index}].pincode`, witness.pincode || '');
+                requestData.append(`Witness[${index}].villageid`, String(witness.villageid || 0));
+                requestData.append(`Witness[${index}].villagename`, witness.villagename || '');
+                requestData.append(`Witness[${index}].districtid`, String(witness.districtid || 0));
+                requestData.append(`Witness[${index}].districtname`, witness.districtname || '');
+                requestData.append(`Witness[${index}].subdistrictid`, String(witness.subdistrictid || 0));
+                requestData.append(`Witness[${index}].subdistrictname`, witness.subdistrictname || '');
+                requestData.append(`Witness[${index}].stateid`, String(witness.stateid || 0));
+                requestData.append(`Witness[${index}].statename`, witness.statename || '');
+                requestData.append(`Witness[${index}].profdocument`, witness.profdocument || '');
+                // requestData.append(`Witness[${index}].signature`, witness.signature || ''); // Base64 string
+
+                // Signature - Convert base64 to file
+                if (witness.signature) {
+                    const signatureFile = await base64ToFile(
+                        witness.signature,
+                        `witness_${index}_signature.png`
+                    );
+
+                    requestData.append(`Witness[${index}].signature`, signatureFile as any);
+                    console.log(`✅ Witness ${index} signature converted to file`);
+                } else {
+                    requestData.append(`Witness[${index}].signature`, '');
+                }
+
+
+                console.log(`✅ Witness ${index} added:`, witness.witnessname);
             });
+
 
             // 🔹 Log everything before sending
             console.log("🚀 Sending this FormData:");
@@ -722,9 +764,6 @@ const AgreementSecond: React.FC = () => {
                 console.log(`➡️ ${key}:`, value);
             }
 
-            // alert("Submitting form data... Check console for details.");
-            // setIsSubmitting(false);
-            // return;
 
             const token = await retrieveToken();
 
@@ -765,171 +804,6 @@ const AgreementSecond: React.FC = () => {
     };
 
 
-
-
-
-    //   const handleSubmit = async () => {
-    //   console.log("📦 Received from context:", formData);
-    //   setIsSubmitting(true);
-
-    //   if (!isAgreementAccepted) {
-    //     Alert.alert(
-    //       "Agreement",
-    //       "Please read and accept the agreement terms before submitting."
-    //     );
-    //     return;
-    //   }
-
-    //   try {
-    //     const FS: any = FileSystem; // ✅ TypeScript ke liye fix
-    //     const requestData = new FormData();
-
-    //     // 🔹 Append main contextual data
-    //     requestData.append("CenterTargetId", formData?.selectedCenterTarget || "");
-    //     requestData.append("FarmerDistributionId", formData?.Farmerdistribution || "");
-    //     requestData.append("FarmerId", formData?.selectedFarmer || "");
-    //     requestData.append("VarietyId", formData?.selectedVariety || "");
-    //     requestData.append("DuringYear", formData?.Year?.toString() || "");
-    //     requestData.append("SeedClass", formData?.seeds?.toString() || "");
-    //     requestData.append("CommodityId", formData?.selectedCommodityType?.toString() || "");
-    //     requestData.append("PlantingMaterial", "SEED");
-    //     requestData.append("Area", formData?.Area || "0");
-
-    //     requestData.append("CertificateNo" , formData?.Certificate|| "");  
-    //         requestData.append("LandDetailId" , formData?.selectedLandId|| "");
-    //     requestData.append("SurveyNo" , formData?.Survey || "");
-
-    //     // 🔹 Append Agreement form fields
-    //     requestData.append("AuthorizedName", state.form.authorizedSignatory || "");
-    //     requestData.append("BillNumber", state.form.BillNumber || "");
-    //     requestData.append("TagNumber", state.form.TagNumber || "");
-    //     requestData.append("LotNumber", state.form.LotNumber || "");
-    //     requestData.append("DuringYear", state.form.DuringYear || "");
-
-    //     // 🔹 Append captured images (Profile + Signature)
-    //     if (signaturePhoto) {
-    //       requestData.append("Signature", {
-    //         uri: signaturePhoto,
-    //         type: "image/jpeg",
-    //         name: "signature.jpg",
-    //       } as any);
-    //     }
-
-    //     if (profilePhoto) {
-    //       requestData.append("ProfFile", {
-    //         uri: profilePhoto,
-    //         type: "image/jpeg",
-    //         name: "profile.jpg",
-    //       } as any);
-    //     }
-
-    //     // ✅ Helper to convert base64 to file URI
-    //     const convertBase64ToFile = async (base64Uri: string, name: string) => {
-    //       if (!base64Uri.startsWith("data:image")) return base64Uri; // Already file URI
-
-    //       const base64Data = base64Uri.split(",")[1];
-    //       const filePath = FS.cacheDirectory + `${name}.jpg`;
-    //       await FS.writeAsStringAsync(filePath, base64Data, {
-    //         encoding: FS.EncodingType.Base64,
-    //       });
-    //       return filePath;
-    //     };
-
-    //     // 🔹 Append nominees
-    //     for (let index = 0; index < nominees.length; index++) {
-    //       const nominee = nominees[index];
-
-    //       for (const key of Object.keys(nominee)) {
-    //         const value = nominee[key as keyof NomineeType];
-
-    //         if (key === "signature" && value) {
-    //           const fileUri = await convertBase64ToFile(
-    //             value,
-    //             `nominee_signature_${index}`
-    //           );
-
-    //           requestData.append(`NomiNee[${index}][signature]`, {
-    //             uri: fileUri,
-    //             type: "image/jpeg",
-    //             name: `nominee_signature_${index}.jpg`,
-    //           } as any);
-    //         } else {
-    //           requestData.append(
-    //             `NomiNee[${index}][${key}]`,
-    //             value?.toString() || ""
-    //           );
-    //         }
-    //       }
-    //     }
-
-    //     // 🔹 Append witnesses
-    //     for (let index = 0; index < witnesses.length; index++) {
-    //       const witness = witnesses[index];
-
-    //       for (const key of Object.keys(witness)) {
-    //         const value = witness[key as keyof WitnessType];
-
-    //         if (key === "signature" && value) {
-    //           const fileUri = await convertBase64ToFile(
-    //             value,
-    //             `witness_signature_${index}`
-    //           );
-
-    //           requestData.append(`Witness[${index}][signature]`, {
-    //             uri: fileUri,
-    //             type: "image/jpeg",
-    //             name: `witness_signature_${index}.jpg`,
-    //           } as any);
-    //         } else {
-    //           requestData.append(
-    //             `Witness[${index}][${key}]`,
-    //             value?.toString() || ""
-    //           );
-    //         }
-    //       }
-    //     }
-
-    //     // 🔹 Debugging
-    //     console.log("🚀 Sending this FormData:");
-    //     for (let [key, value] of (requestData as any).entries()) {
-    //       console.log(`➡️ ${key}:`, value);
-    //     }
-
-    //     // 🔹 API Call
-    //     const token = await retrieveToken();
-    //     const response = await apiClient.post("/api/mobile/agreement", requestData, {
-    //       headers: {
-    //         "Content-Type": "multipart/form-data",
-    //         Authorization: `Bearer ${token}`,
-    //       },
-    //     });
-
-    //     if (response.status === 200 || response.status === 201) {
-    //       Alert.alert("✅ Success", "Agreement submitted successfully.", [
-    //         {
-    //           text: "OK",
-    //           onPress: () => {
-    //             navigation.dispatch(
-    //               CommonActions.reset({
-    //                 index: 0,
-    //                 routes: [{ name: "Dashboard" }],
-    //               })
-    //             );
-    //           },
-    //         },
-    //       ]);
-    //     } else {
-    //       Alert.alert("❌ Error", "Submission failed.");
-    //     }
-    //   } catch (error: any) {
-    //     console.error("❌ Submit error:", error);
-    //     Alert.alert("Error", error.response?.data?.message || "Something went wrong.");
-    //   }
-    // };
-
-
-
-
     const calculateAge = (dob: string) => {
         const birthDate = new Date(dob);
         const today = new Date();
@@ -941,31 +815,6 @@ const AgreementSecond: React.FC = () => {
         return age;
     };
 
-
-
-
-
-
-
-
-
-    // useFocusEffect(
-    //     React.useCallback(() => {
-    //         const params = route.params as { signature?: string; type?: string, index?:number } | undefined;
-    //         if (params?.signature && params?.type) {
-    //             if (params.type === "nominee") {
-    //                 setNomineeSignatureUri((prev) => {
-    //                     const updated = [...(prev || [])];
-    //                     updated[params?.index] = params.signature;
-    //                     return updated;
-    //                 });
-
-    //             } else if (params.type === "witness") {
-    //                 setWitnessSignatureUri(params.signature);
-    //             }
-    //         }
-    //     }, [route.params])
-    // );
 
 
     // Function to render commodity-specific dropdown
