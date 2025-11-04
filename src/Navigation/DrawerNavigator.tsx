@@ -56,14 +56,24 @@ function CustomDrawerContent(props: any) {
         <DrawerItem
           label="Dhasboard"
           icon={({ color, size }) => <MaterialCommunityIcons name="view-dashboard" size={size} color={color} />}
-          onPress={() => props.navigation.navigate('Dashboard')}
+            onPress={() => {
+            props.navigation.reset({
+              index: 0,
+              routes: [{ name: 'Dashboard' }],
+            });
+          }}
           labelStyle={styles.drawerLabel}
         />
 
         <DrawerItem
           label="Agreement Form"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
-          onPress={() => props.navigation.navigate('Agreement Form')}
+               onPress={() => {
+            props.navigation.reset({
+              index: 0,
+              routes: [{ name: 'Agreement Form' }],
+            });
+          }}
           labelStyle={styles.drawerLabel}
         />
 

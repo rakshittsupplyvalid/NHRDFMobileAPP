@@ -1,8 +1,8 @@
 import React from "react";
 import { useState, useEffect, useCallback } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, TextInput  } from "react-native";
 import { BackHandler } from 'react-native';
-import { TextInput, Button, Text, Card, Checkbox, Divider, HelperText } from "react-native-paper";
+import { Button, Text, Card, Checkbox, Divider, HelperText } from "react-native-paper";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import CommonPicker from "../CommonComponent/CommonDropdown";
@@ -20,7 +20,7 @@ const AgreementForm: React.FC = () => {
   const [statesList, setStatesList] = useState([]);
   const [districtsList, setDistrictsList] = useState([]);
   const [selectedVariety, setSelectedVariety] = useState("");
-  const [selectedDate, setSelectedDate] = useState(new Date());
+
   const [commodityTypes, setCommodityTypes] = useState([]);
   const [commodities, setCommodities] = useState([]);
   const [selectedCommodityType, setSelectedCommodityType] = useState('');
@@ -196,13 +196,11 @@ const AgreementForm: React.FC = () => {
   }
 };
 
-
 const handlePickerFocus = (field: string) => {
   console.log(`🎯 Picker ${field} focused`);
   setFocusedFields(prev => ({ ...prev, [field]: true }));
   setTouched(prev => ({ ...prev, [field]: true }));
 };
-
 
 const handlePickerBlur = (field: string) => {
   let value =
@@ -238,7 +236,6 @@ const handlePickerBlur = (field: string) => {
 
   return touched[field] && errors[field] && (!value || value === "");
 };
-
 
   // Rest of your useEffect functions remain the same...
   useEffect(() => {
@@ -341,7 +338,7 @@ const handlePickerBlur = (field: string) => {
     >
       <Card style={styles.sectionCard}>
         <Card.Content>
-          <Text style={styles.label}>Commodity Type *</Text>
+          <Text style={styles.label}>Commodity Types *</Text>
           <CommonPicker
             selectedValue={selectedCommodityType}
             onValueChange={(value) => handleFieldChange('selectedCommodityType', value)}
@@ -382,15 +379,15 @@ const handlePickerBlur = (field: string) => {
 
           <Text style={styles.label}>Certificate No *</Text>
           <TextInput
-            label="Certificate No"
-            mode="outlined"
             placeholder="Enter certificate number"
             value={state.form.CertificateNo || ""}
             onChangeText={(value) => handleFieldChange('CertificateNo', value)}
             onBlur={() => handleTextInputBlur('CertificateNo')}
-            style={[styles.input, { backgroundColor: "white" }]}
+            style={[
+              styles.simpleInput, 
+              shouldShowError('CertificateNo') && styles.inputError
+            ]}
             maxLength={10}
-            error={shouldShowError('CertificateNo')}
           />
           <HelperText type="error" visible={shouldShowError('CertificateNo')}>
             {errors.CertificateNo}
@@ -398,15 +395,15 @@ const handlePickerBlur = (field: string) => {
 
           <Text style={styles.label}>Survey No *</Text>
           <TextInput
-            label="Survey No"
-            mode="outlined"
             placeholder="Enter survey number"
             value={state.form.SurveyNo || ""}
             onChangeText={(value) => handleFieldChange('SurveyNo', value)}
             onBlur={() => handleTextInputBlur('SurveyNo')}
-            style={[styles.input, { backgroundColor: "white" }]}
+            style={[
+              styles.simpleInput, 
+              shouldShowError('SurveyNo') && styles.inputError
+            ]}
             maxLength={10}
-            error={shouldShowError('SurveyNo')}
           />
           <HelperText type="error" visible={shouldShowError('SurveyNo')}>
             {errors.SurveyNo}
@@ -642,17 +639,16 @@ const handlePickerBlur = (field: string) => {
 
           <Text style={styles.label}>Area (in hectares) *</Text>
           <TextInput
-            label="Area (in hectares)"
-            mode="outlined"
-            placeholder="Enter area"
+            placeholder="Enter area in hectares"
             value={state.form.Area || ""}
-            maxLength={8}
-            keyboardType="numeric"
-            left={<TextInput.Icon icon="arrow-expand" />}
             onChangeText={(value) => handleFieldChange('Area', value)}
             onBlur={() => handleTextInputBlur('Area')}
-            style={[styles.input, { backgroundColor: 'white' }]}
-            error={shouldShowError('Area')}
+            style={[
+              styles.simpleInput, 
+              shouldShowError('Area') && styles.inputError
+            ]}
+            maxLength={8}
+            keyboardType="numeric"
           />
           <HelperText type="error" visible={shouldShowError('Area')}>
             {errors.Area}
@@ -683,6 +679,7 @@ const handlePickerBlur = (field: string) => {
             selectedLandId: selectedLandId,
             Certificate: state.form.CertificateNo || "",
             Survey: state.form.SurveyNo || "",
+            produceseeds : state.form.produceseeds || "",
           };
 
           console.log("🚀 Data sent via Context:", dataToSend);
@@ -698,9 +695,7 @@ const handlePickerBlur = (field: string) => {
 
 export default AgreementForm;
 
-// Styles remain the same as previous implementation
 const styles = StyleSheet.create({
-  // ... your existing styles
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
@@ -715,7 +710,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     backgroundColor: "white",
   },
-   landLabel: {
+  landLabel: {
     fontWeight: "600",
     color: "#2E7D32",
     fontSize: 14,
@@ -741,6 +736,21 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     height: 50,
     fontSize: 14,
+  },
+  // Simple TextInput styles
+  simpleInput: {
+    marginBottom: 4,
+    fontSize: 14,
+    height: 38,
+    borderWidth: 1,
+    borderColor: '#a6a8acff',
+    
+    borderRadius: 10,   // ✅ Add this line
+    paddingHorizontal: 17,
+    backgroundColor: '#FFFFFF'
+  },
+  inputError: {
+    borderColor: "#f44336",
   },
   submitButton: {
     marginTop: 8,
