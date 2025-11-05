@@ -63,7 +63,7 @@ export const farmer = async (selectedCommodity: string) => {
     const res = await apiClient.get(url);
  // ✅ Directly map res.data
     const dropdownData = res.data.map((item: any) => ({
-      label: item.targetassignfarmername,  // dropdown me dikhayega
+      label: `${item.targetassignfarmername} ${item.relation} ${item.relative}`,  // dropdown me dikhayega
       value: item.farmerid,                 // select hone par milega
       varietyId: item.varietyid,
       Id : item.id,

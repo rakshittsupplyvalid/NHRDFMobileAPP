@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Alert, Dimensions, Platform } from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 import AgreementForm from '../Agreement/AgreementForm';
 import AgreementSecond from '../Agreement/AgreementSecond';
@@ -11,7 +12,8 @@ import NomineeScreen from '../AgreementList/NomineeList';
 import WitnessScreen from '../AgreementList/WitnessList';
 import Signature from '../Signature/Signature';
 import CameraExample from '../Agreement/CameraExample';
-import Inspectionform from '../Dhasboard/Inspectionform';
+
+import InspectionScreen from '../inspection/IInspectionScreen';
 
 
 const Drawer = createDrawerNavigator();
@@ -85,20 +87,22 @@ function CustomDrawerContent(props: any) {
           labelStyle={styles.drawerLabel}
         />
 
+
+
+        
+        <DrawerItem
+          label="InspectionScreen"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('Inspection Screen')}
+          labelStyle={styles.drawerLabel}
+        />
+
         {/* Hidden Screen */}
         <DrawerItem
           label="Agreement"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document-outline" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Agreement')}
           style={{ display: 'none' }}
-        />
-
-
-        <DrawerItem
-          label="Inspection form"
-          icon={({ color, size }) => <MaterialCommunityIcons name="file-document-outline" size={size} color={color} />}
-          onPress={() => props.navigation.navigate('Inspection form')}
-            labelStyle={styles.drawerLabel}
         />
 
 
@@ -167,8 +171,9 @@ export default function DrawerNavigator() {
 
       <Drawer.Screen name="Agreement Form" component={AgreementForm} />
       <Drawer.Screen name="Agreement List" component={AgreementListScreen} />
-      <Drawer.Screen name="Inspection form" component={Inspectionform} />
+     
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
+         <Drawer.Screen name="InspectionScreen" component={InspectionScreen} />
       <Drawer.Screen name="CameraExample" component={CameraExample} />
       <Drawer.Screen name="Agreement" component={AgreementSecond} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
       <Drawer.Screen name="NomineeScreen" component={NomineeScreen} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />

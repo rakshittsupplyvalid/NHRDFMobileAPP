@@ -68,7 +68,7 @@ const ForgetPassword = ({ navigation }: any) => {
 
       console.log("🔐 Password Change Request:", payload);
 
-      const response = await apiClient.post("/api/mobile/changepassword", payload);
+      const response = await apiClient.put("/api/mobile/changepassword", payload);
 
       console.log("✅ Response:", response.data);
 

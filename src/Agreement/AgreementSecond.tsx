@@ -863,7 +863,7 @@ const AgreementSecond: React.FC = () => {
             requestData.append("DuringYear", formData?.Year?.toString() || "");
             requestData.append("SeedClass", formData?.seeds?.toString() || "");
             requestData.append("CommodityId", formData?.selectedCommodityType?.toString() || "");
-            requestData.append("PlantingMaterial", "SEED");
+            requestData.append("PlantingMaterial", formData?.produceseeds || "");
             requestData.append("Area", formData?.Area || "0");
 
             // 🔹 Append Agreement form fields
@@ -901,7 +901,7 @@ const AgreementSecond: React.FC = () => {
                 requestData.append(`NomiNee[${index}].gender`, nominee.gender || 'NONE');
                 requestData.append(`NomiNee[${index}].mobileno`, nominee.mobileno || '');
                 requestData.append(`NomiNee[${index}].email`, nominee.email || '');
-                requestData.append(`NomiNee[${index}].age`, String(nominee.age || 0));
+                requestData.append(`NomiNee[${index}].age`, String(nominee.age));
                 requestData.append(`NomiNee[${index}].year`, String(nominee.year || 0));
                 requestData.append(`NomiNee[${index}].dob`, nominee.dob || '');
                 requestData.append(`NomiNee[${index}].addrline`, nominee.addrline || '');
@@ -1022,16 +1022,22 @@ const AgreementSecond: React.FC = () => {
     };
 
 
-    const calculateAge = (dob: string) => {
-        const birthDate = new Date(dob);
-        const today = new Date();
-        let age = today.getFullYear() - birthDate.getFullYear();
-        const m = today.getMonth() - birthDate.getMonth();
-        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-            age--;
-        }
-        return age;
-    };
+  const calculateAge = (dob: string) => {
+  if (!dob) return "";
+  
+  const [year, month, day] = dob.split("-");
+  const birthDate = new Date(Number(year), Number(month) - 1, Number(day));
+  const today = new Date();
+
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  return age;
+};
 
 
 
@@ -1187,15 +1193,15 @@ const AgreementSecond: React.FC = () => {
                                 <CustomDateTimePicker
                                     value={nominee.dob ? new Date(nominee.dob) : new Date()}
                                     onChange={(date) => {
-                                        const formattedDate = date.toISOString(); // ✅ ISO format with time
-                                        console.log("Selected DOB (ISO):", formattedDate);
+    const formattedDate = date.toISOString().split("T")[0];
 
-                                        updateNominee(index, "dob", formattedDate);
+    const age = calculateAge(formattedDate);
+    console.log("Calculated Age:", age);
 
-                                        // ✅ Calculate and update age too
-                                        const age = calculateAge(formattedDate);
-                                        updateNominee(index, "age", age.toString());
-                                    }}
+    updateNominee(index, "dob", formattedDate);
+    updateNominee(index, "age", age.toString());
+}}
+
                                     mode="date"
                                 />
 

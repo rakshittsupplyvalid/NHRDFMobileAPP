@@ -36,5 +36,6 @@ export type DrawerParamList = {
   AgreementListScreen: undefined;
   NomineeScreen: { agreementId: string };
   WitnessScreen: { agreementId: string };
+  InspectionScreen: { agreementId: string };
   // add other screens if needed
 };

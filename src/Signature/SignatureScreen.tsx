@@ -165,7 +165,7 @@ const SignatureView: React.FC<SignatureViewProps> = ({ onSave }) => {
           title="Save Signature"
           onPress={saveSignature}
           disabled={isSignatureEmpty || !webViewLoaded}
-          color="green" // ✅ Green background on Android, green text on iOS
+          color="#FF3B30" // ✅ Green background on Android, green text on iOS
         />
 
       </View>
@@ -183,15 +183,24 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 5,
     overflow: 'hidden',
+  
+  marginTop: 50,     
   },
   webview: {
     flex: 1,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 10,
-    backgroundColor: '#f8f8f8',
+      position: 'absolute',
+  top: 5,             // ✅ shift top
+  left: 0,
+  right: 0,
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  paddingHorizontal: 10,
+  paddingVertical: 5,
+
+  zIndex: 1000,
+
   },
 });
 
