@@ -133,6 +133,7 @@ export const getFarmerLandDetail = async (farmerId: string) => {
 
 // Fetch farmer details by farmerId
 export const farmerDetails = async (farmerId: string) => {
+  console.log("if" ,farmerId);
   try {
     const res = await apiClient.get(
       `/api/mobile/farmer/${farmerId}`

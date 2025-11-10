@@ -8,8 +8,8 @@ import { storeToken } from '../Service/apiInterceptors';
 
 const Login = ({ navigation }: any) => {
   // const [mobileNumber, setMobileNumber] = useState('8976865879');
-  const [mobileNumber, setMobileNumber] = useState('6754345656');
-  const [password, setPassword] = useState('Pass@123');
+  const [mobileNumber, setMobileNumber] = useState('7000000555');
+  const [password, setPassword] = useState('Password@123');
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);

@@ -173,7 +173,7 @@ const InspectionScreen = () => {
 
     try {
       setLoading(true);
-      console.log("✅ Fetching Agreement:", agreementId);
+      // console.log("✅ Fetching Agreement:", agreementId);
 
       const response = await apiClient.get(`/api/agreement/${agreementId}`);
       console.log("📄 Agreement API Response:", response.data);
@@ -185,7 +185,7 @@ const InspectionScreen = () => {
         FarmerId: agreementData?.farmerid || "",
         FarmerDistributionId: agreementData?.farmerdistributionid || "",
         VarietyName: agreementData?.varietyname || "",
-        SeedClass: agreementData?.seedclass || "",
+        SeedClass: "SEEDS",
         CommodityName :  agreementData?.commodityname || "",
 
       });
@@ -214,7 +214,7 @@ const InspectionScreen = () => {
         "/api/season?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED"
       );
 
-      console.log("📅 Season Data:", response.data);
+      // console.log("📅 Season Data:", response.data);
 
       const dropdownList = response.data?.map((item: any) => ({
         label: item?.name,

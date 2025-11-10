@@ -276,52 +276,52 @@ const AgreementSecond: React.FC = () => {
                     error = 'Valid 10-digit mobile number starting with 6-9';
                 }
                 break;
-            // case 'email':
-            //     if (value && !isValidEmail(value)) {
-            //         error = 'Please enter a valid email address';
-            //     }
-            //     break;
-            // case "relation":
-            //     if (!isValidRelation(value)) {
-            //         error = "Please select a valid relation (S/O, D/O, or W/O)";
-            //     }
-            //     break;
-            // case 'addrline':
-            //     if (!isValidAddress(value)) {
-            //         error = 'Address must be at least 1 character';
-            //     }
-            //     break;
-            // case 'pincode':
-            //     if (value && !isValidPincode(value)) {
-            //         error = 'Pincode must be 6 digits';
-            //     }
-            //     break;
-            // case 'villagename':
-            //     if (value && !/^[a-zA-Z\s]{1,100}$/.test(value)) {
-            //         error = 'Village name must be 1-100 letters only';
-            //     }
-            //     break;
-            // case 'gender':
-            //     if (!value) {
-            //         error = 'Gender is required';
-            //     }
-            //     break;
-            // case 'stateid':
-            //     if (!value) {
-            //         error = 'State is required';
-            //     }
-            //     break;
-            // case 'districtid':
-            //     if (!value) {
-            //         error = 'District is required';
-            //     }
-            //     break;
-            // case 'subdistrictid':
-            //     if (!value) {
-            //         error = 'City is required';
-            //     }
-            //     break;
-            // case 'year':
+            case 'email':
+                if (value && !isValidEmail(value)) {
+                    error = 'Please enter a valid email address';
+                }
+                break;
+            case "relation":
+                if (!isValidRelation(value)) {
+                    error = "Please select a valid relation (S/O, D/O, or W/O)";
+                }
+                break;
+            case 'addrline':
+                if (!isValidAddress(value)) {
+                    error = 'Address must be at least 1 character';
+                }
+                break;
+            case 'pincode':
+                if (value && !isValidPincode(value)) {
+                    error = 'Pincode must be 6 digits';
+                }
+                break;
+            case 'villagename':
+                if (value && !/^[a-zA-Z\s]{1,100}$/.test(value)) {
+                    error = 'Village name must be 1-100 letters only';
+                }
+                break;
+            case 'gender':
+                if (!value) {
+                    error = 'Gender is required';
+                }
+                break;
+            case 'stateid':
+                if (!value) {
+                    error = 'State is required';
+                }
+                break;
+            case 'districtid':
+                if (!value) {
+                    error = 'District is required';
+                }
+                break;
+            case 'subdistrictid':
+                if (!value) {
+                    error = 'City is required';
+                }
+                break;
+            case 'year':
                 if (value && !isValidYear(value)) {
                     error = 'Please enter a valid year';
                 }
@@ -728,7 +728,7 @@ const AgreementSecond: React.FC = () => {
     const addWitness = () => {
         if (witnesses.length >= 2) {
             Alert.alert("Limit Reached", "You can add only 2 witnesses.");
-            return;
+            return; // stop further adding
         }
 
         setWitnesses([
@@ -930,7 +930,7 @@ const AgreementSecond: React.FC = () => {
                 requestData.append(`NomiNee[${index}].relation`, nominee.relation || '');
                 requestData.append(`NomiNee[${index}].profdocument`, nominee.profdocument || '');
                 requestData.append(`NomiNee[${index}].accountholdername`, nominee.accountholdername || '');
-                requestData.append(`NomiNee[${index}].accountnumber`, nominee.raccountnumber || '');
+                requestData.append(`NomiNee[${index}].raccountnumber`, nominee.raccountnumber || '');
                 requestData.append(`NomiNee[${index}].ifsc`, nominee.ifsc || '');
 
                 // Profile document - Convert to file if exists
@@ -1420,10 +1420,10 @@ const AgreementSecond: React.FC = () => {
 
                                 {/* Profile Document Photo */}
                                 <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                    <Text style={{ fontWeight: "bold", marginBottom: 5 }}>Passbook photo Document:</Text>
+                                    <Text style={{ fontWeight: "bold", marginBottom: 5 }}>Profile Document:</Text>
                                     {nomineeProfilePhotos[index] ? (
                                         <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                            <Text style={{ fontWeight: "bold" }}>Passbook Photo</Text>
+                                            <Text style={{ fontWeight: "bold" }}>Profile Photo Preview:</Text>
                                             <Image
                                                 source={{ uri: nomineeProfilePhotos[index] }}
                                                 style={{ width: 250, height: 150, borderWidth: 1, borderColor: "#ccc", marginTop: 5 }}
@@ -1432,7 +1432,7 @@ const AgreementSecond: React.FC = () => {
                                         </View>
                                     ) : (
                                         <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                            <Text style={{ color: '#666', fontStyle: 'italic' }}>No passbook photo added</Text>
+                                            <Text style={{ color: '#666', fontStyle: 'italic' }}>No profile photo added</Text>
                                         </View>
                                     )}
                                 </View>
@@ -1628,7 +1628,8 @@ const AgreementSecond: React.FC = () => {
                                     </HelperText>
                                 ) : null}
 
-                                {/* <View style={{ marginVertical: 10, alignItems: "center" }}>
+                                {/* Witness Profile Document Photo */}
+                                <View style={{ marginVertical: 10, alignItems: "center" }}>
                                     <Text style={{ fontWeight: "bold", marginBottom: 5 }}>Profile Document:</Text>
                                     {witnessProfilePhotos[index] ? (
                                         <View style={{ marginVertical: 10, alignItems: "center" }}>
@@ -1644,15 +1645,15 @@ const AgreementSecond: React.FC = () => {
                                             <Text style={{ color: '#666', fontStyle: 'italic' }}>No profile photo added</Text>
                                         </View>
                                     )}
-                                </View> */}
-{/* 
+                                </View>
+
                                 <TouchableOpacity
                                     style={styles.iconButton}
                                     onPress={() => handleWitnessProfilePhoto(index)}
                                 >
                                     <MaterialIcons name="photo-camera" size={26} color="#2C5EFF" />
                                     <Text>Add Profile Document Photo</Text>
-                                </TouchableOpacity> */}
+                                </TouchableOpacity>
 
                                 {/* Signature Preview */}
                                 <View style={{ marginVertical: 10, alignItems: "center" }}>
