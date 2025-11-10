@@ -385,60 +385,123 @@ const AgreementForm: React.FC = () => {
         </Card.Content>
       </Card>
 
+<Card style={styles.farmerCard}>
+  <Card.Content>
+    <Text style={styles.sectionTitle}>Aadhar Farmer Details</Text>
+    <Divider style={styles.headerDivider} />
 
-      <Card style={styles.farmerCard}>
-        <Card.Content>
-          <Text style={styles.sectionTitle}>Aadhar Farmer Details</Text>
-          <Divider style={styles.headerDivider} />
+    {aadharData && (
+      <View style={styles.detailsContainer}>
 
-          {aadharData && (
-            <View style={styles.detailsContainer}>
+        <View style={styles.detailRow}>
+          <View style={styles.labelContainer}>
+            <MaterialCommunityIcons
+              name="account"
+              size={20}
+              color="#4CAF50"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.detailLabel}>Farmer Name:</Text>
+          </View>
+          <Text style={styles.detailValue}>{aadharData.farmername}</Text>
+        </View>
 
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Farmer Name:</Text>
-                <Text style={styles.detailValue}>{aadharData.farmername}</Text>
-              </View>
+        <View style={styles.detailRow}>
+          <View style={styles.labelContainer}>
+            <MaterialCommunityIcons
+              name="account-group"
+              size={20}
+              color="#4CAF50"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.detailLabel}>Relative:</Text>
+          </View>
+          <Text style={styles.detailValue}>{aadharData.relative}</Text>
+        </View>
 
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Relative:</Text>
-                <Text style={styles.detailValue}>{aadharData.relative}</Text>
-              </View>
+        <View style={styles.detailRow}>
+          <View style={styles.labelContainer}>
+            <MaterialCommunityIcons
+              name="account-heart"
+              size={20}
+              color="#4CAF50"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.detailLabel}>Relation:</Text>
+          </View>
+          <Text style={styles.detailValue}>{aadharData.relation}</Text>
+        </View>
 
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Relation:</Text>
-                <Text style={styles.detailValue}>{aadharData.relation}</Text>
-              </View>
+        <View style={styles.detailRow}>
+          <View style={styles.labelContainer}>
+            <MaterialCommunityIcons
+              name="home-city"
+              size={20}
+              color="#4CAF50"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.detailLabel}>Center Name:</Text>
+          </View>
+          <Text style={styles.detailValue}>{aadharData.centername}</Text>
+        </View>
 
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Center Name:</Text>
-                <Text style={styles.detailValue}>{aadharData.centername}</Text>
-              </View>
+        <View style={styles.detailRow}>
+          <View style={styles.labelContainer}>
+            <MaterialCommunityIcons
+              name="seed"
+              size={20}
+              color="#4CAF50"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.detailLabel}>Commodity Name:</Text>
+          </View>
+          <Text style={styles.detailValue}>{aadharData.commodityname}</Text>
+        </View>
 
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Commodity Name:</Text>
-                <Text style={styles.detailValue}>{aadharData.commodityname}</Text>
-              </View>
+        <View style={styles.detailRow}>
+          <View style={styles.labelContainer}>
+            <MaterialCommunityIcons
+              name="sprout"
+              size={20}
+              color="#4CAF50"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.detailLabel}>Variety Name:</Text>
+          </View>
+          <Text style={styles.detailValue}>{aadharData.varietyname}</Text>
+        </View>
 
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Variety Name:</Text>
-                <Text style={styles.detailValue}>{aadharData.varietyname}</Text>
-              </View>
+        <View style={styles.detailRow}>
+          <View style={styles.labelContainer}>
+            <MaterialCommunityIcons
+              name="leaf"
+              size={20}
+              color="#4CAF50"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.detailLabel}>Crop Class:</Text>
+          </View>
+          <Text style={styles.detailValue}>{aadharData.cropclass}</Text>
+        </View>
 
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Crop Class:</Text>
-                <Text style={styles.detailValue}>{aadharData.cropclass}</Text>
-              </View>
+        <View style={styles.detailRow}>
+          <View style={styles.labelContainer}>
+            <MaterialCommunityIcons
+              name="storefront"
+              size={20}
+              color="#4CAF50"
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.detailLabel}>Produce Seeds:</Text>
+          </View>
+          <Text style={styles.detailValue}>{aadharData.distributiontype}</Text>
+        </View>
 
+      </View>
+    )}
+  </Card.Content>
+</Card>
 
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Produce Seeds</Text>
-                <Text style={styles.detailValue}>{aadharData.distributiontype}</Text>
-              </View>
-
-            </View>
-          )}
-        </Card.Content>
-      </Card>
 
 
 
@@ -511,7 +574,7 @@ const AgreementForm: React.FC = () => {
                           color="#4CAF50"
                           style={{ marginRight: 8 }}
                         />
-                        <Text style={styles.detailLabel}>Land Number:</Text>
+                        <Text style={styles.detailLabel}>Land Number</Text>
                       </View>
                       <Text style={styles.detailValue}>{land.number || "-"}</Text>
                     </View>

@@ -76,6 +76,7 @@ interface AgreementIdsType {
   VarietyName: string;
   SeedClass: string;
   CommodityName: string;
+  Authorizedname: string;
 }
 
 const InspectionScreen = () => {
@@ -120,7 +121,8 @@ const InspectionScreen = () => {
     FarmerDistributionId: "",
     VarietyName: "",
     SeedClass: "",
-    CommodityName : ""
+    CommodityName : "",
+    Authorizedname : ""
      
      
   });
@@ -185,13 +187,13 @@ const InspectionScreen = () => {
         FarmerId: agreementData?.farmerid || "",
         FarmerDistributionId: agreementData?.farmerdistributionid || "",
         VarietyName: agreementData?.varietyname || "",
-        SeedClass: "SEEDS",
+        SeedClass: agreementData?.plantingmaterial || "",
         CommodityName :  agreementData?.commodityname || "",
+        Authorizedname : agreementData?.authorizedname || ""
 
       });
 
-      // Update form data with agreement details
-      setFormData(prev => ({
+       setFormData(prev => ({
         ...prev,
         VarietyId: agreementData?.varietyid || "",
         CommodityId: agreementData?.commodityid || "",
@@ -957,25 +959,25 @@ const InspectionScreen = () => {
               )}
 
 
-              <Text style={styles.label}>Select Season</Text>
+              <Text style={styles.label}>Year</Text>
               <Dropdown
                 style={[styles.dropdown]}
                 data={seasonData}
                 value={selectedSeason}
-                placeholder={!loading ? "Select Season" : "Loading..."}
+                placeholder={!loading ? "Select Year" : "Loading..."}
                 labelField="label"
                 valueField="value"
                 onChange={(item) => handleSeasonSelect(item.value)}
                 mode="modal"
               />
 
-              <Text style={styles.label}>Sub Season</Text>
+              <Text style={styles.label}>Season</Text>
               <Dropdown
                 style={styles.dropdown}
                 data={subSeasonList}
                 labelField="label"
                 valueField="value"
-                placeholder="Select Sub Season"
+                placeholder="Select Season"
                 value={selectedSubSeason}
                 onChange={(item) => {
                   setSelectedSubSeason(item.value);
@@ -1140,7 +1142,7 @@ const InspectionScreen = () => {
               <TextInput
                 placeholder="Enter representative name"
                     placeholderTextColor="#141414ff"
-                value={formData.GrowerRepresentative}
+                value={agreementIds.Authorizedname}
                 onChangeText={(text) => handleChange("GrowerRepresentative", text)}
                 style={styles.input}
               />

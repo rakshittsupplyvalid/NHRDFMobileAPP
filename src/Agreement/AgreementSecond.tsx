@@ -11,7 +11,7 @@ import {
     Image,
     TextInput as RNTextInput
 } from "react-native";
-import { Button, Text, Card, Checkbox, HelperText, Divider } from "react-native-paper";
+import { Button, Text, Card, Checkbox, HelperText, Divider, TextInput } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
 import CommonPicker from "../CommonComponent/CommonDropdown";
 import { Onion, Garlic, Potato } from "../Constants/constants";
@@ -113,7 +113,6 @@ const AgreementSecond: React.FC = () => {
             ifsc: "",
         },
     ]);
-
     const [witnesses, setWitnesses] = useState<WitnessType[]>([
         {
             witnessname: "",
@@ -133,8 +132,6 @@ const AgreementSecond: React.FC = () => {
             pincode: "",
         },
     ]);
-
-    // State variables
     const [statesList, setStatesList] = useState([]);
     const [nomineeErrors, setNomineeErrors] = useState<{ [key: string]: string }[]>([]);
     const [witnessErrors, setWitnessErrors] = useState<{ [key: string]: string }[]>([]);
@@ -276,52 +273,52 @@ const AgreementSecond: React.FC = () => {
                     error = 'Valid 10-digit mobile number starting with 6-9';
                 }
                 break;
-            // case 'email':
-            //     if (value && !isValidEmail(value)) {
-            //         error = 'Please enter a valid email address';
-            //     }
-            //     break;
-            // case "relation":
-            //     if (!isValidRelation(value)) {
-            //         error = "Please select a valid relation (S/O, D/O, or W/O)";
-            //     }
-            //     break;
-            // case 'addrline':
-            //     if (!isValidAddress(value)) {
-            //         error = 'Address must be at least 1 character';
-            //     }
-            //     break;
-            // case 'pincode':
-            //     if (value && !isValidPincode(value)) {
-            //         error = 'Pincode must be 6 digits';
-            //     }
-            //     break;
-            // case 'villagename':
-            //     if (value && !/^[a-zA-Z\s]{1,100}$/.test(value)) {
-            //         error = 'Village name must be 1-100 letters only';
-            //     }
-            //     break;
-            // case 'gender':
-            //     if (!value) {
-            //         error = 'Gender is required';
-            //     }
-            //     break;
-            // case 'stateid':
-            //     if (!value) {
-            //         error = 'State is required';
-            //     }
-            //     break;
-            // case 'districtid':
-            //     if (!value) {
-            //         error = 'District is required';
-            //     }
-            //     break;
-            // case 'subdistrictid':
-            //     if (!value) {
-            //         error = 'City is required';
-            //     }
-            //     break;
-            // case 'year':
+                // case 'email':
+                //     if (value && !isValidEmail(value)) {
+                //         error = 'Please enter a valid email address';
+                //     }
+                //     break;
+                // case "relation":
+                //     if (!isValidRelation(value)) {
+                //         error = "Please select a valid relation (S/O, D/O, or W/O)";
+                //     }
+                //     break;
+                // case 'addrline':
+                //     if (!isValidAddress(value)) {
+                //         error = 'Address must be at least 1 character';
+                //     }
+                //     break;
+                // case 'pincode':
+                //     if (value && !isValidPincode(value)) {
+                //         error = 'Pincode must be 6 digits';
+                //     }
+                //     break;
+                // case 'villagename':
+                //     if (value && !/^[a-zA-Z\s]{1,100}$/.test(value)) {
+                //         error = 'Village name must be 1-100 letters only';
+                //     }
+                //     break;
+                // case 'gender':
+                //     if (!value) {
+                //         error = 'Gender is required';
+                //     }
+                //     break;
+                // case 'stateid':
+                //     if (!value) {
+                //         error = 'State is required';
+                //     }
+                //     break;
+                // case 'districtid':
+                //     if (!value) {
+                //         error = 'District is required';
+                //     }
+                //     break;
+                // case 'subdistrictid':
+                //     if (!value) {
+                //         error = 'City is required';
+                //     }
+                //     break;
+                // case 'year':
                 if (value && !isValidYear(value)) {
                     error = 'Please enter a valid year';
                 }
@@ -362,37 +359,37 @@ const AgreementSecond: React.FC = () => {
                     error = 'Valid 10-digit mobile number starting with 6-9';
                 }
                 break;
-            case 'witnessemail':
-                if (value && !isValidEmail(value)) {
-                    error = 'Please enter a valid email address';
-                }
+            // case 'witnessemail':
+            //     if (value && !isValidEmail(value)) {
+            //         error = 'Please enter a valid email address';
+            //     }
                 break;
             case 'addrline':
                 if (!isValidAddress(value)) {
                     error = 'Address must be at least 1 character';
                 }
                 break;
-            case 'pincode':
-                if (value && !isValidPincode(value)) {
-                    error = 'Pincode must be 6 digits';
-                }
-                break;
-            case 'villagename':
-                if (value && !/^[a-zA-Z\s]{2,25}$/.test(value)) {
-                    error = 'Village name must be 2-25 letters only';
-                }
-                break;
-            case 'stateid':
-                if (!value) {
-                    error = 'State is required';
-                }
-                break;
-            case 'districtid':
-                if (!value) {
-                    error = 'District is required';
-                }
-                break;
-            case 'subdistrictid':
+            // case 'pincode':
+            //     if (value && !isValidPincode(value)) {
+            //         error = 'Pincode must be 6 digits';
+            //     }
+            //     break;
+            // case 'villagename':
+            //     if (value && !/^[a-zA-Z\s]{2,25}$/.test(value)) {
+            //         error = 'Village name must be 2-25 letters only';
+            //     }
+            //     break;
+            // case 'stateid':
+            //     if (!value) {
+            //         error = 'State is required';
+            //     }
+            //     break;
+            // case 'districtid':
+            //     if (!value) {
+            //         error = 'District is required';
+            //     }
+            //     break;
+            // case 'subdistrictid':
                 if (!value) {
                     error = 'City is required';
                 }
@@ -407,7 +404,7 @@ const AgreementSecond: React.FC = () => {
     const isFormValid = () => {
         const nomineeValid = nominees.every((nominee, index) => {
             const hasRequiredFields = nominee.nomineename && nominee.mobileno;
-            
+
             const hasNoErrors = Object.keys(nomineeErrors[index] || {}).every(key =>
                 !nomineeErrors[index][key]
             );
@@ -417,7 +414,7 @@ const AgreementSecond: React.FC = () => {
 
         const witnessValid = witnesses.every((witness, index) => {
             const hasRequiredFields = witness.witnessname && witness.witnessmobileno;
-            
+
             const hasNoErrors = Object.keys(witnessErrors[index] || {}).every(key =>
                 !witnessErrors[index][key]
             );
@@ -515,7 +512,7 @@ const AgreementSecond: React.FC = () => {
             } else if (response.assets && response.assets.length > 0) {
                 const uri = response.assets[0].uri;
                 console.log("Captured nominee profile photo:", uri);
-                
+
                 // Update nominee profile photos state
                 setNomineeProfilePhotos(prev => {
                     const updated = [...prev];
@@ -551,7 +548,7 @@ const AgreementSecond: React.FC = () => {
             } else if (response.assets && response.assets.length > 0) {
                 const uri = response.assets[0].uri;
                 console.log("Captured witness profile photo:", uri);
-                
+
                 // Update witness profile photos state
                 setWitnessProfilePhotos(prev => {
                     const updated = [...prev];
@@ -878,8 +875,8 @@ const AgreementSecond: React.FC = () => {
             requestData.append("CommodityId", formData?.CommodityId || "");
             requestData.append("PlantingMaterial", formData?.distributiontype || "");
             requestData.append("Area", formData?.AreaFromAadhar || "0");
-
-            // 🔹 Append Agreement form fields
+            requestData.append("AuthorizedName", state.form.authorizedSignatory || "");
+            requestData.append("TagNumber", state.form.TagNumber || "");
             requestData.append("AuthorizedName", state.form.authorizedSignatory || "");
             requestData.append("BillNumber", formData?.BillNumber || "");
             requestData.append("TagNumber", formData?.TagNumber || "");
@@ -928,7 +925,7 @@ const AgreementSecond: React.FC = () => {
                 requestData.append(`NomiNee[${index}].stateid`, String(nominee.stateid || 0));
                 requestData.append(`NomiNee[${index}].statename`, nominee.statename || '');
                 requestData.append(`NomiNee[${index}].relation`, nominee.relation || '');
-                requestData.append(`NomiNee[${index}].profdocument`, nominee.profdocument || '');
+                requestData.append(`NomiNee[${index}].passbookdoc`, nominee.profdocument || '');
                 requestData.append(`NomiNee[${index}].accountholdername`, nominee.accountholdername || '');
                 requestData.append(`NomiNee[${index}].accountnumber`, nominee.raccountnumber || '');
                 requestData.append(`NomiNee[${index}].ifsc`, nominee.ifsc || '');
@@ -939,7 +936,7 @@ const AgreementSecond: React.FC = () => {
                         nominee.profdocument,
                         `nominee_${index}_profile.png`
                     );
-                    requestData.append(`NomiNee[${index}].profdocument`, profileFile as any);
+                    requestData.append(`NomiNee[${index}].passbookdoc`, profileFile as any);
                 }
 
                 // Signature - Convert base64 to file
@@ -1645,7 +1642,7 @@ const AgreementSecond: React.FC = () => {
                                         </View>
                                     )}
                                 </View> */}
-{/* 
+                                {/* 
                                 <TouchableOpacity
                                     style={styles.iconButton}
                                     onPress={() => handleWitnessProfilePhoto(index)}
@@ -1766,6 +1763,39 @@ const AgreementSecond: React.FC = () => {
 
                 {/* Commodity Dropdown */}
                 {renderCommodityDropdown()}
+
+
+                <Card style={styles.sectionCard}>
+                    <Card.Content>
+                        <Text style={styles.sectionTitle}>NHRDF Authorized Signatory</Text>
+
+                        {/* Authorized Signatory Name */}
+                        <Text style={styles.label}>Authorized Signatory Name</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.authorizedSignatory || ""}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, authorizedSignatory: text } })}
+                            style={styles.input}
+                            placeholder="Enter authorized signatory name"
+                            maxLength={20}
+                        />
+
+
+
+                        <Text style={styles.label}>Tag Number</Text>
+                        <TextInput
+                            mode="outlined"
+                            value={state.form.TagNumber || ""}
+                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, TagNumber: text } })}
+                            style={styles.input}
+                            placeholder="Enter Tag number"
+                            maxLength={50}
+                        />
+
+
+                    </Card.Content>
+                </Card>
+
 
                 {/* Agreement Terms and Conditions Section */}
                 <Card style={styles.sectionCard}>
@@ -2051,6 +2081,11 @@ const styles = StyleSheet.create({
         marginLeft: 8,
         fontSize: 14,
         color: "#455A64",
+    },
+    input: {
+        backgroundColor: '#fff',
+        marginBottom: 12,
+        fontSize: 14,
     },
 });
 

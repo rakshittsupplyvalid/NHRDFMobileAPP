@@ -178,29 +178,32 @@ const AgreementListScreen = () => {
     <View style={styles.container}>
       {/* ✅ Aadhar Stylish Auto Search UI */}
       <View style={styles.searchContainer}>
-        <View style={styles.inputWrapper}>
-          <MaterialCommunityIcons
-            name="card-account-details"
-            size={24}
-            color="#4CAF50"
-            style={{ marginRight: 10 }}
-          />
+        <View style={styles.cardWrapper}>
+          <View style={styles.inputWrapper}>
+            <MaterialCommunityIcons
+              name="card-account-details"
+              size={26}
+              color="#4CAF50"
+              style={{ marginRight: 12 }}
+            />
 
-          <TextInput
-            placeholder="Enter Aadhar Number"
-            value={aadhar}
-            maxLength={12}
-            keyboardType="numeric"
-            onChangeText={(text) => setAadhar(text)}
-            style={styles.stylishInput}
-            placeholderTextColor="#9BA0A8"
-          />
+            <TextInput
+              placeholder="Enter Aadhar Number"
+              value={aadhar}
+              maxLength={12}
+              keyboardType="numeric"
+              onChangeText={(text) => setAadhar(text)}
+              style={styles.stylishInput}
+              placeholderTextColor="#9BA0A8"
+            />
+          </View>
+
+          {aadhar.length > 0 && aadhar.length < 12 && (
+            <Text style={styles.helper}>Aadhar number must be 12 digits</Text>
+          )}
         </View>
-
-        {aadhar.length > 0 && aadhar.length < 12 && (
-          <Text style={styles.helper}>Aadhar number must be 12 digits</Text>
-        )}
       </View>
+
 
       {loading ? (
         <View style={styles.loader}>
@@ -228,15 +231,19 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f4f7",
   },
 
-  /* ✅ Stylish Aadhar UI */
-  searchContainer: {
-    backgroundColor: "#ffffff",
-    padding: 18,
-    borderRadius: 20,
-    marginBottom: 18,
-    elevation: 8,
+    searchContainer: {
+    padding: 16,
+    backgroundColor: "#F4F6F9",
+  },
+
+  cardWrapper: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    elevation: 5,
     shadowColor: "#000",
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.1,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
   },
@@ -244,29 +251,23 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#f9fafb",
-    borderWidth: 1.4,
-    borderColor: "#d0d8df",
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    elevation: 3,
   },
 
   stylishInput: {
-   
-    fontSize: 17,
-    fontWeight: "500",
-    color: "#222",
-    letterSpacing: 1,
+    flex: 1,
+    fontSize: 16,
+    color: "#333",
+    paddingVertical: 8,
   },
 
   helper: {
+    color: "red",
     marginTop: 6,
-    color: "#d9534f",
     fontSize: 13,
-    fontWeight: "500",
+    marginLeft: 4,
   },
+
+
 
   card: {
     marginBottom: 15,
