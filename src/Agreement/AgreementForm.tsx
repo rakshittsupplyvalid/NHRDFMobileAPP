@@ -28,6 +28,7 @@ const AgreementForm: React.FC = () => {
     BillNumber: string;
     distributiontype: string;
     DistrubutedFarnerId: string;
+    Cropclass: string;
   }
 
   const [aadharExtraFields, setAadharExtraFields] = useState<AadharFields>({
@@ -39,7 +40,9 @@ const AgreementForm: React.FC = () => {
     TagNumber: '',
     BillNumber: '',
     distributiontype: '',
-    DistrubutedFarnerId: ''
+    DistrubutedFarnerId: '',
+    Cropclass: ''
+
   });
 
 
@@ -47,7 +50,8 @@ const AgreementForm: React.FC = () => {
   const [aadharData, setAadharData] = useState(null);
 
   const [selectedCommodityType, setSelectedCommodityType] = useState('');
-  const [selectedCommodity, setSelectedCommodity] = useState('');
+  const [Commodity, setCommodity] = useState([]);
+
   const [selectedFarmerId, setSelectedFarmerId] = useState("");
   const [selectedCenterTarget, setSelectedCenterTargetId] = useState("");
   const [farmersList, setFarmersList] = useState([]);
@@ -77,12 +81,6 @@ const AgreementForm: React.FC = () => {
         }
         break;
 
-           case 'seeds':
-        if (!value || value.toString().trim() === '') {
-          error = 'Seeds selection is required';
-        }
-        break;
-
       case 'Year':
         if (!value || value.toString().trim() === '') {
           error = 'Duration Year is required';
@@ -103,7 +101,7 @@ const AgreementForm: React.FC = () => {
 
     newErrors.selectedLandId = validateField('selectedLandId', selectedLandId);
     newErrors.Year = validateField('Year', state.form.Year);
-        newErrors.seeds = validateField('seeds', state.form.seeds);
+    newErrors.seeds = validateField('seeds', state.form.seeds);
 
     setErrors(newErrors);
 
@@ -125,6 +123,12 @@ const AgreementForm: React.FC = () => {
   };
 
 
+  useEffect(() => {
+    (async () => {
+      const data = await fetchCommodityTypes();
+      setCommodity(data);
+    })();
+  }, []);
 
   const handleFieldChange = (field: string, value: any) => {
     console.log(`🔄 Field ${field} changed to:`, value);
@@ -164,7 +168,7 @@ const AgreementForm: React.FC = () => {
   const handlePickerBlur = (field: string) => {
     let value =
       field === "selectedCommodityType" ? selectedCommodityType :
-        field === "selectedCommodity" ? selectedCommodity :
+        field === "selectedCommodity" ? Commodity :
           field === "selectedFarmer" ? selectedFarmer :
             field === "selectedLandId" ? selectedLandId :
               state.form[field];
@@ -222,6 +226,8 @@ const AgreementForm: React.FC = () => {
           TagNumber: info.tagnumber ?? "",   // ✅ If not coming, blank
           BillNumber: info.billnumber,
           distributiontype: info.distributiontype,
+          Cropclass: info.cropclass
+
         });
 
         console.log("✅ Extra Aadhar Fields:", {
@@ -283,27 +289,28 @@ const AgreementForm: React.FC = () => {
     })();
   }, [selectedFarmerId]);
 
-      useEffect(() => {
-        (async () => {
-          const data = await fetchSeedOptions();
-          setSeedOptions(data);
-          console.log("Fetched Commodity Types:", data);
-        })();
-      }, []);
-  
 
 
-  const fields = [
-    { label: 'Full Name', value: state.form.name, icon: 'account' },
-    { label: 'Age', value: '25', icon: 'calendar' },
-    { label: 'Gender', value: state.form.gender, icon: 'gender-male-female' },
-    { label: 'Relation', value: state.form.relation, icon: 'account-group' },
-    { label: 'Relative Name', value: state.form.relativename, icon: 'account' },
-    { label: 'Village', value: state.form.villagename, icon: 'home-city' },
-    { label: 'District', value: state.form.districtname, icon: 'map-marker' },
-    { label: 'State', value: state.form.statename, icon: 'map' },
-    { label: 'Pincode', value: state.form.pincode, icon: 'numeric' },
-    { label: 'Mobile Number', value: state.form.mobile, icon: 'phone' },
+
+  type MCIIconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
+
+  const mergedFarmerDetails: { label: string; value: any; icon: MCIIconName }[] = [
+    { label: "Farmer Name", value: aadharData?.farmername || state.form.name, icon: "account" },
+    { label: "Mobile Number", value: state.form.mobile, icon: "phone" },
+    { label: "Gender", value: state.form.gender, icon: "gender-male-female" },
+    { label: "Relative Name", value: aadharData?.relative || state.form.relativename, icon: "account-group" },
+    { label: "Relation", value: aadharData?.relation || state.form.relation, icon: "account-heart" },
+    { label: "Center Name", value: aadharData?.centername || "-", icon: "home-city" },
+    { label: "Commodity", value: aadharData?.commodityname || "-", icon: "seed" },
+    { label: "Variety", value: aadharData?.varietyname || "-", icon: "sprout" },
+    { label: "Class of Seeds", value: aadharData?.cropclass || "-", icon: "seed-outline" },
+    { label: "Pincode", value: state.form.pincode, icon: "numeric" },
+    { label: "State", value: state.form.statename, icon: "map" },
+    { label: "District", value: state.form.districtname, icon: "map-marker" },
+    { label: "Village", value: state.form.villagename, icon: "home-city" },
+
+
+
   ];
 
   return (
@@ -321,7 +328,7 @@ const AgreementForm: React.FC = () => {
 
 
 
-          <Text style={styles.label}>Aadhar Number*</Text>
+          <Text style={styles.label}>Aadhar Number *</Text>
 
           <TextInput
             placeholder="Enter Aadhar Number"
@@ -341,12 +348,20 @@ const AgreementForm: React.FC = () => {
               shouldShowError("AadharNumber") && styles.inputError,
             ]}
             keyboardType="number-pad"
-            maxLength={12}              // ✅ Aadhar 12 digits hota hai
+            maxLength={12}
           />
-
           <HelperText type="error" visible={shouldShowError("AadharNumber")}>
             {errors.AadharNumber}
           </HelperText>
+
+
+          <CommonPicker
+            selectedValue={state.form.seeds}
+            onValueChange={(value) => handleFieldChange("seeds", value)}
+            items={Commodity}       // ✅ yahan seedOptions pass ho raha hai
+            onFocus={() => handlePickerFocus("seeds")}
+            onBlur={() => handlePickerBlur("seeds")}
+          />
 
 
 
@@ -367,6 +382,13 @@ const AgreementForm: React.FC = () => {
             {errors.CertificateNo}
           </HelperText>
 
+
+
+
+
+
+
+
           <Text style={styles.label}>Survey No *</Text>
           <TextInput
             placeholder="Enter survey number"
@@ -385,161 +407,35 @@ const AgreementForm: React.FC = () => {
         </Card.Content>
       </Card>
 
-<Card style={styles.farmerCard}>
-  <Card.Content>
-    <Text style={styles.sectionTitle}>Aadhar Farmer Details</Text>
-    <Divider style={styles.headerDivider} />
-
-    {aadharData && (
-      <View style={styles.detailsContainer}>
-
-        <View style={styles.detailRow}>
-          <View style={styles.labelContainer}>
-            <MaterialCommunityIcons
-              name="account"
-              size={20}
-              color="#4CAF50"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.detailLabel}>Farmer Name:</Text>
-          </View>
-          <Text style={styles.detailValue}>{aadharData.farmername}</Text>
-        </View>
-
-        <View style={styles.detailRow}>
-          <View style={styles.labelContainer}>
-            <MaterialCommunityIcons
-              name="account-group"
-              size={20}
-              color="#4CAF50"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.detailLabel}>Relative:</Text>
-          </View>
-          <Text style={styles.detailValue}>{aadharData.relative}</Text>
-        </View>
-
-        <View style={styles.detailRow}>
-          <View style={styles.labelContainer}>
-            <MaterialCommunityIcons
-              name="account-heart"
-              size={20}
-              color="#4CAF50"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.detailLabel}>Relation:</Text>
-          </View>
-          <Text style={styles.detailValue}>{aadharData.relation}</Text>
-        </View>
-
-        <View style={styles.detailRow}>
-          <View style={styles.labelContainer}>
-            <MaterialCommunityIcons
-              name="home-city"
-              size={20}
-              color="#4CAF50"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.detailLabel}>Center Name:</Text>
-          </View>
-          <Text style={styles.detailValue}>{aadharData.centername}</Text>
-        </View>
-
-        <View style={styles.detailRow}>
-          <View style={styles.labelContainer}>
-            <MaterialCommunityIcons
-              name="seed"
-              size={20}
-              color="#4CAF50"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.detailLabel}>Commodity Name:</Text>
-          </View>
-          <Text style={styles.detailValue}>{aadharData.commodityname}</Text>
-        </View>
-
-        <View style={styles.detailRow}>
-          <View style={styles.labelContainer}>
-            <MaterialCommunityIcons
-              name="sprout"
-              size={20}
-              color="#4CAF50"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.detailLabel}>Variety Name:</Text>
-          </View>
-          <Text style={styles.detailValue}>{aadharData.varietyname}</Text>
-        </View>
-
-        <View style={styles.detailRow}>
-          <View style={styles.labelContainer}>
-            <MaterialCommunityIcons
-              name="leaf"
-              size={20}
-              color="#4CAF50"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.detailLabel}>Crop Class:</Text>
-          </View>
-          <Text style={styles.detailValue}>{aadharData.cropclass}</Text>
-        </View>
-
-        <View style={styles.detailRow}>
-          <View style={styles.labelContainer}>
-            <MaterialCommunityIcons
-              name="storefront"
-              size={20}
-              color="#4CAF50"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.detailLabel}>Produce Seeds:</Text>
-          </View>
-          <Text style={styles.detailValue}>{aadharData.distributiontype}</Text>
-        </View>
-
-      </View>
-    )}
-  </Card.Content>
-</Card>
 
 
-
-
-      {/* Farmer Information Card - Same as before */}
       <Card style={styles.farmerCard}>
         <Card.Content>
-          <Text style={styles.sectionTitle}>Farmer Information</Text>
+          <Text style={styles.sectionTitle}>Farmer Details</Text>
           <Divider style={styles.headerDivider} />
-          {selectedFarmerId ? (
-            <View style={styles.detailsContainer}>
-              {fields.map((item, index) => (
-                <View key={index}>
-                  <View style={styles.detailRow}>
-                    <View style={styles.labelContainer}>
-                      <MaterialCommunityIcons
-                        name={item.icon as any}
-                        size={20}
-                        color="#4CAF50"
-                        style={{ marginRight: 8 }}
-                      />
-                      <Text variant="bodyMedium" style={styles.detailLabel}>{item.label}:</Text>
-                    </View>
-                    <Text variant="bodyMedium" style={styles.detailValue}>
-                      {item.value?.toString() || '-'}
-                    </Text>
-                  </View>
-                  {index < fields.length - 1 && <Divider style={styles.rowDivider} />}
+
+          {mergedFarmerDetails.map((item, i) => (
+            <View key={i}>
+              <View style={styles.detailRow}>
+                <View style={styles.labelContainer}>
+                  <MaterialCommunityIcons name={item.icon} size={20} color="#4CAF50" style={{ marginRight: 8 }} />
+                  <Text style={styles.detailLabel}>{item.label}:</Text>
                 </View>
-              ))}
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.detailValue} numberOfLines={0}>
+                    {item.value || "-"}
+                  </Text>
+                </View>
+
+              </View>
+
+              {i < mergedFarmerDetails.length - 1 && (
+                <Divider style={styles.rowDivider} />
+              )}
             </View>
-          ) : (
-            <Text variant="bodySmall" style={styles.noFarmerSelected}>
-              {shouldShowError('selectedFarmer') ? errors.selectedFarmer : 'No farmer selected'}
-            </Text>
-          )}
+          ))}
         </Card.Content>
       </Card>
-
       {/* Farmer Land Details Card - Same as before */}
       <Card style={styles.farmerCard}>
         <Card.Content>
@@ -688,27 +584,6 @@ const AgreementForm: React.FC = () => {
 
 
 
-       <Card style={styles.sectionCard}>
-        <Card.Content>
-          <Text style={styles.sectionTitle}>Seed Production Details</Text>
-          
-          <Text style={styles.label}>Seeds *</Text>
-          <CommonPicker
-            selectedValue={state.form.seeds || ""}
-            onValueChange={(value) => handleFieldChange('seeds', value)}
-            onFocus={() => handlePickerFocus('seeds')}
-            onBlur={() => handlePickerBlur('seeds')}
-            items={seedOptions}
-            isFocused={focusedFields.seeds}
-          />
-          <HelperText type="error" visible={shouldShowError('seeds')}>
-            {errors.seeds}
-          </HelperText>
-        </Card.Content>
-      </Card>
-
-
-
       <Card style={styles.sectionCard}>
         <Card.Content>
           <Text style={styles.sectionTitle}>Contract Terms</Text>
@@ -737,7 +612,7 @@ const AgreementForm: React.FC = () => {
           const dataToSend = {
             // formData: state.form,
 
-              seeds: state.form.seeds,
+            seeds: aadharExtraFields.Cropclass,
             DistributedFarmerid: aadharExtraFields.DistrubutedFarnerId,
             Farmerid: selectedFarmerId,
             selectedCenterTarget: selectedCenterTarget,
@@ -753,7 +628,7 @@ const AgreementForm: React.FC = () => {
             BillNumber: aadharExtraFields.BillNumber,
             distributiontype: aadharExtraFields.distributiontype,
             Year: state.form.Year
-            
+
           };
 
 
@@ -873,17 +748,18 @@ const styles = StyleSheet.create({
   },
   detailRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 10,
     backgroundColor: '#F9F9F9',
-    marginVertical: 4,
+    marginVertical: 4
   },
   labelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: 140, // ✅ Fixed width for labels
   },
   detailLabel: {
     fontSize: 16,
@@ -894,6 +770,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
     fontWeight: '600',
+    flexShrink: 1,
+    flexWrap: "wrap",
   },
   rowDivider: {
     backgroundColor: '#E0E0E0',

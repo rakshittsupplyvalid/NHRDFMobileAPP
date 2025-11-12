@@ -258,91 +258,91 @@ const AgreementSecond: React.FC = () => {
     };
 
     // Real-time validation functions
-    const validateNomineeField = (index: number, field: string, value: string) => {
+    const validateNomineeField = (index, field, value) => {
         const newErrors = [...nomineeErrors];
-        let error = '';
+        let error = "";
 
         switch (field) {
-            case 'nomineename':
-                if (!isValidName(value)) {
-                    error = 'Name must be 1-100 letters only';
+            case "nomineename":
+                if (!value || !isValidName(value)) {
+                    error = "Name must be 1-100 letters only";
                 }
                 break;
-            case 'mobileno':
-                if (!isValidMobile(value)) {
-                    error = 'Valid 10-digit mobile number starting with 6-9';
+
+            case "mobileno":
+                if (!value || !isValidMobile(value)) {
+                    error = "Valid 10-digit mobile number required";
                 }
                 break;
-                // case 'email':
-                //     if (value && !isValidEmail(value)) {
-                //         error = 'Please enter a valid email address';
-                //     }
-                //     break;
-                // case "relation":
-                //     if (!isValidRelation(value)) {
-                //         error = "Please select a valid relation (S/O, D/O, or W/O)";
-                //     }
-                //     break;
-                // case 'addrline':
-                //     if (!isValidAddress(value)) {
-                //         error = 'Address must be at least 1 character';
-                //     }
-                //     break;
-                // case 'pincode':
-                //     if (value && !isValidPincode(value)) {
-                //         error = 'Pincode must be 6 digits';
-                //     }
-                //     break;
-                // case 'villagename':
-                //     if (value && !/^[a-zA-Z\s]{1,100}$/.test(value)) {
-                //         error = 'Village name must be 1-100 letters only';
-                //     }
-                //     break;
-                // case 'gender':
-                //     if (!value) {
-                //         error = 'Gender is required';
-                //     }
-                //     break;
-                // case 'stateid':
-                //     if (!value) {
-                //         error = 'State is required';
-                //     }
-                //     break;
-                // case 'districtid':
-                //     if (!value) {
-                //         error = 'District is required';
-                //     }
-                //     break;
-                // case 'subdistrictid':
-                //     if (!value) {
-                //         error = 'City is required';
-                //     }
-                //     break;
-                // case 'year':
+
+            case "relation":
+                if (!value) {
+                    error = "Relation is required";
+                }
+                break;
+
+            case "addrline":
+                if (!value) {
+                    error = "Address Line is required";
+                }
+                break;
+
+            case "accountholdername":
+                if (!value || !isValidName(value)) {
+                    error = "Account holder name required";
+                }
+                break;
+
+            case "raccountnumber":
+                if (!value || !isValidAccountNumber(value)) {
+                    error = "Account number must be 9-18 digits";
+                }
+                break;
+
+            case "ifsc":
+                if (!value || !isValidIFSC(value)) {
+                    error = "Valid IFSC code required";
+                }
+                break;
+
+            case "year":
                 if (value && !isValidYear(value)) {
-                    error = 'Please enter a valid year';
+                    error = "Please enter a valid year";
                 }
                 break;
-            case 'accountholdername':
-                if (value && !isValidName(value)) {
-                    error = 'Account holder name must be 1-100 letters only';
+            case 'pincode':
+                if (value && !isValidPincode(value)) {
+                    error = 'Pincode must be 6 digits';
                 }
                 break;
-            case 'raccountnumber':
-                if (value && !isValidAccountNumber(value)) {
-                    error = 'Account number must be 9-18 digits';
+
+            case "stateid":
+                if (!value) {
+                    error = "State is required";
                 }
                 break;
-            case 'ifsc':
-                if (value && !isValidIFSC(value)) {
-                    error = 'Please enter a valid IFSC code';
+
+            case "districtid":
+                if (!value) {
+                    error = "District is required";
                 }
                 break;
+
+            case "subdistrictid":
+                if (!value) {
+                    error = "City is required";
+                }
+                break;
+
         }
 
         newErrors[index] = { ...newErrors[index], [field]: error };
         setNomineeErrors(newErrors);
     };
+
+
+
+
 
     const validateWitnessField = (index: number, field: string, value: string) => {
         const newErrors = [...witnessErrors];
@@ -359,37 +359,37 @@ const AgreementSecond: React.FC = () => {
                     error = 'Valid 10-digit mobile number starting with 6-9';
                 }
                 break;
-            // case 'witnessemail':
-            //     if (value && !isValidEmail(value)) {
-            //         error = 'Please enter a valid email address';
-            //     }
+                // case 'witnessemail':
+                //     if (value && !isValidEmail(value)) {
+                //         error = 'Please enter a valid email address';
+                //     }
                 break;
             case 'addrline':
                 if (!isValidAddress(value)) {
                     error = 'Address must be at least 1 character';
                 }
                 break;
-            // case 'pincode':
-            //     if (value && !isValidPincode(value)) {
-            //         error = 'Pincode must be 6 digits';
-            //     }
-            //     break;
+            case 'pincode':
+                if (value && !isValidPincode(value)) {
+                    error = 'Pincode must be 6 digits';
+                }
+                break;
             // case 'villagename':
             //     if (value && !/^[a-zA-Z\s]{2,25}$/.test(value)) {
             //         error = 'Village name must be 2-25 letters only';
             //     }
             //     break;
-            // case 'stateid':
-            //     if (!value) {
-            //         error = 'State is required';
-            //     }
-            //     break;
-            // case 'districtid':
-            //     if (!value) {
-            //         error = 'District is required';
-            //     }
-            //     break;
-            // case 'subdistrictid':
+            case 'stateid':
+                if (!value) {
+                    error = 'State is required';
+                }
+                break;
+            case 'districtid':
+                if (!value) {
+                    error = 'District is required';
+                }
+                break;
+            case 'subdistrictid':
                 if (!value) {
                     error = 'City is required';
                 }
@@ -400,23 +400,41 @@ const AgreementSecond: React.FC = () => {
         setWitnessErrors(newErrors);
     };
 
-    // Check if all validations pass - ONLY nomineename and mobileno are required
     const isFormValid = () => {
         const nomineeValid = nominees.every((nominee, index) => {
-            const hasRequiredFields = nominee.nomineename && nominee.mobileno;
 
-            const hasNoErrors = Object.keys(nomineeErrors[index] || {}).every(key =>
-                !nomineeErrors[index][key]
+            const hasRequiredFields =
+                nominee.nomineename &&
+                nominee.mobileno &&
+                nominee.relation &&
+                nominee.addrline &&
+                nominee.accountholdername &&
+                nominee.raccountnumber &&
+                nominee.ifsc &&
+                nominee.pincode &&
+                nominee.stateid &&
+                nominee.districtid &&
+                nominee.subdistrictid &&
+                nomineeProfilePhotos[index]; // ✅ Passbook Required
+
+            const hasNoErrors = Object.keys(nomineeErrors[index] || {}).every(
+                (key) => !nomineeErrors[index][key]
             );
 
             return hasRequiredFields && hasNoErrors;
         });
 
         const witnessValid = witnesses.every((witness, index) => {
-            const hasRequiredFields = witness.witnessname && witness.witnessmobileno;
+            const hasRequiredFields = witness.witnessname &&
+                witness.witnessmobileno &&
+                witness.pincode &&
+                witness.stateid &&
+                witness.districtid &&
+                witness.subdistrictid &&
+                witnessSignatureUri[index];;
 
-            const hasNoErrors = Object.keys(witnessErrors[index] || {}).every(key =>
-                !witnessErrors[index][key]
+            const hasNoErrors = Object.keys(witnessErrors[index] || {}).every(
+                (key) => !witnessErrors[index][key]
             );
 
             return hasRequiredFields && hasNoErrors;
@@ -424,6 +442,7 @@ const AgreementSecond: React.FC = () => {
 
         return nomineeValid && witnessValid && isAgreementAccepted;
     };
+
 
     // Back handler
     useFocusEffect(
@@ -821,6 +840,9 @@ const AgreementSecond: React.FC = () => {
                         return updated;
                     });
                 }
+                else if (params.type === "signature") {
+                    setSignaturePhoto(params.signatureUri);
+                }
             }
         }, [route.params])
     );
@@ -882,15 +904,18 @@ const AgreementSecond: React.FC = () => {
             requestData.append("TagNumber", formData?.TagNumber || "");
             requestData.append("LotNumber", formData?.LotNumber || "");
             requestData.append("DuringYear", formData?.LotNumber || "");
+            // Convert Base64 signature to file
+            const convertedSignature = await base64ToFile(signaturePhoto, "signature.png");
 
-            // 🔹 Append captured images
-            if (signaturePhoto) {
+            // Append in FormData
+            if (convertedSignature) {
                 requestData.append("Signature", {
-                    uri: signaturePhoto,
-                    type: "image/jpeg",
-                    name: "signature.jpg",
+                    uri: convertedSignature.uri,
+                    type: convertedSignature.type,
+                    name: convertedSignature.name,
                 } as any);
             }
+
 
             if (profilePhoto) {
                 requestData.append("ProfFile", {
@@ -1160,7 +1185,7 @@ const AgreementSecond: React.FC = () => {
                                         styles.simpleInput,
                                         nomineeErrors[index]?.nomineename && styles.inputError
                                     ]}
-                                    maxLength={100}
+                                    maxLength={25}
                                 />
                                 {nomineeErrors[index]?.nomineename ? (
                                     <HelperText type="error" visible={!!nomineeErrors[index]?.nomineename}>
@@ -1254,7 +1279,7 @@ const AgreementSecond: React.FC = () => {
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>Relation</Text>
+                                <Text style={styles.label}>Relation *</Text>
                                 <CommonPicker
                                     selectedValue={nominee.relation || ""}
                                     onValueChange={(value) => updateNominee(index, "relation", value)}
@@ -1270,7 +1295,7 @@ const AgreementSecond: React.FC = () => {
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>Address Line</Text>
+                                <Text style={styles.label}>Address Line *</Text>
                                 <RNTextInput
                                     placeholder="Address Line"
                                     value={nominee.addrline}
@@ -1304,7 +1329,7 @@ const AgreementSecond: React.FC = () => {
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>Pincode</Text>
+                                <Text style={styles.label}>Pincode *</Text>
                                 <RNTextInput
                                     placeholder="Pincode"
                                     keyboardType="numeric"
@@ -1322,7 +1347,7 @@ const AgreementSecond: React.FC = () => {
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>State</Text>
+                                <Text style={styles.label}>State *</Text>
                                 <CommonPicker
                                     selectedValue={nominee.stateid || ""}
                                     onValueChange={(value) => handleStateChange(value, "Nominee", index)}
@@ -1334,7 +1359,7 @@ const AgreementSecond: React.FC = () => {
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>District</Text>
+                                <Text style={styles.label}>District *</Text>
                                 <CommonPicker
                                     selectedValue={nominee.districtid || ""}
                                     onValueChange={(value) => handleDistrictChange(value, "Nominee", index)}
@@ -1346,7 +1371,7 @@ const AgreementSecond: React.FC = () => {
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>City</Text>
+                                <Text style={styles.label}>City *</Text>
                                 <CommonPicker
                                     selectedValue={nominee.subdistrictid || ""}
                                     onValueChange={(value) => handleCityChange(value, "Nominee", index)}
@@ -1358,92 +1383,106 @@ const AgreementSecond: React.FC = () => {
                                     </HelperText>
                                 ) : null}
 
-                                {/* NEW FIELDS - Account Details */}
-                                <Text style={styles.label}>Account Holder Name</Text>
+                                {/* Account Holder Name */}
+                                <Text style={styles.label}>Account Holder Name *</Text>
                                 <RNTextInput
                                     placeholder="Account Holder Name"
                                     value={nominee.accountholdername}
-                                    onChangeText={(text) => updateNominee(index, "accountholdername", text)}
-                                    style={[
-                                        styles.simpleInput,
-                                        nomineeErrors[index]?.accountholdername && styles.inputError
-                                    ]}
-                                    maxLength={100}
-                                />
-                                {nomineeErrors[index]?.accountholdername ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.accountholdername}>
-                                        {nomineeErrors[index]?.accountholdername}
-                                    </HelperText>
-                                ) : null}
-
-                                <Text style={styles.label}>Account Number</Text>
-                                <RNTextInput
-                                    placeholder="Account Number"
-                                    keyboardType="numeric"
-                                    value={nominee.raccountnumber}
                                     onChangeText={(text) => {
-                                        const numericText = text.replace(/[^0-9]/g, "");
-                                        updateNominee(index, "raccountnumber", numericText);
+                                        updateNominee(index, "accountholdername", text);
+                                        validateNomineeField(index, "accountholdername", text);
                                     }}
                                     style={[
                                         styles.simpleInput,
-                                        nomineeErrors[index]?.raccountnumber && styles.inputError
+                                        nomineeErrors[index]?.accountholdername && styles.inputError,
                                     ]}
-                                    maxLength={18}
                                 />
-                                {nomineeErrors[index]?.raccountnumber ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.raccountnumber}>
-                                        {nomineeErrors[index]?.raccountnumber}
+                                {nomineeErrors[index]?.accountholdername && (
+                                    <HelperText type="error">
+                                        {nomineeErrors[index].accountholdername}
                                     </HelperText>
-                                ) : null}
+                                )}
 
-                                <Text style={styles.label}>IFSC Code</Text>
+                                {/* Account Number */}
+                                <Text style={styles.label}>Account Number *</Text>
+                                <RNTextInput
+                                    placeholder="Account Number"
+                                    keyboardType="numeric"
+                                    maxLength={18}
+                                    value={nominee.raccountnumber}
+                                    onChangeText={(text) => {
+                                        const numeric = text.replace(/[^0-9]/g, "");
+                                        updateNominee(index, "raccountnumber", numeric);
+                                        validateNomineeField(index, "raccountnumber", numeric);
+                                    }}
+                                    style={[
+                                        styles.simpleInput,
+                                        nomineeErrors[index]?.raccountnumber && styles.inputError,
+                                    ]}
+                                />
+                                {nomineeErrors[index]?.raccountnumber && (
+                                    <HelperText type="error">
+                                        {nomineeErrors[index].raccountnumber}
+                                    </HelperText>
+                                )}
+
+                                {/* IFSC */}
+                                <Text style={styles.label}>IFSC Code *</Text>
                                 <RNTextInput
                                     placeholder="IFSC Code"
                                     value={nominee.ifsc}
-                                    onChangeText={(text) => updateNominee(index, "ifsc", text.toUpperCase())}
+                                    maxLength={11}
+                                    onChangeText={(text) => {
+                                        const upper = text.toUpperCase();
+                                        updateNominee(index, "ifsc", upper);
+                                        validateNomineeField(index, "ifsc", upper);
+                                    }}
                                     style={[
                                         styles.simpleInput,
-                                        nomineeErrors[index]?.ifsc && styles.inputError
+                                        nomineeErrors[index]?.ifsc && styles.inputError,
                                     ]}
-                                    maxLength={11}
-                                    autoCapitalize="characters"
                                 />
-                                {nomineeErrors[index]?.ifsc ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.ifsc}>
-                                        {nomineeErrors[index]?.ifsc}
-                                    </HelperText>
-                                ) : null}
+                                {nomineeErrors[index]?.ifsc && (
+                                    <HelperText type="error">{nomineeErrors[index].ifsc}</HelperText>
+                                )}
 
-                                {/* Profile Document Photo */}
+                                {/* Passbook Photo Required */}
                                 <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                    <Text style={{ fontWeight: "bold", marginBottom: 5 }}>Passbook photo Document:</Text>
+                                    <Text style={{ fontWeight: "bold" }}>Passbook Photo *</Text>
+
                                     {nomineeProfilePhotos[index] ? (
-                                        <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                            <Text style={{ fontWeight: "bold" }}>Passbook Photo</Text>
-                                            <Image
-                                                source={{ uri: nomineeProfilePhotos[index] }}
-                                                style={{ width: 250, height: 150, borderWidth: 1, borderColor: "#ccc", marginTop: 5 }}
-                                                resizeMode="cover"
-                                            />
-                                        </View>
+                                        <Image
+                                            source={{ uri: nomineeProfilePhotos[index] }}
+                                            style={{ width: 250, height: 150, marginVertical: 10 }}
+                                            resizeMode="cover"
+                                        />
                                     ) : (
-                                        <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                            <Text style={{ color: '#666', fontStyle: 'italic' }}>No passbook photo added</Text>
-                                        </View>
+                                        <Text style={{ color: "#777", fontStyle: "italic" }}>
+                                            No passbook photo added
+                                        </Text>
+                                    )}
+
+                                    {/* PASSBOOK ERROR */}
+                                    {nomineeErrors[index]?.passbook && (
+                                        <HelperText type="error">
+                                            {nomineeErrors[index].passbook}
+                                        </HelperText>
                                     )}
                                 </View>
 
                                 <TouchableOpacity
                                     style={styles.iconButton}
-                                    onPress={() => handleNomineeProfilePhoto(index)}
+                                    onPress={() => {
+                                        handleNomineeProfilePhoto(index);
+
+                                    }}
                                 >
                                     <MaterialIcons name="photo-camera" size={26} color="#2C5EFF" />
-                                    <Text>Add Profile Document Photo</Text>
+                                    <Text>Add Passbook Photo</Text>
                                 </TouchableOpacity>
 
                                 {/* Signature Preview */}
-                                <View style={{ marginVertical: 10, alignItems: "center" }}>
+                                {/* <View style={{ marginVertical: 10, alignItems: "center" }}>
                                     <Text style={{ fontWeight: "bold", marginBottom: 5 }}>Signature:</Text>
                                     {nomineeSignatureUri?.[index]?.length > 0 ? (
                                         <View style={{ marginVertical: 10, alignItems: "center" }}>
@@ -1467,7 +1506,7 @@ const AgreementSecond: React.FC = () => {
                                 >
                                     <MaterialCommunityIcons name="signature-freehand" size={26} color="#2C5EFF" />
                                     <Text>Add Nominee Signature</Text>
-                                </TouchableOpacity>
+                                </TouchableOpacity> */}
                             </Card.Content>
                         </Card>
                     ))}
@@ -1490,7 +1529,7 @@ const AgreementSecond: React.FC = () => {
                                         styles.simpleInput,
                                         witnessErrors[index]?.witnessname && styles.inputError
                                     ]}
-                                    maxLength={100}
+                                    maxLength={20}
                                 />
                                 {witnessErrors[index]?.witnessname ? (
                                     <HelperText type="error" visible={!!witnessErrors[index]?.witnessname}>
@@ -1537,7 +1576,7 @@ const AgreementSecond: React.FC = () => {
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>Address</Text>
+                                <Text style={styles.label}>Address *</Text>
                                 <RNTextInput
                                     placeholder="Address Line"
                                     value={witness.addrline}
@@ -1554,7 +1593,7 @@ const AgreementSecond: React.FC = () => {
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>Pincode</Text>
+                                <Text style={styles.label}>Pincode *</Text>
                                 <RNTextInput
                                     placeholder="Pincode"
                                     keyboardType="numeric"
@@ -1572,7 +1611,7 @@ const AgreementSecond: React.FC = () => {
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>State</Text>
+                                <Text style={styles.label}>State *</Text>
                                 <CommonPicker
                                     selectedValue={witness.stateid || ""}
                                     onValueChange={(value) => handleStateChange(value, "Witness", index)}
@@ -1584,7 +1623,7 @@ const AgreementSecond: React.FC = () => {
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>District</Text>
+                                <Text style={styles.label}>District *</Text>
                                 <CommonPicker
                                     selectedValue={witness.districtid || ""}
                                     onValueChange={(value) => handleDistrictChange(value, "Witness", index)}
@@ -1596,7 +1635,7 @@ const AgreementSecond: React.FC = () => {
                                     </HelperText>
                                 ) : null}
 
-                                <Text style={styles.label}>City</Text>
+                                <Text style={styles.label}>City *</Text>
                                 <CommonPicker
                                     selectedValue={witness.subdistrictid || ""}
                                     onValueChange={(value) => handleCityChange(value, "Witness", index)}
@@ -1652,9 +1691,11 @@ const AgreementSecond: React.FC = () => {
                                 </TouchableOpacity> */}
 
                                 {/* Signature Preview */}
+
                                 <View style={{ marginVertical: 10, alignItems: "center" }}>
                                     <Text style={{ fontWeight: "bold", marginBottom: 5 }}>Signature:</Text>
-                                    {witnessSignatureUri?.[index]?.length > 0 ? (
+
+                                    {witnessSignatureUri?.[index] ? (
                                         <View style={{ marginVertical: 10, alignItems: "center" }}>
                                             <Text style={{ fontWeight: "bold" }}>Signature Preview:</Text>
                                             <Image
@@ -1666,6 +1707,7 @@ const AgreementSecond: React.FC = () => {
                                     ) : (
                                         <View style={{ marginVertical: 10, alignItems: "center" }}>
                                             <Text style={{ color: '#666', fontStyle: 'italic' }}>No signature added</Text>
+                                            <Text style={{ color: 'red', marginTop: 5 }}>Witness signature is required</Text>
                                         </View>
                                     )}
                                 </View>
@@ -1678,6 +1720,8 @@ const AgreementSecond: React.FC = () => {
                                     <Text>Add Witness Signature</Text>
                                 </TouchableOpacity>
 
+
+                              
                                 {witnesses.length > 1 && (
                                     <Button
                                         mode="outlined"
@@ -1723,7 +1767,9 @@ const AgreementSecond: React.FC = () => {
 
                                 <Button
                                     mode="contained"
-                                    onPress={() => openCamera(setSignaturePhoto)}
+                                    onPress={() =>
+                                        navigation.navigate("Signature", { type: "signature" })
+                                    }
                                     icon={() => <MaterialIcons name="edit" size={20} color="#fff" />}
                                     style={styles.actionButton}
                                     contentStyle={styles.buttonContent}
@@ -1731,6 +1777,7 @@ const AgreementSecond: React.FC = () => {
                                     Capture Signature
                                 </Button>
                             </View>
+
 
                             <View style={styles.photoBlock}>
                                 <View style={styles.photoHeader}>
