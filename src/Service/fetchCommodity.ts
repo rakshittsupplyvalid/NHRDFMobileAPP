@@ -5,7 +5,7 @@ import apiClient from "../Service/apiInterceptors";
 export const fetchCommodityTypes = async () => {
   try {
     const res = await apiClient.get(
-      "/api/mobile/commoditytype/get/list?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED"
+      "/api/commodity?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED"
     );
 
 
@@ -42,14 +42,6 @@ export const fetchCommoditiesByType = async (commodityTypeId: string) => {
   }
 };
 
-
-
-
-
-
-
-// Fetch all farmers (for dropdown)
-// Fetch all farmers (for dropdown)
 
 export const farmer = async (selectedCommodity: string) => {
   if (!selectedCommodity) return [];
