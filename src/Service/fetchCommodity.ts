@@ -5,7 +5,7 @@ import apiClient from "../Service/apiInterceptors";
 export const fetchCommodityTypes = async () => {
   try {
     const res = await apiClient.get(
-      "/api/commodity?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED"
+      "/api/mobile/commoditytype/get/list?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED"
     );
 
 
@@ -21,27 +21,39 @@ export const fetchCommodityTypes = async () => {
 };
 
 // Fetch commodities based on selected Commodity Type
-export const fetchCommoditiesByType = async (commodityTypeId: string) => {
+export const fetchCommodity = async (commodityTypeId: string) => {
   try {
     const res = await apiClient.get(
       `/api/mobile/commodity/get/list?CommodityTypesId=${commodityTypeId}&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`
     );
-
-
-    console.log("response" , res)
-
-
 
     return res.data.map((item: any) => ({
       label: item.name,
       value: item.id,
     }));
   } catch (error: any) {
-  
+    console.error("Error fetching commodity:", error);
     return [];
   }
 };
 
+
+
+export const fetchVariety = async (VarietyId: string) => {
+  try {
+    const res = await apiClient.get(
+      `/api/mobile/variety/list?CommodityId=CMM2025111006232817434264651&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`
+    );
+
+    return res.data.map((item: any) => ({
+      label: item.name,
+      value: item.id,
+    }));
+  } catch (error: any) {
+    console.error("Error fetching commodity:", error);
+    return [];
+  }
+};
 
 export const farmer = async (selectedCommodity: string) => {
   if (!selectedCommodity) return [];
@@ -108,8 +120,7 @@ export const getFarmerLandDetail = async (farmerId: string) => {
     const url = `/api/mobile/farmer/${farmerId}/landdetail`;
     const res = await apiClient.get(url);
 
-    console.log("Farmer Land Detail:", res.data);
-
+   
     return res.data;
 
   } catch (error: any) {
@@ -131,7 +142,7 @@ export const farmerDetails = async (farmerId: string) => {
       `/api/mobile/farmer/${farmerId}`
     );
 
-    console.log("Farmer Details:", res.data);
+   
 
     // Agar API single object return kare, to usko array me wrap karke map karo
     const data = [res.data];

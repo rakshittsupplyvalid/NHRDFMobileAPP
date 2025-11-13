@@ -1,8 +1,8 @@
 import React from "react";
 import { useState, useEffect, useCallback } from "react";
-import { View, StyleSheet, TextInput } from "react-native";
+import { View, StyleSheet } from "react-native";
 import { BackHandler } from 'react-native';
-import { Button, Text, Card, Checkbox, Divider, HelperText } from "react-native-paper";
+import { TextInput, Button, Text, Card, Checkbox, Divider, HelperText } from "react-native-paper";
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import CommonPicker from "../CommonComponent/CommonDropdown";
@@ -14,44 +14,17 @@ import { useNavigation } from "@react-navigation/native";
 import { fetchCommodityTypes, fetchCommoditiesByType, farmer, farmerDetails, getFarmerLandDetail, fetchSeedOptions } from "../Service/fetchCommodity";
 import axios from 'axios';
 import { useFormData } from "../Constants/FormContext";
-import apiClient from "../Service/apiInterceptors";
 
 const AgreementForm: React.FC = () => {
   const { state, updateState } = useForm();
-  interface AadharFields {
-    VarietyId: string;
-    CommodityId: string;
-    CenterTargetId: string;
-    Area: string;
-    LotNumber: string;
-    TagNumber: string;
-    BillNumber: string;
-    distributiontype: string;
-    DistrubutedFarnerId: string;
-    Cropclass: string;
-  }
-
-  const [aadharExtraFields, setAadharExtraFields] = useState<AadharFields>({
-    VarietyId: '',
-    CommodityId: '',
-    CenterTargetId: '',
-    Area: '',
-    LotNumber: '',
-    TagNumber: '',
-    BillNumber: '',
-    distributiontype: '',
-    DistrubutedFarnerId: '',
-    Cropclass: ''
-
-  });
-
-
-  const [aadharNumber, setAadharNumber] = useState("")
-  const [aadharData, setAadharData] = useState(null);
-
+  const [statesList, setStatesList] = useState([]);
+  const [districtsList, setDistrictsList] = useState([]);
+  const [selectedVariety, setSelectedVariety] = useState("");
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [commodityTypes, setCommodityTypes] = useState([]);
+  const [commodities, setCommodities] = useState([]);
   const [selectedCommodityType, setSelectedCommodityType] = useState('');
-  const [Commodity, setCommodity] = useState([]);
-
+  const [selectedCommodity, setSelectedCommodity] = useState('');
   const [selectedFarmerId, setSelectedFarmerId] = useState("");
   const [selectedCenterTarget, setSelectedCenterTargetId] = useState("");
   const [farmersList, setFarmersList] = useState([]);
@@ -60,33 +33,87 @@ const AgreementForm: React.FC = () => {
   const [farmerLandList, setFarmerLandList] = useState<any[]>([]);
   const [selectedLandId, setSelectedLandId] = useState<string | null>(null);
 
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
-  const [focusedFields, setFocusedFields] = useState<{ [key: string]: boolean }>({});
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
+  const [touched, setTouched] = useState<{[key: string]: boolean}>({});
+  const [focusedFields, setFocusedFields] = useState<{[key: string]: boolean}>({});
   const [checked, setChecked] = useState(false);
 
   const { setFormData } = useFormData();
   const navigation = useNavigation<any>();
 
-
-
+  // Validation functions
   const validateField = (field: string, value: any): string => {
     let error = '';
 
     switch (field) {
-
+      case 'selectedCommodityType':
+        if (!value || value.toString().trim() === '') {
+          error = 'Commodity Type is required';
+        }
+        break;
+      
+      case 'selectedCommodity':
+        if (!value || value.toString().trim() === '') {
+          error = 'Commodity is required';
+        }
+        break;
+      
+      case 'selectedFarmer':
+        if (!value || value.toString().trim() === '') {
+          error = 'Farmer selection is required';
+        }
+        break;
+      
+      case 'produceseeds':
+        if (!value || value.toString().trim() === '') {
+          error = 'Produce Seeds selection is required';
+        }
+        break;
+      
+      case 'seeds':
+        if (!value || value.toString().trim() === '') {
+          error = 'Seeds selection is required';
+        }
+        break;
+      
+      case 'Year':
+        if (!value || value.toString().trim() === '') {
+          error = 'Year is required';
+        }
+        break;
+      
+      case 'Area':
+        if (!value || value.toString().trim() === '') {
+          error = 'Area is required';
+        } else if (isNaN(Number(value)) || parseFloat(value) <= 0) {
+          error = 'Please enter a valid area';
+        } else if (parseFloat(value) > 1000000) {
+          error = 'Maximum area allowed is 10,00,000 hectares';
+        }
+        break;
+      
+      case 'CertificateNo':
+        if (!value || value.toString().trim() === '') {
+          error = 'Certificate No is required';
+        } else if (value.length > 10) {
+          error = 'Certificate No cannot exceed 10 characters';
+        }
+        break;
+      
+      case 'SurveyNo':
+        if (!value || value.toString().trim() === '') {
+          error = 'Survey No is required';
+        } else if (value.length > 10) {
+          error = 'Survey No cannot exceed 10 characters';
+        }
+        break;
+      
       case 'selectedLandId':
         if (!value || value.toString().trim() === '') {
           error = 'Please select at least one land';
         }
         break;
-
-      case 'Year':
-        if (!value || value.toString().trim() === '') {
-          error = 'Duration Year is required';
-        }
-        break;
-
+      
       default:
         break;
     }
@@ -94,26 +121,30 @@ const AgreementForm: React.FC = () => {
     return error;
   };
 
-
-
   const validateForm = (): boolean => {
-    const newErrors: { [key: string]: string } = {};
-
-    newErrors.selectedLandId = validateField('selectedLandId', selectedLandId);
-    newErrors.Year = validateField('Year', state.form.Year);
+    const newErrors: {[key: string]: string} = {};
+    
+    // Validate all required fields
+    newErrors.selectedCommodityType = validateField('selectedCommodityType', selectedCommodityType);
+    newErrors.selectedCommodity = validateField('selectedCommodity', selectedCommodity);
+    newErrors.selectedFarmer = validateField('selectedFarmer', selectedFarmer);
+    newErrors.produceseeds = validateField('produceseeds', state.form.produceseeds);
     newErrors.seeds = validateField('seeds', state.form.seeds);
+    newErrors.Year = validateField('Year', state.form.Year);
+    newErrors.Area = validateField('Area', state.form.Area);
+    newErrors.CertificateNo = validateField('CertificateNo', state.form.CertificateNo);
+    newErrors.SurveyNo = validateField('SurveyNo', state.form.SurveyNo);
+    newErrors.selectedLandId = validateField('selectedLandId', selectedLandId);
 
     setErrors(newErrors);
-
+    
+    // Mark all fields as touched to show all errors
     const allFields = [
-      'CertificateNo',
-      'SurveyNo',
-      'selectedLandId',
-      'Year',
-      'seeds'
+      'selectedCommodityType', 'selectedCommodity', 'selectedFarmer', 
+      'produceseeds', 'seeds', 'Year', 'Area', 'CertificateNo', 
+      'SurveyNo', 'selectedLandId'
     ];
-
-    const newTouched: { [key: string]: boolean } = {};
+    const newTouched: {[key: string]: boolean} = {};
     allFields.forEach(field => {
       newTouched[field] = true;
     });
@@ -122,63 +153,71 @@ const AgreementForm: React.FC = () => {
     return Object.values(newErrors).every(error => error === '');
   };
 
-
-  useEffect(() => {
-    (async () => {
-      const data = await fetchCommodityTypes();
-      setCommodity(data);
-    })();
-  }, []);
-
   const handleFieldChange = (field: string, value: any) => {
-    console.log(`🔄 Field ${field} changed to:`, value);
+  console.log(`🔄 Field ${field} changed to:`, value);
 
-
-
-    if (field === 'selectedLandId') {
-      setSelectedLandId(value);
+  // Update state
+  if (field === 'selectedCommodityType') {
+    setSelectedCommodityType(value);
+    setSelectedCommodity('');
+    setFarmersList([]);
+    setSelectedFarmer('');
+    setFarmerLandList([]);
+    setSelectedLandId(null);
+  } else if (field === 'selectedCommodity') {
+    setSelectedCommodity(value);
+  } else if (field === 'selectedFarmer') {
+    setSelectedFarmer(value);
+    const selectedItem = farmersList.find(item => item.value === value);
+    if (selectedItem) {
+      setSelectedVariety(selectedItem.varietyId);
+      setSelectedFarmerId(selectedItem.Id);
+      setSelectedCenterTargetId(selectedItem.centertargetid);
     }
-    else {
-      updateState({
-        ...state,
-        form: { ...state.form, [field]: value },
-      });
-    }
+  } else if (field === 'selectedLandId') {
+    setSelectedLandId(value);
+  } else {
+    updateState({
+      ...state,
+      form: { ...state.form, [field]: value },
+    });
+  }
+
+  // Mark touched
+  setTouched(prev => ({ ...prev, [field]: true }));
+
+  // ✅ If value selected -> remove error immediately
+  if (value && value !== "") {
+    setErrors(prev => ({ ...prev, [field]: '' }));
+  } else {
+    // Only validate if value empty
+    const error = validateField(field, value);
+    setErrors(prev => ({ ...prev, [field]: error }));
+  }
+};
 
 
-    // Mark touched
-    setTouched(prev => ({ ...prev, [field]: true }));
+const handlePickerFocus = (field: string) => {
+  console.log(`🎯 Picker ${field} focused`);
+  setFocusedFields(prev => ({ ...prev, [field]: true }));
+  setTouched(prev => ({ ...prev, [field]: true }));
+};
 
-    // ✅ If value selected -> remove error immediately
-    if (value && value !== "") {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    } else {
-      // Only validate if value empty
-      const error = validateField(field, value);
-      setErrors(prev => ({ ...prev, [field]: error }));
-    }
-  };
 
-  const handlePickerFocus = (field: string) => {
-    console.log(`🎯 Picker ${field} focused`);
-    setFocusedFields(prev => ({ ...prev, [field]: true }));
-    setTouched(prev => ({ ...prev, [field]: true }));
-  };
+const handlePickerBlur = (field: string) => {
+  let value =
+    field === "selectedCommodityType" ? selectedCommodityType :
+    field === "selectedCommodity" ? selectedCommodity :
+    field === "selectedFarmer" ? selectedFarmer :
+    field === "selectedLandId" ? selectedLandId :
+    state.form[field];
 
-  const handlePickerBlur = (field: string) => {
-    let value =
-      field === "selectedCommodityType" ? selectedCommodityType :
-        field === "selectedCommodity" ? Commodity :
-          field === "selectedFarmer" ? selectedFarmer :
-            field === "selectedLandId" ? selectedLandId :
-              state.form[field];
-
-    // Only validate if empty
-    if (!value) {
-      const error = validateField(field, value);
-      setErrors(prev => ({ ...prev, [field]: error }));
-    }
-  };
+  // Only validate if empty
+  if (!value) {
+    const error = validateField(field, value);
+    setErrors(prev => ({ ...prev, [field]: error }));
+  }
+};
 
   // FIXED: Proper handler for text inputs
   const handleTextInputBlur = (field: string) => {
@@ -189,76 +228,55 @@ const AgreementForm: React.FC = () => {
   };
 
   // Helper to check if error should be shown
-  const shouldShowError = (field: string) => {
-    const value =
+ const shouldShowError = (field: string) => {
+  const value =
+    field === "selectedCommodityType" ? selectedCommodityType :
+    field === "selectedCommodity" ? selectedCommodity :
+    field === "selectedFarmer" ? selectedFarmer :
+    field === "selectedLandId" ? selectedLandId :
+    state.form[field];
 
-      field === "selectedLandId" ? selectedLandId :
-        field === "aadharNumber" ? aadharNumber :
-          state.form[field];
-
-    return touched[field] && errors[field] && (!value || value === "");
-  };
+  return touched[field] && errors[field] && (!value || value === "");
+};
 
 
-
-  const fetchAadharData = async (aadhar) => {
-    if (!aadhar || aadhar.length !== 12) return;
-
-    try {
-      const res = await apiClient.get(
-        `/api/mobile/farmer/distribution/list?AadharNo=${aadhar}&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`
-      );
-      if (res.data && res.data.length > 0) {
-        const info = res.data[0];
-
-        setAadharData(info);
-
-        setSelectedFarmerId(info.farmerid);
-
-        // ✅ Store all required fields here:
-        setAadharExtraFields({
-          DistrubutedFarnerId: info.id,
-          VarietyId: info.varietyid,
-          CommodityId: info.commodityid,
-          CenterTargetId: info.centertargetid,
-          Area: info.area,
-          LotNumber: info.lotno,
-          TagNumber: info.tagnumber ?? "",   // ✅ If not coming, blank
-          BillNumber: info.billnumber,
-          distributiontype: info.distributiontype,
-          Cropclass: info.cropclass
-
-        });
-
-        console.log("✅ Extra Aadhar Fields:", {
-          VarietyId: info.varietyid,
-          CommodityId: info.commodityid,
-          CenterTargetId: info.centertargetid,
-          Area: info.area,
-          LotNumber: info.lotno,
-          TagNumber: info.tagnumber,
-          BillNumber: info.billnumber,
-          distributiontype: info.distributiontype,
-        });
-      }
-
-      else {
-        setAadharData(null);
-      }
-
-    } catch (error) {
-      console.log("Aadhar API Error:", error);
-      setAadharData(null);
-    }
-  };
+  // Rest of your useEffect functions remain the same...
+  useEffect(() => {
+    (async () => {
+      const data = await fetchCommodityTypes();
+      setCommodityTypes(data);
+    })();
+  }, []);
 
   useEffect(() => {
-    if (!selectedFarmerId) return;
+    if (!selectedCommodityType) return;
+    (async () => {
+      const items = await fetchCommoditiesByType(selectedCommodityType);
+      setCommodities(items);
+    })();
+  }, [selectedCommodityType]);
+
+  useEffect(() => {
+    if (!selectedCommodity) {
+      setFarmersList([]);
+      setSelectedFarmer('');
+      setFarmerLandList([]);
+      setSelectedLandId(null);
+      return;
+    }
+    (async () => {
+      const items = await farmer(selectedCommodity);
+      setFarmersList(items);
+    })();
+  }, [selectedCommodity]);
+
+  useEffect(() => {
+    if (!selectedFarmer) return;
 
     (async () => {
-      const details = await farmerDetails(selectedFarmerId);
+      const details = await farmerDetails(selectedFarmer);
       const info = details.length > 0 ? details[0] : null;
-      const landDetails = await getFarmerLandDetail(selectedFarmerId);
+      const landDetails = await getFarmerLandDetail(selectedFarmer);
 
       updateState({
         ...state,
@@ -287,30 +305,28 @@ const AgreementForm: React.FC = () => {
 
       setFarmerLandList(landDetails || []);
     })();
-  }, [selectedFarmerId]);
+  }, [selectedFarmer]);
 
 
+    useEffect(() => {
+      (async () => {
+        const data = await fetchSeedOptions();
+        setSeedOptions(data);
+        console.log("Fetched Commodity Types:", data);
+      })();
+    }, []);
 
-
-  type MCIIconName = React.ComponentProps<typeof MaterialCommunityIcons>['name'];
-
-  const mergedFarmerDetails: { label: string; value: any; icon: MCIIconName }[] = [
-    { label: "Farmer Name", value: aadharData?.farmername || state.form.name, icon: "account" },
-    { label: "Mobile Number", value: state.form.mobile, icon: "phone" },
-    { label: "Gender", value: state.form.gender, icon: "gender-male-female" },
-    { label: "Relative Name", value: aadharData?.relative || state.form.relativename, icon: "account-group" },
-    { label: "Relation", value: aadharData?.relation || state.form.relation, icon: "account-heart" },
-    { label: "Center Name", value: aadharData?.centername || "-", icon: "home-city" },
-    { label: "Commodity", value: aadharData?.commodityname || "-", icon: "seed" },
-    { label: "Variety", value: aadharData?.varietyname || "-", icon: "sprout" },
-    { label: "Class of Seeds", value: aadharData?.cropclass || "-", icon: "seed-outline" },
-    { label: "Pincode", value: state.form.pincode, icon: "numeric" },
-    { label: "State", value: state.form.statename, icon: "map" },
-    { label: "District", value: state.form.districtname, icon: "map-marker" },
-    { label: "Village", value: state.form.villagename, icon: "home-city" },
-
-
-
+  const fields = [
+    { label: 'Full Name', value: state.form.name, icon: 'account' },
+    { label: 'Age', value: '25', icon: 'calendar' },
+    { label: 'Gender', value: state.form.gender, icon: 'gender-male-female' },
+    { label: 'Relation', value: state.form.relation, icon: 'account-group' },
+    { label: 'Relative Name', value: state.form.relativename, icon: 'account' },
+    { label: 'Village', value: state.form.villagename, icon: 'home-city' },
+    { label: 'District', value: state.form.districtname, icon: 'map-marker' },
+    { label: 'State', value: state.form.statename, icon: 'map' },
+    { label: 'Pincode', value: state.form.pincode, icon: 'numeric' },
+    { label: 'Mobile Number', value: state.form.mobile, icon: 'phone' },
   ];
 
   return (
@@ -325,83 +341,72 @@ const AgreementForm: React.FC = () => {
     >
       <Card style={styles.sectionCard}>
         <Card.Content>
-
-
-
-          <Text style={styles.label}>Aadhar Number *</Text>
-
-          <TextInput
-            placeholder="Enter Aadhar Number"
-            value={state.form.AadharNumber || ""}
-            onChangeText={(value) => {
-              handleFieldChange("AadharNumber", value);
-
-              if (value.length === 12) {
-                fetchAadharData(value);   // ✅ 12 digits complete → fetch data
-              } else {
-                setAadharData(null);      // ✅ Less than 12 → clear UI
-              }
-            }}
-            onBlur={fetchAadharData}   // ✅ BLUR par API call
-            style={[
-              styles.simpleInput,
-              shouldShowError("AadharNumber") && styles.inputError,
-            ]}
-            keyboardType="number-pad"
-            maxLength={12}
+          <Text style={styles.label}>Commodity Type *</Text>
+          <CommonPicker
+            selectedValue={selectedCommodityType}
+            onValueChange={(value) => handleFieldChange('selectedCommodityType', value)}
+            onFocus={() => handlePickerFocus('selectedCommodityType')}
+            onBlur={() => handlePickerBlur('selectedCommodityType')}
+            items={commodityTypes}
+            isFocused={focusedFields.selectedCommodityType}
           />
-          <HelperText type="error" visible={shouldShowError("AadharNumber")}>
-            {errors.AadharNumber}
+          <HelperText type="error" visible={shouldShowError('selectedCommodityType')}>
+            {errors.selectedCommodityType}
           </HelperText>
 
-
-              <Text style={styles.label}>Commodity *</Text>
-
+          <Text style={styles.label}>Commodity *</Text>
           <CommonPicker
-            selectedValue={state.form.seeds}
-            onValueChange={(value) => handleFieldChange("seeds", value)}
-            items={Commodity}       // ✅ yahan seedOptions pass ho raha hai
-            onFocus={() => handlePickerFocus("seeds")}
-            onBlur={() => handlePickerBlur("seeds")}
+            selectedValue={selectedCommodity}
+            onValueChange={(value) => handleFieldChange('selectedCommodity', value)}
+            onFocus={() => handlePickerFocus('selectedCommodity')}
+            onBlur={() => handlePickerBlur('selectedCommodity')}
+            items={commodities}
+            isFocused={focusedFields.selectedCommodity}
           />
+          <HelperText type="error" visible={shouldShowError('selectedCommodity')}>
+            {errors.selectedCommodity}
+          </HelperText>
 
-
-
+          <Text style={styles.label}>Farmer *</Text>
+          <CommonPicker
+            selectedValue={selectedFarmer}
+            onValueChange={(value) => handleFieldChange('selectedFarmer', value)}
+            onFocus={() => handlePickerFocus('selectedFarmer')}
+            onBlur={() => handlePickerBlur('selectedFarmer')}
+            items={farmersList}
+            isFocused={focusedFields.selectedFarmer}
+          />
+          <HelperText type="error" visible={shouldShowError('selectedFarmer')}>
+            {errors.selectedFarmer}
+          </HelperText>
 
           <Text style={styles.label}>Certificate No *</Text>
           <TextInput
+            label="Certificate No"
+            mode="outlined"
             placeholder="Enter certificate number"
             value={state.form.CertificateNo || ""}
             onChangeText={(value) => handleFieldChange('CertificateNo', value)}
             onBlur={() => handleTextInputBlur('CertificateNo')}
-            style={[
-              styles.simpleInput,
-              shouldShowError('CertificateNo') && styles.inputError
-            ]}
+            style={[styles.input, { backgroundColor: "white" }]}
             maxLength={10}
+            error={shouldShowError('CertificateNo')}
           />
           <HelperText type="error" visible={shouldShowError('CertificateNo')}>
             {errors.CertificateNo}
           </HelperText>
 
-
-
-
-
-
-
-
           <Text style={styles.label}>Survey No *</Text>
           <TextInput
+            label="Survey No"
+            mode="outlined"
             placeholder="Enter survey number"
             value={state.form.SurveyNo || ""}
             onChangeText={(value) => handleFieldChange('SurveyNo', value)}
             onBlur={() => handleTextInputBlur('SurveyNo')}
-            style={[
-              styles.simpleInput,
-              shouldShowError('SurveyNo') && styles.inputError
-            ]}
+            style={[styles.input, { backgroundColor: "white" }]}
             maxLength={10}
+            error={shouldShowError('SurveyNo')}
           />
           <HelperText type="error" visible={shouldShowError('SurveyNo')}>
             {errors.SurveyNo}
@@ -409,35 +414,41 @@ const AgreementForm: React.FC = () => {
         </Card.Content>
       </Card>
 
-
-
+      {/* Farmer Information Card - Same as before */}
       <Card style={styles.farmerCard}>
         <Card.Content>
-          <Text style={styles.sectionTitle}>Farmer Details</Text>
+          <Text style={styles.sectionTitle}>Farmer Information</Text>
           <Divider style={styles.headerDivider} />
-
-          {mergedFarmerDetails.map((item, i) => (
-            <View key={i}>
-              <View style={styles.detailRow}>
-                <View style={styles.labelContainer}>
-                  <MaterialCommunityIcons name={item.icon} size={20} color="#4CAF50" style={{ marginRight: 8 }} />
-                  <Text style={styles.detailLabel}>{item.label}:</Text>
+          {selectedFarmer ? (
+            <View style={styles.detailsContainer}>
+              {fields.map((item, index) => (
+                <View key={index}>
+                  <View style={styles.detailRow}>
+                    <View style={styles.labelContainer}>
+                      <MaterialCommunityIcons
+                        name={item.icon as any}
+                        size={20}
+                        color="#4CAF50"
+                        style={{ marginRight: 8 }}
+                      />
+                      <Text variant="bodyMedium" style={styles.detailLabel}>{item.label}:</Text>
+                    </View>
+                    <Text variant="bodyMedium" style={styles.detailValue}>
+                      {item.value?.toString() || '-'}
+                    </Text>
+                  </View>
+                  {index < fields.length - 1 && <Divider style={styles.rowDivider} />}
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.detailValue} numberOfLines={0}>
-                    {item.value || "-"}
-                  </Text>
-                </View>
-
-              </View>
-
-              {i < mergedFarmerDetails.length - 1 && (
-                <Divider style={styles.rowDivider} />
-              )}
+              ))}
             </View>
-          ))}
+          ) : (
+            <Text variant="bodySmall" style={styles.noFarmerSelected}>
+              {shouldShowError('selectedFarmer') ? errors.selectedFarmer : 'No farmer selected'}
+            </Text>
+          )}
         </Card.Content>
       </Card>
+
       {/* Farmer Land Details Card - Same as before */}
       <Card style={styles.farmerCard}>
         <Card.Content>
@@ -463,113 +474,113 @@ const AgreementForm: React.FC = () => {
                   </View>
                   <Divider />
                   <View style={styles.detailsContainer}>
-
-                    <View style={styles.detailRow}>
-                      <View style={styles.labelContainer}>
-                        <MaterialCommunityIcons
-                          name="numeric"
-                          size={20}
-                          color="#4CAF50"
-                          style={{ marginRight: 8 }}
-                        />
-                        <Text style={styles.detailLabel}>Land Number</Text>
-                      </View>
-                      <Text style={styles.detailValue}>{land.number || "-"}</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                      <View style={styles.labelContainer}>
-                        <MaterialCommunityIcons
-                          name="numeric-2-box-outline"
-                          size={20}
-                          color="#4CAF50"
-                          style={{ marginRight: 8 }}
-                        />
-                        <Text style={styles.detailLabel}>Sub Number:</Text>
-                      </View>
-                      <Text style={styles.detailValue}>{land.subnumber || "-"}</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                      <View style={styles.labelContainer}>
-                        <MaterialCommunityIcons
-                          name="square-outline"
-                          size={20}
-                          color="#4CAF50"
-                          style={{ marginRight: 8 }}
-                        />
-                        <Text style={styles.detailLabel}>Total Area:</Text>
-                      </View>
-                      <Text style={styles.detailValue}>
-                        {land.totalarea || "-"} {land.unit}
-                      </Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                      <View style={styles.labelContainer}>
-                        <MaterialCommunityIcons
-                          name="nature"
-                          size={20}
-                          color="#4CAF50"
-                          style={{ marginRight: 8 }}
-                        />
-                        <Text style={styles.detailLabel}>Sowing Area:</Text>
-                      </View>
-                      <Text style={styles.detailValue}>{land.sowingarea || "-"}</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                      <View style={styles.labelContainer}>
-                        <MaterialCommunityIcons
-                          name="home-city"
-                          size={20}
-                          color="#4CAF50"
-                          style={{ marginRight: 8 }}
-                        />
-                        <Text style={styles.detailLabel}>Village:</Text>
-                      </View>
-                      <Text style={styles.detailValue}>{land.village || "-"}</Text>
-                    </View>
-
-                    <View style={styles.detailRow}>
-                      <View style={styles.labelContainer}>
-                        <MaterialCommunityIcons
-                          name={
-                            land.approvalstatus === "PENDING"
-                              ? "clock-time-four-outline"
-                              : land.approvalstatus === "APPROVED"
-                                ? "check-circle-outline"
-                                : "close-circle-outline"
-                          }
-                          size={20}
-                          color={
-                            land.approvalstatus === "PENDING"
-                              ? "#FFC107"
-                              : land.approvalstatus === "APPROVED"
-                                ? "#4CAF50"
-                                : "#F44336"
-                          }
-                          style={{ marginRight: 8 }}
-                        />
-                        <Text style={styles.detailLabel}>Approval Status:</Text>
-                      </View>
-                      <Text
-                        style={[
-                          styles.detailValue,
-                          {
-                            color:
-                              land.approvalstatus === "PENDING"
-                                ? "#FFC107"
-                                : land.approvalstatus === "APPROVED"
-                                  ? "#4CAF50"
-                                  : "#F44336",
-                          },
-                        ]}
-                      >
-                        {land.approvalstatus || "-"}
-                      </Text>
-                    </View>
-                  </View>
+                                 
+                                     <View style={styles.detailRow}>
+                                       <View style={styles.labelContainer}>
+                                         <MaterialCommunityIcons
+                                           name="numeric"
+                                           size={20}
+                                           color="#4CAF50"
+                                           style={{ marginRight: 8 }}
+                                         />
+                                         <Text style={styles.detailLabel}>Land Number:</Text>
+                                       </View>
+                                       <Text style={styles.detailValue}>{land.number || "-"}</Text>
+                                     </View>
+                 
+                                     <View style={styles.detailRow}>
+                                       <View style={styles.labelContainer}>
+                                         <MaterialCommunityIcons
+                                           name="numeric-2-box-outline"
+                                           size={20}
+                                           color="#4CAF50"
+                                           style={{ marginRight: 8 }}
+                                         />
+                                         <Text style={styles.detailLabel}>Sub Number:</Text>
+                                       </View>
+                                       <Text style={styles.detailValue}>{land.subnumber || "-"}</Text>
+                                     </View>
+                 
+                                     <View style={styles.detailRow}>
+                                       <View style={styles.labelContainer}>
+                                         <MaterialCommunityIcons
+                                           name="square-outline"
+                                           size={20}
+                                           color="#4CAF50"
+                                           style={{ marginRight: 8 }}
+                                         />
+                                         <Text style={styles.detailLabel}>Total Area:</Text>
+                                       </View>
+                                       <Text style={styles.detailValue}>
+                                         {land.totalarea || "-"} {land.unit}
+                                       </Text>
+                                     </View>
+                 
+                                     <View style={styles.detailRow}>
+                                       <View style={styles.labelContainer}>
+                                         <MaterialCommunityIcons
+                                           name="nature"
+                                           size={20}
+                                           color="#4CAF50"
+                                           style={{ marginRight: 8 }}
+                                         />
+                                         <Text style={styles.detailLabel}>Sowing Area:</Text>
+                                       </View>
+                                       <Text style={styles.detailValue}>{land.sowingarea || "-"}</Text>
+                                     </View>
+                 
+                                     <View style={styles.detailRow}>
+                                       <View style={styles.labelContainer}>
+                                         <MaterialCommunityIcons
+                                           name="home-city"
+                                           size={20}
+                                           color="#4CAF50"
+                                           style={{ marginRight: 8 }}
+                                         />
+                                         <Text style={styles.detailLabel}>Village:</Text>
+                                       </View>
+                                       <Text style={styles.detailValue}>{land.village || "-"}</Text>
+                                     </View>
+                 
+                                     <View style={styles.detailRow}>
+                                       <View style={styles.labelContainer}>
+                                         <MaterialCommunityIcons
+                                           name={
+                                             land.approvalstatus === "PENDING"
+                                               ? "clock-time-four-outline"
+                                               : land.approvalstatus === "APPROVED"
+                                                 ? "check-circle-outline"
+                                                 : "close-circle-outline"
+                                           }
+                                           size={20}
+                                           color={
+                                             land.approvalstatus === "PENDING"
+                                               ? "#FFC107"
+                                               : land.approvalstatus === "APPROVED"
+                                                 ? "#4CAF50"
+                                                 : "#F44336"
+                                           }
+                                           style={{ marginRight: 8 }}
+                                         />
+                                         <Text style={styles.detailLabel}>Approval Status:</Text>
+                                       </View>
+                                       <Text
+                                         style={[
+                                           styles.detailValue,
+                                           {
+                                             color:
+                                               land.approvalstatus === "PENDING"
+                                                 ? "#FFC107"
+                                                 : land.approvalstatus === "APPROVED"
+                                                   ? "#4CAF50"
+                                                   : "#F44336",
+                                           },
+                                         ]}
+                                       >
+                                         {land.approvalstatus || "-"}
+                                       </Text>
+                                     </View>
+                                   </View>
                 </View>
               ))}
               <HelperText type="error" visible={shouldShowError('selectedLandId')}>
@@ -584,7 +595,37 @@ const AgreementForm: React.FC = () => {
         </Card.Content>
       </Card>
 
+      <Card style={styles.sectionCard}>
+        <Card.Content>
+          <Text style={styles.sectionTitle}>Seed Production Details</Text>
+          
+          <Text style={styles.label}>Produce Seeds *</Text>
+          <CommonPicker
+            selectedValue={state.form.produceseeds || ""}
+            onValueChange={value => handleFieldChange('produceseeds', value)}
+            onFocus={() => handlePickerFocus('produceseeds')}
+            onBlur={() => handlePickerBlur('produceseeds')}
+            items={produceseeds}
+            isFocused={focusedFields.produceseeds}
+          />
+          <HelperText type="error" visible={shouldShowError('produceseeds')}>
+            {errors.produceseeds}
+          </HelperText>
 
+          <Text style={styles.label}>Seeds *</Text>
+          <CommonPicker
+            selectedValue={state.form.seeds || ""}
+            onValueChange={(value) => handleFieldChange('seeds', value)}
+            onFocus={() => handlePickerFocus('seeds')}
+            onBlur={() => handlePickerBlur('seeds')}
+            items={seedOptions}
+            isFocused={focusedFields.seeds}
+          />
+          <HelperText type="error" visible={shouldShowError('seeds')}>
+            {errors.seeds}
+          </HelperText>
+        </Card.Content>
+      </Card>
 
       <Card style={styles.sectionCard}>
         <Card.Content>
@@ -599,6 +640,23 @@ const AgreementForm: React.FC = () => {
             {errors.Year}
           </HelperText>
 
+          <Text style={styles.label}>Area (in hectares) *</Text>
+          <TextInput
+            label="Area (in hectares)"
+            mode="outlined"
+            placeholder="Enter area"
+            value={state.form.Area || ""}
+            maxLength={8}
+            keyboardType="numeric"
+            left={<TextInput.Icon icon="arrow-expand" />}
+            onChangeText={(value) => handleFieldChange('Area', value)}
+            onBlur={() => handleTextInputBlur('Area')}
+            style={[styles.input, { backgroundColor: 'white' }]}
+            error={shouldShowError('Area')}
+          />
+          <HelperText type="error" visible={shouldShowError('Area')}>
+            {errors.Area}
+          </HelperText>
         </Card.Content>
       </Card>
 
@@ -611,28 +669,21 @@ const AgreementForm: React.FC = () => {
             console.log("❌ Validation failed — please fix all errors");
             return;
           }
-          const dataToSend = {
-            // formData: state.form,
 
-            seeds: aadharExtraFields.Cropclass,
-            DistributedFarmerid: aadharExtraFields.DistrubutedFarnerId,
-            Farmerid: selectedFarmerId,
+          const dataToSend = {
+            formData: state.form,
+            selectedCommodityType: selectedCommodity,
+            selectedFarmer: selectedFarmer,
+            Farmerdistribution: selectedFarmerId,
+            selectedVariety: selectedVariety,
             selectedCenterTarget: selectedCenterTarget,
+            seeds: state.form.seeds,
+            Area: state.form.Area,
+            Year: state.form.Year,
             selectedLandId: selectedLandId,
             Certificate: state.form.CertificateNo || "",
             Survey: state.form.SurveyNo || "",
-            VarietyId: aadharExtraFields.VarietyId,
-            CommodityId: aadharExtraFields.CommodityId,
-            CenterTargetId: aadharExtraFields.CenterTargetId,
-            AreaFromAadhar: aadharExtraFields.Area,
-            LotNumber: aadharExtraFields.LotNumber,
-            TagNumber: aadharExtraFields.TagNumber,
-            BillNumber: aadharExtraFields.BillNumber,
-            distributiontype: aadharExtraFields.distributiontype,
-            Year: state.form.Year
-
           };
-
 
           console.log("🚀 Data sent via Context:", dataToSend);
           setFormData(dataToSend);
@@ -647,7 +698,9 @@ const AgreementForm: React.FC = () => {
 
 export default AgreementForm;
 
+// Styles remain the same as previous implementation
 const styles = StyleSheet.create({
+  // ... your existing styles
   container: {
     flex: 1,
     backgroundColor: "#f5f5f5",
@@ -662,7 +715,7 @@ const styles = StyleSheet.create({
     elevation: 2,
     backgroundColor: "white",
   },
-  landLabel: {
+   landLabel: {
     fontWeight: "600",
     color: "#2E7D32",
     fontSize: 14,
@@ -688,21 +741,6 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     height: 50,
     fontSize: 14,
-  },
-  // Simple TextInput styles
-  simpleInput: {
-    marginBottom: 4,
-    fontSize: 14,
-    height: 38,
-    borderWidth: 1,
-    borderColor: '#a6a8acff',
-
-    borderRadius: 10,   // ✅ Add this line
-    paddingHorizontal: 17,
-    backgroundColor: '#FFFFFF'
-  },
-  inputError: {
-    borderColor: "#f44336",
   },
   submitButton: {
     marginTop: 8,
@@ -750,18 +788,17 @@ const styles = StyleSheet.create({
   },
   detailRow: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'flex-start',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 10,
     backgroundColor: '#F9F9F9',
-    marginVertical: 4
+    marginVertical: 4,
   },
   labelContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: 140, // ✅ Fixed width for labels
   },
   detailLabel: {
     fontSize: 16,
@@ -772,8 +809,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1F2937',
     fontWeight: '600',
-    flexShrink: 1,
-    flexWrap: "wrap",
   },
   rowDivider: {
     backgroundColor: '#E0E0E0',

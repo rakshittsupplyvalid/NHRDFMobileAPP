@@ -12,6 +12,7 @@ import NomineeScreen from '../AgreementList/NomineeList';
 import WitnessScreen from '../AgreementList/WitnessList';
 import Signature from '../Signature/Signature';
 import CameraExample from '../Agreement/CameraExample';
+import Agreementland from '../Agreement/Agreementland';
 
 import InspectionScreen from '../inspection/IInspectionScreen';
 
@@ -106,6 +107,14 @@ function CustomDrawerContent(props: any) {
         />
 
 
+         <DrawerItem
+          label="Agreementland"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document-outline" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('Agreementland')}
+          style={{ display: 'none' }}
+        />
+
+
 
 
         {/* <DrawerItem
@@ -176,6 +185,7 @@ export default function DrawerNavigator() {
          <Drawer.Screen name="InspectionScreen" component={InspectionScreen} />
       <Drawer.Screen name="CameraExample" component={CameraExample} />
       <Drawer.Screen name="Agreement" component={AgreementSecond} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
+            <Drawer.Screen name="Agreementland" component={Agreementland} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
       <Drawer.Screen name="NomineeScreen" component={NomineeScreen} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
     
 

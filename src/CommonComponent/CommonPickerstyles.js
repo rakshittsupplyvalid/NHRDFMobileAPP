@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 
 export default StyleSheet.create({
   container: {
-    marginBottom: 16,
+    marginBottom: 10,
   },
   label: {
     fontSize: 14,

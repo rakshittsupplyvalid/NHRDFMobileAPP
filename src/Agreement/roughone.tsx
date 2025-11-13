@@ -1,3 +1,6 @@
+
+
+
 import React from "react";
 import { useState, useEffect, useCallback } from "react";
 import { View, StyleSheet, TextInput, Modal } from "react-native";
@@ -11,7 +14,7 @@ import useForm from "../Form/UseForm";
 import YearPickerInput from "../CommonComponent/CommonYearPicker";
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { useNavigation } from "@react-navigation/native";
-import { fetchCommodityTypes, fetchCommoditiesByType, farmer, farmerDetails, getFarmerLandDetail, fetchSeedOptions } from "../Service/fetchCommodity";
+import { fetchCommodityTypes, fetchCommodity, fetchVariety, farmer, farmerDetails, getFarmerLandDetail, fetchSeedOptions } from "../Service/fetchCommodity";
 import axios from 'axios';
 import { useFormData } from "../Constants/FormContext";
 import { TouchableOpacity } from "react-native";
@@ -49,10 +52,15 @@ const AgreementForm: React.FC = () => {
 
 
   const [aadharNumber, setAadharNumber] = useState<string>("");
+  const [commodityTypes, setCommodityTypes] = useState([]);
+  const [selectedCommodity, setSelectedCommodity] = useState('');
+  const [Variety, setVariety] = useState([])
+  const [selectedVariety, setSelectedVariety] = useState('');
   const [aadharData, setAadharData] = useState<any[]>([]);
 
   const [selectedCommodityType, setSelectedCommodityType] = useState<string>('');
   const [Commodity, setCommodity] = useState<any[]>([]);
+  const [commodities, setCommodities] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
 
 
@@ -68,6 +76,14 @@ const AgreementForm: React.FC = () => {
   const [touched, setTouched] = useState<{ [key: string]: boolean }>({});
   const [focusedFields, setFocusedFields] = useState<{ [key: string]: boolean }>({});
   const [checked, setChecked] = useState(false);
+
+
+  const [seasonData, setSeasonData] = useState<any[]>([]);
+  const [selectedSeason, setSelectedSeason] = useState<string>("");
+  const [subSeasonList, setSubSeasonList] = useState<any[]>([]);
+  const [selectedSubSeason, setSelectedSubSeason] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+
 
   const { setFormData } = useFormData();
   const navigation = useNavigation<any>();
@@ -127,58 +143,17 @@ const AgreementForm: React.FC = () => {
   };
 
 
-  useEffect(() => {
-    (async () => {
-      const data = await fetchCommodityTypes();
-      setCommodity(data);
-      console.log("commodity reposne", data)
-    })();
-  }, []);
-
-
-
-
-  
-
-  const handleFieldChange = (field: string, value: any) => {
-    console.log(`🔄 Field ${field} changed to:`, value);
-
-
-
-    if (field === 'selectedLandId') {
-      setSelectedLandId(value);
-    }
-    else {
-      updateState({
-        ...state,
-        form: { ...state.form, [field]: value },
-      });
-    }
-
-
-    // Mark touched
-    setTouched(prev => ({ ...prev, [field]: true }));
-
-    // ✅ If value selected -> remove error immediately
-    if (value && value !== "") {
-      setErrors(prev => ({ ...prev, [field]: '' }));
-    } else {
-      // Only validate if value empty
-      const error = validateField(field, value);
-      setErrors(prev => ({ ...prev, [field]: error }));
-    }
-  };
-
   const handlePickerFocus = (field: string) => {
     console.log(`🎯 Picker ${field} focused`);
     setFocusedFields(prev => ({ ...prev, [field]: true }));
     setTouched(prev => ({ ...prev, [field]: true }));
   };
 
+
   const handlePickerBlur = (field: string) => {
     let value =
       field === "selectedCommodityType" ? selectedCommodityType :
-        field === "selectedCommodity" ? Commodity :
+        field === "selectedCommodity" ? selectedCommodity :
           field === "selectedFarmer" ? selectedFarmer :
             field === "selectedLandId" ? selectedLandId :
               state.form[field];
@@ -201,54 +176,175 @@ const AgreementForm: React.FC = () => {
   // Helper to check if error should be shown
   const shouldShowError = (field: string) => {
     const value =
-
-      field === "selectedLandId" ? selectedLandId :
-        field === "aadharNumber" ? aadharNumber :
-          state.form[field];
+      field === "selectedCommodityType" ? selectedCommodityType :
+        field === "selectedCommodity" ? selectedCommodity :
+          field === "selectedFarmer" ? selectedFarmer :
+            field === "selectedLandId" ? selectedLandId :
+              state.form[field];
 
     return touched[field] && errors[field] && (!value || value === "");
   };
 
 
-  
+  // Rest of your useEffect functions remain the same...
+  useEffect(() => {
+    (async () => {
+      const data = await fetchCommodityTypes();
+      setCommodityTypes(data);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCommodityType) return;
+    (async () => {
+      const items = await fetchCommodity(selectedCommodityType);
+      setCommodities(items);
+    })();
+  }, [selectedCommodityType]);
+
+
+  useEffect(() => {
+    if (!selectedCommodity) return;
+    (async () => {
+      const items = await fetchVariety(selectedCommodity);
+      setVariety(items);
+    })();
+  }, [selectedCommodity]);
+
+
+  useEffect(() => {
+    fetchSeasonData();
+  }, []);
+
+
+  const fetchSeasonData = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get(
+        "/api/season?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED"
+      );
+
+      // console.log("📅 Season Data:", response.data);
+
+      const dropdownList = response.data?.map((item: any) => ({
+        label: item?.name,
+        value: item?.id,
+      }));
+
+      setSeasonData(dropdownList || []);
+    } catch (error) {
+      console.error("❌ Season API error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleSeasonSelect = async (value: string) => {
+    setSelectedSeason(value);
+    console.log("Selected Season ID:", value);
+
+    try {
+      const response = await apiClient.get(`/api/subseason/${value}`);
+      console.log("SubSeason Data:", response.data);
+
+      const formattedData = response.data.map((item: any) => ({
+        label: item.name,
+        value: item.id,
+      }));
+
+      setSubSeasonList(formattedData);
+    } catch (error) {
+      console.log("Error fetching subseason:", error);
+    }
+  };
+
+
+
+
+
+
+
   const fetchAadharData = async (aadhar: string, commodity?: string) => {
-  console.log("commodity", commodity);
-  if (!aadhar || aadhar.length !== 12) return;
+    console.log("commodity", commodity);
+    if (!aadhar || aadhar.length !== 12) return;
 
-  try {
-    const encodedCommodity = encodeURIComponent(commodity || state.form.seeds || "");
+    try {
+      const encodedCommodity = encodeURIComponent(commodity || state.form.seeds || "");
 
-    const res = await apiClient.get(
-      `/api/mobile/farmer/distribution/list?CommodityName=${encodedCommodity}&AadharNo=${aadhar}&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`
-    );
-
-    
+      const res = await apiClient.get(
+        `/api/mobile/farmer/distribution/list?CommodityName=${encodedCommodity}&AadharNo=${aadhar}&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`
+      );
 
 
-    if (res.data && res.data.length > 0) {
-      setAadharData(res.data);
-      console.log("✅ Farmers Found:", res.data);
 
-      // ✅ Auto-select if only one farmer
-      if (res.data.length === 1) {
-        setSelectedFarmer(res.data[0]);
-         setSelectedFarmerId(res.data[0].farmerid);
-        handleFieldChange("farmername", res.data[0].farmername);
-        handleFieldChange("commodity", res.data[0].commodityname);
-        handleFieldChange("variety", res.data[0].varietyname);
+
+      if (res.data && res.data.length > 0) {
+        setAadharData(res.data);
+        console.log("✅ Farmers Found:", res.data);
+
+        // ✅ Auto-select if only one farmer
+        if (res.data.length === 1) {
+          setSelectedFarmer(res.data[0]);
+          setSelectedFarmerId(res.data[0].farmerid);
+          handleFieldChange("farmername", res.data[0].farmername);
+          handleFieldChange("commodity", res.data[0].commodityname);
+          handleFieldChange("variety", res.data[0].varietyname);
+        }
+      } else {
+        setAadharData([]);
+        setSelectedFarmer(null);
       }
-    } else {
+    } catch (error) {
+      console.error("Aadhar API Error:", error);
       setAadharData([]);
       setSelectedFarmer(null);
     }
-  } catch (error) {
-    console.error("Aadhar API Error:", error);
-    setAadharData([]);
-    setSelectedFarmer(null);
-  }
-};
+  };
 
 
+  const handleFieldChange = (field: string, value: any) => {
+    console.log(`🔄 Field ${field} changed to:`, value);
+
+    // Update state
+    if (field === 'selectedCommodityType') {
+      setSelectedCommodityType(value);
+      setSelectedCommodity('');
+      setFarmersList([]);
+      setSelectedFarmer('');
+      setFarmerLandList([]);
+      setSelectedLandId(null);
+    } else if (field === 'selectedCommodity') {
+      setSelectedCommodity(value);
+    } else if (field === 'selectedVariety') {
+      setSelectedVariety(value);
+      const selectedItem = farmersList.find(item => item.value === value);
+      if (selectedItem) {
+
+        setSelectedFarmerId(selectedItem.Id);
+        setSelectedCenterTargetId(selectedItem.centertargetid);
+      }
+    } else if (field === 'selectedLandId') {
+      setSelectedLandId(value);
+    } else {
+      updateState({
+        ...state,
+        form: { ...state.form, [field]: value },
+      });
+    }
+
+    // Mark touched
+    setTouched(prev => ({ ...prev, [field]: true }));
+
+    // ✅ If value selected -> remove error immediately
+    if (value && value !== "") {
+      setErrors(prev => ({ ...prev, [field]: '' }));
+    } else {
+      // Only validate if value empty
+      const error = validateField(field, value);
+      setErrors(prev => ({ ...prev, [field]: error }));
+    }
+  };
 
 
 
@@ -333,43 +429,68 @@ const AgreementForm: React.FC = () => {
             maxLength={12}
           />
 
-
-          <Text style={styles.label}>Commodity *</Text>
-
+          <Text style={styles.label}>Commodity Type </Text>
           <CommonPicker
-            selectedValue={state.form.seeds}
-            onValueChange={(label) => {
-              handleFieldChange("seeds", label); // store the label
+            selectedValue={selectedCommodityType}
+            onValueChange={(value) => handleFieldChange('selectedCommodityType', value)}
+            onFocus={() => handlePickerFocus('selectedCommodityType')}
+            onBlur={() => handlePickerBlur('selectedCommodityType')}
+            items={commodityTypes}
+            isFocused={focusedFields.selectedCommodityType}
+          />
+          <HelperText type="error" visible={shouldShowError('selectedCommodityType')}>
+            {errors.selectedCommodityType}
+          </HelperText>
 
-              // Only fetch if Aadhar is 12 digits
-              if (state.form.AadharNumber && state.form.AadharNumber.length === 12) {
-                fetchAadharData(state.form.AadharNumber, label); // pass the label
-              }
+          <Text style={styles.label}>Commodity </Text>
+          <CommonPicker
+            selectedValue={selectedCommodity}
+            onValueChange={(value) => handleFieldChange('selectedCommodity', value)}
+            onFocus={() => handlePickerFocus('selectedCommodity')}
+            onBlur={() => handlePickerBlur('selectedCommodity')}
+            items={commodities}
+            isFocused={focusedFields.selectedCommodity}
+          />
+
+
+          <Text style={styles.label}>Variety </Text>
+          <CommonPicker
+            selectedValue={selectedVariety}
+            onValueChange={(value) => handleFieldChange('selectedVariety', value)}
+            onFocus={() => handlePickerFocus('selectedVariety')}
+            onBlur={() => handlePickerBlur('selectedVariety')}
+            items={Variety}
+            isFocused={focusedFields.selectedCommodity}
+          />
+
+
+          <Text style={styles.label}>Year </Text>
+          <CommonPicker
+            selectedValue={selectedSeason}
+            onValueChange={(value) => handleSeasonSelect(value)}
+            onFocus={() => handlePickerFocus("selectedSeason")}
+            onBlur={() => handlePickerBlur("selectedSeason")}
+            items={seasonData}
+            isFocused={focusedFields.selectedSeason}
+          />
+          <HelperText type="error" visible={shouldShowError("selectedSeason")}>
+            {errors.selectedSeason}
+          </HelperText>
+
+          <Text style={styles.label}>Season </Text>
+          <CommonPicker
+            selectedValue={selectedSubSeason}
+            onValueChange={(value) => {
+              setSelectedSubSeason(value);
+              handleFieldChange("selectedSubSeason", value);
             }}
-            items={Commodity.map(item => ({ label: item.label, value: item.label }))} // use label as value
-            onFocus={() => handlePickerFocus("seeds")}
-            onBlur={() => handlePickerBlur("seeds")}
+            onFocus={() => handlePickerFocus("selectedSubSeason")}
+            onBlur={() => handlePickerBlur("selectedSubSeason")}
+            items={subSeasonList}
+            isFocused={focusedFields.selectedSubSeason}
           />
-
-
-
-
-
-
-          <Text style={styles.label}>Certificate No *</Text>
-          <TextInput
-            placeholder="Enter certificate number"
-            value={state.form.CertificateNo || ""}
-            onChangeText={(value) => handleFieldChange('CertificateNo', value)}
-            onBlur={() => handleTextInputBlur('CertificateNo')}
-            style={[
-              styles.simpleInput,
-              shouldShowError('CertificateNo') && styles.inputError
-            ]}
-            maxLength={10}
-          />
-          <HelperText type="error" visible={shouldShowError('CertificateNo')}>
-            {errors.CertificateNo}
+          <HelperText type="error" visible={shouldShowError("selectedSubSeason")}>
+            {errors.selectedSubSeason}
           </HelperText>
 
 
@@ -379,191 +500,178 @@ const AgreementForm: React.FC = () => {
 
 
 
-          <Text style={styles.label}>Survey No *</Text>
-          <TextInput
-            placeholder="Enter survey number"
-            value={state.form.SurveyNo || ""}
-            onChangeText={(value) => handleFieldChange('SurveyNo', value)}
-            onBlur={() => handleTextInputBlur('SurveyNo')}
-            style={[
-              styles.simpleInput,
-              shouldShowError('SurveyNo') && styles.inputError
-            ]}
-            maxLength={10}
-          />
-          <HelperText type="error" visible={shouldShowError('SurveyNo')}>
-            {errors.SurveyNo}
-          </HelperText>
+
+          {/*  */}
         </Card.Content>
       </Card>
 
 
-     <Card style={styles.farmerCard}>
-  <Card.Content>
-     <Text style={styles.sectionTitle}>Farmer Details</Text>
-    <Divider style={styles.headerDivider} />
+      <Card style={styles.farmerCard}>
+        <Card.Content>
+          <Text style={styles.sectionTitle}>Farmer Details</Text>
+          <Divider style={styles.headerDivider} />
 
-    {selectedFarmer ? (
-      <>
-        {/* Farmer Name */}
-        <View style={styles.detailRow}>
-          <View style={styles.labelContainer}>
-            <MaterialCommunityIcons
-              name="account"
-              size={20}
-              color="#4CAF50"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.detailLabel}>Farmer Name:</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.detailValue}>{selectedFarmer.farmername}</Text>
-          </View>
-        </View>
-        <Divider style={styles.rowDivider} />
+          {selectedFarmer ? (
+            <>
+              {/* Farmer Name */}
+              <View style={styles.detailRow}>
+                <View style={styles.labelContainer}>
+                  <MaterialCommunityIcons
+                    name="account"
+                    size={20}
+                    color="#4CAF50"
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={styles.detailLabel}>Farmer Name:</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.detailValue}>{selectedFarmer.farmername}</Text>
+                </View>
+              </View>
+              <Divider style={styles.rowDivider} />
 
-        {/* Commodity */}
-        <View style={styles.detailRow}>
-          <View style={styles.labelContainer}>
-            <MaterialCommunityIcons
-              name="seed"
-              size={20}
-              color="#4CAF50"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.detailLabel}>Commodity:</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.detailValue}>{selectedFarmer.commodityname}</Text>
-          </View>
-        </View>
-        <Divider style={styles.rowDivider} />
+              {/* Commodity */}
+              <View style={styles.detailRow}>
+                <View style={styles.labelContainer}>
+                  <MaterialCommunityIcons
+                    name="seed"
+                    size={20}
+                    color="#4CAF50"
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={styles.detailLabel}>Commodity:</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.detailValue}>{selectedFarmer.commodityname}</Text>
+                </View>
+              </View>
+              <Divider style={styles.rowDivider} />
 
 
-         <View style={styles.detailRow}>
-          <View style={styles.labelContainer}>
-            <MaterialCommunityIcons
-              name="leaf"
-              size={20}
-              color="#4CAF50"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.detailLabel}>Crop Class</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.detailValue}>{selectedFarmer.cropclass}</Text>
-          </View>
-        </View>
-        <Divider style={styles.rowDivider} />
+              <View style={styles.detailRow}>
+                <View style={styles.labelContainer}>
+                  <MaterialCommunityIcons
+                    name="leaf"
+                    size={20}
+                    color="#4CAF50"
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={styles.detailLabel}>Crop Class</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.detailValue}>{selectedFarmer.cropclass}</Text>
+                </View>
+              </View>
+              <Divider style={styles.rowDivider} />
 
-        {/* Variety */}
-        <View style={styles.detailRow}>
-          <View style={styles.labelContainer}>
-            <MaterialCommunityIcons
-              name="leaf"
-              size={20}
-              color="#4CAF50"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.detailLabel}>Variety:</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.detailValue}>{selectedFarmer.varietyname}</Text>
-          </View>
-        </View>
-        <Divider style={styles.rowDivider} />
+              {/* Variety */}
+              <View style={styles.detailRow}>
+                <View style={styles.labelContainer}>
+                  <MaterialCommunityIcons
+                    name="leaf"
+                    size={20}
+                    color="#4CAF50"
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={styles.detailLabel}>Variety:</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.detailValue}>{selectedFarmer.varietyname}</Text>
+                </View>
+              </View>
+              <Divider style={styles.rowDivider} />
 
-        {/* Relation */}
-        <View style={styles.detailRow}>
-          <View style={styles.labelContainer}>
-            <MaterialCommunityIcons
-              name="account-group"
-              size={20}
-              color="#4CAF50"
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.detailLabel}>Relation:</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.detailValue}>
-              {selectedFarmer.relation} of {selectedFarmer.relative}
+              {/* Relation */}
+              <View style={styles.detailRow}>
+                <View style={styles.labelContainer}>
+                  <MaterialCommunityIcons
+                    name="account-group"
+                    size={20}
+                    color="#4CAF50"
+                    style={{ marginRight: 8 }}
+                  />
+                  <Text style={styles.detailLabel}>Relation:</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.detailValue}>
+                    {selectedFarmer.relation} of {selectedFarmer.relative}
+                  </Text>
+                </View>
+              </View>
+            </>
+          ) : (
+            <Text style={{ color: "#555", textAlign: "center", marginTop: 10 }}>
+              No farmer selected or data available
             </Text>
+          )}
+
+          {/* ✅ Button to open modal */}
+          {selectedFarmer && (
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => setModalVisible(true)}
+            >
+              <Text style={{ color: "#fff", textAlign: "center", fontWeight: "bold" }}>
+                View More Details
+              </Text>
+            </TouchableOpacity>
+          )}
+        </Card.Content>
+      </Card>
+
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Farmer Full Details</Text>
+
+            {selectedFarmer ? (
+              <ScrollView style={{ maxHeight: 400 }}>
+                {/* Each detail row */}
+                {[
+                  { label: "Name", value: selectedFarmer.farmername, icon: "account" },
+                  { label: "Relation", value: `${selectedFarmer.relation} of ${selectedFarmer.relative}`, icon: "account-group" },
+                  { label: "Commodity", value: selectedFarmer.commodityname, icon: "seed" },
+                  { label: "Variety", value: selectedFarmer.varietyname, icon: "leaf" },
+                  { label: "Bill Amount", value: selectedFarmer.billamount, icon: "currency-inr" },
+                  { label: "Lot No", value: selectedFarmer.lotno, icon: "numeric" },
+                  { label: "Supply Qty", value: selectedFarmer.supplyqty, icon: "cube-outline" },
+                  { label: "Rate", value: selectedFarmer.rate, icon: "cash" },
+                  { label: "Sowing Date", value: selectedFarmer.sowingdate, icon: "calendar" },
+
+                ].map((item, index) => (
+                  <View key={index} style={styles.modalRow}>
+                    <MaterialCommunityIcons
+                      name={item.icon as MCIIconName}
+                      size={20}
+                      color="#4CAF50"
+                      style={{ marginRight: 10 }}
+                    />
+                    <Text style={styles.modalLabel}>{item.label}:</Text>
+                    <Text style={styles.modalValue}>{item.value || "-"}</Text>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : (
+              <Text style={{ textAlign: "center", color: "#555" }}>No farmer selected</Text>
+            )}
+
+            <TouchableOpacity
+              style={[styles.modalButton, { marginTop: 20 }]}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={{ color: "#fff", textAlign: "center", fontWeight: "bold" }}>
+                Close
+              </Text>
+            </TouchableOpacity>
           </View>
         </View>
-      </>
-    ) : (
-      <Text style={{ color: "#555", textAlign: "center", marginTop: 10 }}>
-        No farmer selected or data available
-      </Text>
-    )}
-
-    {/* ✅ Button to open modal */}
-    {selectedFarmer && (
-      <TouchableOpacity
-        style={styles.modalButton}
-        onPress={() => setModalVisible(true)}
-      >
-        <Text style={{ color: "#fff", textAlign: "center", fontWeight: "bold" }}>
-          View More Details
-        </Text>
-      </TouchableOpacity>
-    )}
-  </Card.Content>
-</Card>
-
-
-<Modal
-  animationType="slide"
-  transparent={true}
-  visible={modalVisible}
-  onRequestClose={() => setModalVisible(false)}
->
-  <View style={styles.modalOverlay}>
-    <View style={styles.modalContent}>
-      <Text style={styles.modalTitle}>Farmer Full Details</Text>
-
-      {selectedFarmer ? (
-        <ScrollView style={{ maxHeight: 400 }}>
-          {/* Each detail row */}
-          {[
-            { label: "Name", value: selectedFarmer.farmername, icon: "account" },
-              { label: "Relation", value: `${selectedFarmer.relation} of ${selectedFarmer.relative}`, icon: "account-group" },
-            { label: "Commodity", value: selectedFarmer.commodityname, icon: "seed" },
-            { label: "Variety", value: selectedFarmer.varietyname, icon: "leaf" },
-            { label: "Bill Amount", value: selectedFarmer.billamount, icon: "currency-inr" },
-            { label: "Lot No", value: selectedFarmer.lotno, icon: "numeric" },
-            { label: "Supply Qty", value: selectedFarmer.supplyqty, icon: "cube-outline" },
-            { label: "Rate", value: selectedFarmer.rate, icon: "cash" },
-            { label: "Sowing Date", value: selectedFarmer.sowingdate, icon: "calendar" },
-          
-          ].map((item, index) => (
-            <View key={index} style={styles.modalRow}>
-              <MaterialCommunityIcons
-                name={item.icon as MCIIconName}
-                size={20}
-                color="#4CAF50"
-                style={{ marginRight: 10 }}
-              />
-              <Text style={styles.modalLabel}>{item.label}:</Text>
-              <Text style={styles.modalValue}>{item.value || "-"}</Text>
-            </View>
-          ))}
-        </ScrollView>
-      ) : (
-        <Text style={{ textAlign: "center", color: "#555" }}>No farmer selected</Text>
-      )}
-
-      <TouchableOpacity
-        style={[styles.modalButton, { marginTop: 20 }]}
-        onPress={() => setModalVisible(false)}
-      >
-        <Text style={{ color: "#fff", textAlign: "center", fontWeight: "bold" }}>
-          Close
-        </Text>
-      </TouchableOpacity>
-    </View>
-  </View>
-</Modal>
+      </Modal>
 
 
 
@@ -786,7 +894,7 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 30,
   },
- 
+
   sectionCard: {
     marginBottom: 16,
     borderRadius: 12,
@@ -930,7 +1038,7 @@ const styles = StyleSheet.create({
     color: '#999',
     fontStyle: 'italic',
   },
-    modalOverlay: {
+  modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
     justifyContent: "center",
@@ -974,3 +1082,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
 });
+
+
+
+
+
+      

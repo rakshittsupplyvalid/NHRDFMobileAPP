@@ -48,7 +48,7 @@ apiClient.interceptors.request.use(
   async (config) => {
     try {
       const token = await retrieveToken();
-        console.log("🪙 Token sent in header:", token);
+    
         
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;

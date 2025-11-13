@@ -85,6 +85,12 @@ const AgreementSecond: React.FC = () => {
     const { formData } = useFormData();
     const { state, updateState } = useForm();
 
+
+
+
+   // This will log the formData whenever this screen renders
+  console.log("AgreementSecond formData:", formData);
+
     // Nominees and witnesses state
     const [nominees, setNominees] = useState<NomineeType[]>([
         {
