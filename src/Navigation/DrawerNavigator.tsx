@@ -95,7 +95,7 @@ function CustomDrawerContent(props: any) {
           label="InspectionScreen"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Inspection Screen')}
-          labelStyle={styles.drawerLabel}
+            style={{ display: 'none' }}
         />
 
         {/* Hidden Screen */}
@@ -182,7 +182,14 @@ export default function DrawerNavigator() {
       <Drawer.Screen name="Agreement List" component={AgreementListScreen} />
      
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
-         <Drawer.Screen name="InspectionScreen" component={InspectionScreen} />
+        <Drawer.Screen
+  name="InspectionScreen"
+  component={InspectionScreen}
+  options={{
+    drawerItemStyle: { display: 'none' }, // hides from the drawer
+  }}
+/>
+
       <Drawer.Screen name="CameraExample" component={CameraExample} />
       <Drawer.Screen name="Agreement" component={AgreementSecond} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
             <Drawer.Screen name="Agreementland" component={Agreementland} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
@@ -251,6 +258,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#ccc',
     backgroundColor: '#fff',
+    position : 'relative',
+    bottom : 50
   },
 
   logoutButton: {

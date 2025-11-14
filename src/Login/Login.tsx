@@ -7,7 +7,7 @@ import { storeToken } from '../Service/apiInterceptors';
 
 
 const Login = ({ navigation }: any) => {
-  // const [mobileNumber, setMobileNumber] = useState('8976865879');
+//const [mobileNumber, setMobileNumber] = useState('8976865879');
   const [mobileNumber, setMobileNumber] = useState('7000000555');
   const [password, setPassword] = useState('Password@123');
   const [secureTextEntry, setSecureTextEntry] = useState(true);
@@ -15,8 +15,8 @@ const Login = ({ navigation }: any) => {
   const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
   const [loading, setLoading] = useState(false);
 
-  const theme = useTheme();
-  const primaryColor = '#70B04F';
+  
+  const primaryColor = '#6ba94bff';
 
 
 
@@ -41,7 +41,7 @@ const Login = ({ navigation }: any) => {
     };
   }, []);
 
-  // 🔹 Login API Call
+ 
   // 🔹 Login API Call
   const handleLogin = async () => {
     if (!mobileNumber || !password) {

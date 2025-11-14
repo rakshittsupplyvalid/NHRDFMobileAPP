@@ -1,24 +1,44 @@
-// Signature.tsx
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, StyleSheet, Image, Text, Button } from 'react-native';
 import SignatureView from './SignatureScreen';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { BackHandler } from "react-native";
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 
 const Signature: React.FC = () => {
   const [signature, setSignature] = useState<string | null>(null);
   const navigation = useNavigation<any>();
   const route = useRoute();
+  const { type, index } = route.params as { type: string; index?: number };
 
-  const { type, index } = route.params as { type: string, index?: number };
+  // 🔹 Reset signature whenever the screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      setSignature(null);
+    }, [])
+  );
 
   const handleSave = (signatureData: string) => {
     setSignature(signatureData);
     navigation.navigate('Agreement', {
-      type,                // nominee / witness
+      type, // nominee / witness
       signatureUri: signatureData, // captured image
-      index:index
+      index: index,
     });
   };
+
+
+    // Handle Android Back Button
+    useFocusEffect(
+      useCallback(() => {
+        const onBackPress = () => {
+          navigation.navigate("Agreement" as never);
+          return true;
+        };
+  
+        const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+        return () => subscription.remove();
+      }, [navigation])
+    );
 
   return (
     <View style={styles.container}>
@@ -49,6 +69,3 @@ const styles = StyleSheet.create({
 });
 
 export default Signature;
-
-
-

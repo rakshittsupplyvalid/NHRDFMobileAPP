@@ -2,7 +2,7 @@ import { StyleSheet, Dimensions } from "react-native";
 
 const { height } = Dimensions.get('window');
 
- export const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
@@ -21,9 +21,17 @@ const { height } = Dimensions.get('window');
     flexDirection: "row",
     gap: 8,
   },
-  placeholderStyle: { color: "#000", fontSize: 14 },
-selectedTextStyle: { color: "#000", fontSize: 14 },
-inputError: { borderColor: "red" },
+  placeholderStyle: { 
+    color: "#666", 
+    fontSize: 14 
+  },
+  selectedTextStyle: { 
+    color: "#000", 
+    fontSize: 14 
+  },
+  inputError: { 
+    borderColor: "red" 
+  },
 
   card: {
     marginBottom: 16,
@@ -60,20 +68,27 @@ inputError: { borderColor: "red" },
     marginTop: 12,
   },
   input: {
- height: 38,
-
-  paddingHorizontal: 10,
-  fontSize: 14,
-  backgroundColor: "#fff",
-  marginBottom: 6,
-   borderWidth: 1,
-    borderColor: '#a6a8acff',
-    
-    borderRadius: 10,   // ✅ Add this line
+    height: 44,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    backgroundColor: "#fff",
+    marginBottom: 6,
+    borderWidth: 1,
+    borderColor: '#a6a8ac',
+    borderRadius: 8,
   },
+  disabledInput: {
+    backgroundColor: "#f5f5f5",
+    color: "#666",
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+  },
+
   dateInput: {
     borderWidth: 1,
-    borderColor: '#a6a8acff',
+    borderColor: '#a6a8ac',
     borderRadius: 10,
     padding: 12,
     backgroundColor: '#fff',
@@ -81,11 +96,13 @@ inputError: { borderColor: "red" },
   dropdown: {
     backgroundColor: "#fff",
     borderWidth: 1,
-    borderColor: "#a6a8acff",
-    borderRadius: 10,
+    borderColor: "#a6a8ac",
+    borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginBottom: 4,
+    height: 44,
+    justifyContent: 'center',
   },
   dropdownError: {
     borderColor: "#D32F2F",
@@ -123,10 +140,11 @@ inputError: { borderColor: "red" },
   },
   submitButton: {
     backgroundColor: "#2E7D32",
-    paddingVertical: 8,
+    paddingVertical: 12,
     marginHorizontal: 16,
     marginBottom: 30,
     borderRadius: 10,
+    elevation: 2,
   },
   submitButtonText: {
     color: "#fff",
@@ -144,9 +162,37 @@ inputError: { borderColor: "red" },
     fontSize: 16,
     color: "#2E7D32",
   },
-   dateButton: {
+  dateButton: {
     marginTop: 8,
-    borderColor: '#a6a8acff',
+    borderColor: '#a6a8ac',
+    height: 44,
+    justifyContent: 'center',
+  },
+  dateDisplayContainer: {
+    borderWidth: 1,
+    borderColor: '#a6a8ac',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#f0f8f0',
+    marginTop: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    height: 44,
+  },
+  dateDisplayText: {
+    fontSize: 14,
+    color: '#2E7D32',
+    fontWeight: '500',
+  },
+  todayBadge: {
+    backgroundColor: '#2E7D32',
+    color: 'white',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   
   imagePickerContainer: {
@@ -155,7 +201,9 @@ inputError: { borderColor: "red" },
   
   imagePickerButton: {
     marginTop: 8,
-    borderColor: '#a6a8acff',
+    borderColor: '#a6a8ac',
+    height: 44,
+    justifyContent: 'center',
   },
   errorContainer: {
     marginHorizontal: 16,
@@ -193,6 +241,8 @@ inputError: { borderColor: "red" },
   signatureButton: {
     flex: 1,
     marginHorizontal: 5,
+    height: 44,
+    justifyContent: 'center',
   },
   clearButton: {
     borderColor: '#FF3B30',
@@ -220,73 +270,76 @@ inputError: { borderColor: "red" },
     height: 400,
   },
   
-offtypeRow: {
-  flexDirection: 'row',
-  alignItems: 'center',
-  marginBottom: 16,
-  padding: 12,
-  backgroundColor: '#f8f9fa',
-  borderRadius: 8,
-  borderWidth: 1,
-  borderColor: '#e9ecef',
-},
+  offtypeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
 
-countNumber: {
-  width: 40,
-  height: 40,
-  borderRadius: 20,
-  backgroundColor: '#2E7D32',
-  justifyContent: 'center',
-  alignItems: 'center',
-  marginRight: 12,
-},
+  countNumber: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#2E7D32',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
 
-countNumberText: {
-  color: 'white',
-  fontWeight: 'bold',
-  fontSize: 16,
-},
+  countNumberText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 
-offtypeInputs: {
-  flex: 1,
-  flexDirection: 'row',
-  gap: 12,
-},
+  offtypeInputs: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 12,
+  },
 
-offtypeInputContainer: {
-  flex: 1,
-},
+  offtypeInputContainer: {
+    flex: 1,
+  },
 
-offtypeLabel: {
-  fontSize: 12,
-  fontWeight: '500',
-  marginBottom: 4,
-  color: '#495057',
-},
+  offtypeLabel: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginBottom: 4,
+    color: '#495057',
+  },
 
-offtypeInput: {
-  borderWidth: 1,
-  borderColor: '#ced4da',
-  borderRadius: 4,
-  padding: 8,
-  backgroundColor: 'white',
-  fontSize: 14,
-},
+  offtypeInput: {
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    borderRadius: 4,
+    padding: 8,
+    backgroundColor: 'white',
+    fontSize: 14,
+    height: 40,
+  },
 
-removeButton: {
-  marginLeft: 8,
-  alignSelf: 'flex-start',
-},
+  removeButton: {
+    marginLeft: 8,
+    alignSelf: 'flex-start',
+  },
 
-addMoreButton: {
-  marginTop: 16,
-  borderColor: '#2E7D32',
-},
+  addMoreButton: {
+    marginTop: 16,
+    borderColor: '#2E7D32',
+    height: 44,
+    justifyContent: 'center',
+  },
 
-sectionDescription: {
-  fontSize: 14,
-  color: '#6c757d',
-  marginBottom: 16,
-  fontStyle: 'italic',
-},
-  });
+  sectionDescription: {
+    fontSize: 14,
+    color: '#6c757d',
+    marginBottom: 16,
+    fontStyle: 'italic',
+  },
+});

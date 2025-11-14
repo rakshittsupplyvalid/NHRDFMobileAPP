@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   View,
   StyleSheet,
@@ -7,20 +7,32 @@ import {
   ScrollView,
   Linking,
   TextInput,
-  
+  Alert
+
 } from "react-native";
+import { useFocusEffect } from '@react-navigation/native';
 import { useNavigation } from "@react-navigation/native";
 import { Button } from "react-native-paper";
 import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFormData } from "../Constants/FormContext";
 import { getFarmerLandDetail, farmerDetails } from "../Service/fetchCommodity";
+import { BackHandler } from 'react-native';
+import apiClient from "../Service/apiInterceptors";
+import { KeyboardAvoidingView, Platform } from "react-native";
+
 
 const Agreementland: React.FC = () => {
   const { formData } = useFormData();
-    const { setFormData } = useFormData();
+  const { setFormData } = useFormData();
   const navigation = useNavigation();
   const [landDetails, setLandDetails] = useState<any[]>([]);
   const [farmerDetils, setFarmerDetils] = useState<any>(null);
+  const [landId, setLandId] = useState<string | null>(null);
+    const [inputValue, setInputValue] = useState('');
+  const [generatedCode, setGeneratedCode] = useState<string | null>(null);
+  
+
+
   const [loading, setLoading] = useState(false);
 
 
@@ -33,6 +45,14 @@ const Agreementland: React.FC = () => {
     }
   }, [formData?.farmerId]);
 
+
+   // Auto-select first land if only one
+  useEffect(() => {
+    if (landDetails.length === 1) {
+      setLandId(landDetails[0].id);
+    }
+  }, [landDetails]);
+
   const fetchFarmerDetails = async (farmerId: string) => {
     setLoading(true);
     try {
@@ -44,48 +64,122 @@ const Agreementland: React.FC = () => {
     setLoading(false);
   };
 
+  
   const fetchLandDetails = async (farmerId: string) => {
-  setLoading(true);
-  try {
-    const data = await getFarmerLandDetail(farmerId);
-    if (data && data.length > 0) {
-      setLandDetails(data);
-      const landId = data[0].id; // <-- this is the land ID
-      console.log("Land ID:", landId);
-      return landId; // you can return it if you want to use it outside
+    setLoading(true);
+    try {
+      const data = await getFarmerLandDetail(farmerId);
+      if (data && data.length > 0) {
+        setLandDetails(data);
+        // default selection handled by useEffect
+      } else {
+        setLandDetails([]);
+        setLandId(null);
+      }
+    } catch (error) {
+      console.log("Error fetching land details:", error);
+      setLandId(null);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.log("Error fetching land details:", error);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-
- const handleNext = (record: any) => {
-  const formPayload = {
-    farmerId: record.farmerid,
-    varietyId: record.varietyid || null,
-    commodityId: record.commodityid || null,
-    centerTargetId: record.centertargetid || null,
-    billNumber: record.billnumber,
-    area: record.area,
-    lotNo: record.lotno,
-    cropClassSeeds: record.cropclass,
-    DistributionType: record.distributiontype,
   };
 
-  // Merge old formData with new payload
-  setFormData({ ...formData, ...formPayload });
 
-  navigation.navigate("Agreement" as never);
-};
+   const handleLandSelect = (id: string) => {
+    setLandId(id);
+  };
+
+
+
+
+useFocusEffect(
+  useCallback(() => {
+    const fetchCode = async () => {
+      const currentFormData = formData; // grab the latest value
+      const distId = currentFormData?.farmerDistributionId; // notice: typo fix
+      if (distId) {
+        setLoading(true);
+        try {
+          const response = await apiClient.get(
+            `/api/static/generate/code/number/${distId}`
+          );
+          if (response?.data) {
+            setInputValue(response.data.toString());
+            setGeneratedCode(response.data.toString());
+          }
+        } catch (err) {
+          console.log(err);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    fetchCode();
+  }, [formData]) // dependency is entire formData to always get latest
+);
+
+
+
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate("Agreement Form" as never);
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
+      );
+
+      return () => subscription.remove();
+    }, [navigation])
+  );
+
+
+
+
+
+  const handleNext = (record: any) => {
+
+     if (!landId) {
+      alert("Please select a land before proceeding.");
+      return;
+    }
+
+
+    const formPayload = {
+      farmerfarmerDistributionId: record.farmerDistributionId || formData.farmerDistributionId,  // keep existing if not passed
+      CodeNumber : inputValue,
+      farmerId: record.farmerId || record.farmerId,
+      varietyId: record.varietyId || formData.varietyId || null,
+      commodityId: record.commodityId || formData.commodityId || null,
+      centerTargetId: record.centerTargetId || formData.centerTargetId || null,
+      billNumber: record.billNumber || formData.billNumber,
+      area: record.area || formData.area,
+      lotNo: record.lotNo || formData.lotNo,
+      cropClassSeeds: record.cropClassSeeds || formData.cropClassSeeds,
+      DistributionType: record.DistributionType || formData.DistributionType,
+      landId: landId,
+    };
+
+    // ✅ Merge and persist globally before navigating
+    setFormData({ ...formData, ...formPayload });
+
+    // ✅ Then navigate
+    navigation.navigate("Agreement" as never);
+  };
 
 
 
 
   return (
+      <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === "ios" ? "padding" : "height"}
+    keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0} // adjust if needed
+  >
     <ScrollView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
@@ -127,10 +221,16 @@ const Agreementland: React.FC = () => {
           <Text style={styles.loadingText}>No land details found.</Text>
         )}
 
-        {!loading &&
+                {!loading &&
           landDetails.map((land, index) => (
-            <View key={index} style={styles.card}>
-
+            <TouchableOpacity
+              key={index}
+              style={[
+                styles.card,
+                landId === land.id && { borderColor: "#007AFF", borderWidth: 2 }
+              ]}
+              onPress={() => handleLandSelect(land.id)}
+            >
               <View style={styles.detailsContainer}>
                 <DetailRow icon="numeric" label="Land Number" value={land.number} />
                 <DetailRow icon="numeric-2-box-outline" label="Sub Number" value={land.subnumber} />
@@ -159,17 +259,11 @@ const Agreementland: React.FC = () => {
                         : "#F44336"
                   }
                 />
-                {/* {land.document && (
-                  <TouchableOpacity
-                    onPress={() => Linking.openURL(land.document)}
-                    style={styles.documentButton}
-                  >
-                    <Text style={styles.documentLink}>View Document</Text>
-                  </TouchableOpacity>
-                )} */}
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
+
+
 
 
 
@@ -239,6 +333,7 @@ const Agreementland: React.FC = () => {
           </View>
 
 
+
           {/* Lot Number */}
           <View style={styles.inputContainer}>
             <View style={styles.labelWithIcon}>
@@ -253,26 +348,60 @@ const Agreementland: React.FC = () => {
             />
           </View>
 
-         
+
+
+        <View style={styles.inputContainer}>
+  <View style={styles.labelWithIcon}>
+    <MaterialIcons name="receipt" size={20} color="#2E7D32" style={{ marginRight: 6 }} />
+    <Text style={styles.inputLabel}>Code Number</Text>
+  </View>
+
+  <TextInput
+    style={[styles.inputCode, { flex: 1 }]}
+    placeholder="Enter number"
+    value={inputValue}         // <-- This will be updated after API response
+    onChangeText={setInputValue}
+  />
+{/* 
+  <TouchableOpacity
+    style={styles.searchIconContainer}
+
+    activeOpacity={0.7}
+  >
+    <MaterialIcons name="search" size={24} color="#007AFF" />
+  </TouchableOpacity> */}
+</View>
+
+ 
+
+
+
+
+
+          <Button
+            mode="contained"
+            style={styles.submitButton}
+            contentStyle={styles.submitButtonContent}
+            onPress={() => handleNext(formData)} // Pass the current formData
+          >
+            Next
+          </Button>
+
+
 
         </View>
 
 
-         
-         <Button
-  mode="contained"
-  style={styles.submitButton}
-  contentStyle={styles.submitButtonContent}
-  onPress={() => handleNext(formData)} // Pass the current formData
->
-  Next
-</Button>
+
 
 
       </View>
     </ScrollView>
+
+    </KeyboardAvoidingView>
   );
 };
+
 
 // Detail Row Component
 const DetailRow = ({
@@ -309,9 +438,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: "#2E7D32",
+    paddingHorizontal: 20,
+    paddingVertical: 25,
+    backgroundColor: "#4CAF50",
     justifyContent: "space-between",
   },
   backButton: {
@@ -332,6 +461,27 @@ const styles = StyleSheet.create({
     color: "#555",
     fontSize: 15,
   },
+
+  inputCode: {
+    flexDirection: "row",
+  alignItems: "center",
+  marginVertical: 10,
+  borderWidth: 1,
+  borderColor: "#ccc",
+  borderRadius: 8,
+  paddingHorizontal: 10,
+  backgroundColor: "#fff",
+
+  },
+
+  searchIconContainer: {
+  padding: 8,
+  marginLeft: 8,
+  backgroundColor: "#E0F2F1",
+  borderRadius: 8,
+  justifyContent: "center",
+  alignItems: "center",
+},
 
   headerTitle: { fontSize: 22, fontWeight: "bold", color: "#fff" },
   content: { flex: 1, padding: 16 },
@@ -366,8 +516,9 @@ const styles = StyleSheet.create({
   documentButton: { marginTop: 6, paddingVertical: 4 },
   documentLink: { color: "#1B5E20", fontWeight: "600", fontSize: 15 },
   loadingText: { fontSize: 15, color: "#555", marginVertical: 8, fontStyle: "italic" },
-    submitButton: { marginTop: 12, backgroundColor: "#4CAF50", borderRadius: 8 },
+  submitButton: { marginTop: 12, backgroundColor: "#4CAF50", borderRadius: 8 },
   submitButtonContent: { paddingVertical: 6 },
+  searchIcon: { paddingHorizontal: 6, justifyContent: 'center', alignItems: 'center' },
 });
 
 export default Agreementland;

@@ -84,10 +84,19 @@ const InspectionScreen = () => {
   const navigation: any = useNavigation();
   const { agreementId } = (route.params as { agreementId?: string }) || {};
 
+  // Get today's date in YYYY-MM-DD format
+  const getTodayDate = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // State Management
   const [formData, setFormData] = useState<FormDataType>({
     InspectionNo: "",
-    InspectionDate: "",
+    InspectionDate: getTodayDate(), // Auto-set today's date
     HarvestingDate: "",
     DurationFrom: "",
     DurationTo: "",
@@ -123,15 +132,12 @@ const InspectionScreen = () => {
     SeedClass: "",
     CommodityName: "",
     Authorizedname: ""
-
-
   });
 
-  // Offtypes State - 10 count numbers with 2 input boxes each
+  // Offtypes State
   const [offtypes, setOfftypes] = useState<OfftypeData[]>([
     { nature: "", count: "" },
     { nature: "", count: "" },
-
   ]);
 
   const [errors, setErrors] = useState<FormErrorsType>({});
@@ -153,8 +159,6 @@ const InspectionScreen = () => {
   const [classSeedList, setClassSeedList] = useState([]);
   const [loadingClassSeed, setLoadingClassSeed] = useState(false);
 
-
-
   // Camera Options
   const cameraOptions: CameraOptions = {
     mediaType: 'photo',
@@ -164,7 +168,6 @@ const InspectionScreen = () => {
   };
 
   // API Calls
-
   const fetchAgreementDetails = async () => {
     if (!agreementId) {
       console.log("❌ No agreementId provided");
@@ -173,11 +176,8 @@ const InspectionScreen = () => {
 
     try {
       setLoading(true);
-
       const response = await apiClient.get(`/api/agreement/${agreementId}`);
       const agreementData = response.data;
-
-
 
       setAgreementIds(prev => ({
         VarietyId: agreementData?.varietyid || "",
@@ -187,14 +187,10 @@ const InspectionScreen = () => {
         VarietyName: agreementData?.varietyname || "",
         CommodityName: agreementData?.commodityname || "",
         Authorizedname: agreementData?.authorizedname || "",
-
-        // ✅ FIRST: user value preserve (prev.SeedClass) OR API default
-        // ✅ OTHER: API value only
         SeedClass: isFirstInspection
           ? (prev.SeedClass || agreementData?.plantingmaterial || "")
           : (agreementData?.plantingmaterial || "")
       }));
-
 
       setFormData(prev => ({
         ...prev,
@@ -212,18 +208,16 @@ const InspectionScreen = () => {
     }
   };
 
-
   const fetchClassSeed = async () => {
     try {
       setLoadingClassSeed(true);
-
       const response = await apiClient.get(
         "/api/class/seed?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED"
       );
 
       const formatted = response.data.map((item) => ({
-        label: item.name,    // change if key different
-        value: item.id       // change if key different
+        label: item.name,
+        value: item.id
       }));
 
       setClassSeedList(formatted);
@@ -238,15 +232,12 @@ const InspectionScreen = () => {
     fetchClassSeed();
   }, []);
 
-
   const fetchSeasonData = async () => {
     try {
       setLoading(true);
       const response = await apiClient.get(
         "/api/season?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED"
       );
-
-      // console.log("📅 Season Data:", response.data);
 
       const dropdownList = response.data?.map((item: any) => ({
         label: item?.name,
@@ -354,18 +345,14 @@ const InspectionScreen = () => {
     return `${year}-${month}-${day}`;
   };
 
-
   const handleDateConfirm = (date: Date) => {
     if (dateField) {
       const formattedDate = formatDateForAPI(date);
-
-      // ✅ 1. Update the date
       setFormData(prev => ({
         ...prev,
         [dateField]: formattedDate
       }));
 
-      // ✅ 2. Clear the error for that field
       setErrors(prev => ({
         ...prev,
         [dateField]: ""
@@ -376,21 +363,21 @@ const InspectionScreen = () => {
     setDateField(null);
   };
 
-
-  const openDatePicker = (field: string) => {
+  const  openDatePicker = (field: string) => {
     setDateField(field);
     setShowDatePicker(true);
   };
 
-  const displayDate = (dateString: string) => {
-    if (!dateString) return "Select date";
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
-  };
+ const displayDate = (dateString: string) => {
+  if (!dateString) return "Select date";
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+};
+
 
   // Offtype Handlers
   const handleOfftypeChange = (index: number, field: keyof OfftypeData, value: string) => {
@@ -401,7 +388,6 @@ const InspectionScreen = () => {
     };
     setOfftypes(updatedOfftypes);
 
-    // Validate offtype fields
     validateOfftypeField(index, field, value);
   };
 
@@ -430,7 +416,7 @@ const InspectionScreen = () => {
   };
 
   const removeOfftype = (index: number) => {
-    if (offtypes.length > 10) {
+    if (offtypes.length > 2) {
       const updatedOfftypes = [...offtypes];
       const updatedErrors = [...offtypeErrors];
 
@@ -440,7 +426,7 @@ const InspectionScreen = () => {
       setOfftypes(updatedOfftypes);
       setOfftypeErrors(updatedErrors);
     } else {
-      Alert.alert("Cannot Remove", "Minimum 10 offtype entries are required");
+      Alert.alert("Cannot Remove", "Minimum 2 offtype entries are required");
     }
   };
 
@@ -462,22 +448,12 @@ const InspectionScreen = () => {
       'EstimatedSeedYield',
       'GrowerRepresentative',
       'Remarks',
-      'Latitude',
-      'Longitude',
-      'GeoImage',
-      'GrowerSignature',
-      'OfficerSignature',
-      'CenterInchargeSignature',
-
-      // ✅ Add these two new required fields
-      'Year',
-      'Season'
     ];
 
     if (requiredFields.includes(field) && (!value || value.toString().trim() === "")) {
       error = "This field is required";
     } else {
-      if (["InspectedArea", "FieldCount", "Latitude", "Longitude"].includes(field)) {
+      if (["InspectedArea", "FieldCount"].includes(field)) {
         if (value && (isNaN(value) || parseFloat(value) < 0)) {
           error = "Please enter a valid number";
         }
@@ -501,7 +477,6 @@ const InspectionScreen = () => {
       const response = await apiClient.get(`/api/subseason/${value}`);
       console.log("SubSeason Data:", response.data);
 
-      // dropdown data format me set karo
       const formattedData = response.data.map((item: any) => ({
         label: item.name,
         value: item.id,
@@ -512,7 +487,6 @@ const InspectionScreen = () => {
       console.log("Error fetching subseason:", error);
     }
   };
-
 
   // Form Submission
   const base64ToFile = async (base64String: string, fileName: string) => {
@@ -541,7 +515,6 @@ const InspectionScreen = () => {
     let isValid = true;
     const newErrors: FormErrorsType = {};
 
-    // Validate main form fields
     requiredFields.forEach(field => {
       const value = formData[field as keyof FormDataType];
       if (!value || value.toString().trim() === "") {
@@ -550,7 +523,6 @@ const InspectionScreen = () => {
       }
     });
 
-    // Numeric field validation
     if (formData.InspectedArea <= 0) {
       newErrors.InspectedArea = "Please enter a valid area";
       isValid = false;
@@ -561,7 +533,6 @@ const InspectionScreen = () => {
       isValid = false;
     }
 
-    // Validate offtypes
     const hasOfftypeErrors = offtypeErrors.some(error =>
       error.nature !== "" || error.count !== ""
     );
@@ -592,13 +563,11 @@ const InspectionScreen = () => {
       const token = await retrieveToken();
       const requestData = new FormData();
 
-      // Append agreement IDs
       requestData.append("VarietyId", agreementIds.VarietyId);
       requestData.append("CommodityId", agreementIds.CommodityId);
       requestData.append("FarmerId", agreementIds.FarmerId);
       requestData.append("FarmerDistributionId", agreementIds.FarmerDistributionId);
 
-      // Append form data
       Object.keys(formData).forEach(key => {
         const value = formData[key as keyof FormDataType];
         if (value !== null && value !== undefined) {
@@ -610,7 +579,6 @@ const InspectionScreen = () => {
         }
       });
 
-      // Append offtypes data as JSON string
       const offtypesData = offtypes.map((offtype, index) => ({
         countNumber: index + 1,
         natureOfOfftype: offtype.nature,
@@ -619,7 +587,6 @@ const InspectionScreen = () => {
 
       requestData.append("Offtypes", JSON.stringify(offtypesData));
 
-      // Handle file attachments
       if (formData.GeoImage) {
         requestData.append("GeoImage", {
           uri: formData.GeoImage,
@@ -628,7 +595,6 @@ const InspectionScreen = () => {
         } as any);
       }
 
-      // Handle signatures
       if (formData.GrowerSignature) {
         const growerFile = await base64ToFile(formData.GrowerSignature, "grower_signature.png");
         requestData.append("GrowerSignature", growerFile as any);
@@ -645,7 +611,6 @@ const InspectionScreen = () => {
       }
 
       console.log("🚀 Submitting Inspection Data...");
-      console.log("Offtypes Data:", offtypesData);
 
       const response = await apiClient.post(
         `/api/inspection/${agreementId}`,
@@ -676,7 +641,6 @@ const InspectionScreen = () => {
         ]
       );
 
-
     } catch (error: any) {
       console.error("❌ Error submitting inspection:", error);
       Alert.alert(
@@ -696,7 +660,7 @@ const InspectionScreen = () => {
         <View style={styles.radioContainer}>
           {options.map((option: any) => (
             <View key={option.value} style={styles.radioOption}>
-              <RadioButton value={option.value} />
+              <RadioButton value={option.value} color="#2E7D32" />
               <Text style={styles.radioLabel}>{option.label}</Text>
             </View>
           ))}
@@ -718,6 +682,7 @@ const InspectionScreen = () => {
         onPress={onPress}
         style={styles.imagePickerButton}
         icon="camera"
+        textColor="#2E7D32"
       >
         {value ? "Retake Photo" : "Take Photo"}
       </Button>
@@ -748,6 +713,7 @@ const InspectionScreen = () => {
               onPress={() => openSignatureModal(field)}
               style={styles.signatureButton}
               icon="pencil"
+              textColor="#2E7D32"
             >
               Resign
             </Button>
@@ -768,6 +734,7 @@ const InspectionScreen = () => {
           onPress={() => openSignatureModal(field)}
           style={styles.signatureButton}
           icon="signature-freehand"
+          textColor="#2E7D32"
         >
           Add Signature
         </Button>
@@ -788,7 +755,6 @@ const InspectionScreen = () => {
       </View>
 
       <View style={styles.offtypeInputs}>
-
         <View style={styles.offtypeInputContainer}>
           <Text style={styles.offtypeLabel}>Number of Plant of Offtypes</Text>
           <TextInput
@@ -879,7 +845,7 @@ const InspectionScreen = () => {
                 value={formData.InspectionNo}
                 onChange={(item) => {
                   handleChange("InspectionNo", item.value);
-                  setIsFirstInspection(item.value === "FIRST"); // ✅ Enable only when FIRST
+                  setIsFirstInspection(item.value === "FIRST");
                 }}
                 mode="modal"
               />
@@ -892,13 +858,12 @@ const InspectionScreen = () => {
               <View style={styles.row}>
                 <View style={styles.halfInput}>
                   <Text style={styles.label}>Inspection Date</Text>
-                  <Button
-                    mode="outlined"
-                    onPress={() => openDatePicker("InspectionDate")}
-                    style={styles.dateButton}
-                  >
-                    {displayDate(formData.InspectionDate)}
-                  </Button>
+                  <View style={styles.dateDisplayContainer}>
+                    <Text style={styles.dateDisplayText}>
+                      {displayDate(formData.InspectionDate)}
+                    </Text>
+                    <Text style={styles.todayBadge}>Today</Text>
+                  </View>
                   <HelperText type="error" visible={!!errors.InspectionDate}>
                     {errors.InspectionDate}
                   </HelperText>
@@ -910,6 +875,7 @@ const InspectionScreen = () => {
                     mode="outlined"
                     onPress={() => openDatePicker("HarvestingDate")}
                     style={styles.dateButton}
+                    textColor="#2E7D32"
                   >
                     {displayDate(formData.HarvestingDate)}
                   </Button>
@@ -922,7 +888,12 @@ const InspectionScreen = () => {
               <View style={styles.row}>
                 <View style={styles.halfInput}>
                   <Text style={styles.label}>Duration From</Text>
-                  <Button mode="outlined" onPress={() => openDatePicker("DurationFrom")} style={styles.dateButton}>
+                  <Button 
+                    mode="outlined" 
+                    onPress={() => openDatePicker("DurationFrom")} 
+                    style={styles.dateButton}
+                    textColor="#2E7D32"
+                  >
                     {displayDate(formData.DurationFrom)}
                   </Button>
                   <HelperText type="error" visible={!!errors.DurationFrom}>
@@ -932,7 +903,12 @@ const InspectionScreen = () => {
 
                 <View style={styles.halfInput}>
                   <Text style={styles.label}>Duration To</Text>
-                  <Button mode="outlined" onPress={() => openDatePicker("DurationTo")} style={styles.dateButton}>
+                  <Button 
+                    mode="outlined" 
+                    onPress={() => openDatePicker("DurationTo")} 
+                    style={styles.dateButton}
+                    textColor="#2E7D32"
+                  >
                     {displayDate(formData.DurationTo)}
                   </Button>
                   <HelperText type="error" visible={!!errors.DurationTo}>
@@ -941,64 +917,49 @@ const InspectionScreen = () => {
                 </View>
               </View>
 
-
               <Text style={styles.label}>Variety Name</Text>
               <TextInput
                 placeholder="Enter Variety Name"
                 value={agreementIds.VarietyName}
                 editable={false}
-                style={styles.input}
+                style={[styles.input, styles.disabledInput]}
               />
 
-
               <Text style={styles.label}>Class of Seed</Text>
-
               <Dropdown
                 style={[
                   styles.dropdown,
-                  !isFirstInspection && { backgroundColor: "#e5e5e5" } // disabled look
+                  !isFirstInspection && { backgroundColor: "#e5e5e5" }
                 ]}
                 data={classSeedList}
                 labelField="label"
                 valueField="value"
                 placeholder={loadingClassSeed ? "Loading..." : "Select Class of Seed"}
-
-                // ✅ FIRST + SECOND + THIRD + FOURTH → always show API OR saved value
                 value={agreementIds.SeedClass}
-
                 onChange={(item) => {
                   if (isFirstInspection) {
-                    // ✅ FIRST inspection only
                     setAgreementIds(prev => ({
                       ...prev,
                       SeedClass: item.value
                     }));
                   }
                 }}
-
                 mode="modal"
-
-                // ✅ Disable for 2/3/4
                 disable={!isFirstInspection}
               />
-
-
 
               <Text style={styles.label}>Crop</Text>
               <TextInput
                 placeholder="Enter crop"
                 value={agreementIds.CommodityName}
-                style={styles.input}
+                style={[styles.input, styles.disabledInput]}
                 editable={false}
-
               />
-
-
 
               <Text style={styles.label}>Previous Crop</Text>
               <TextInput
                 placeholder="Enter previous crop"
-                placeholderTextColor="#141414ff"
+                placeholderTextColor="#666"
                 value={formData.PreviousCrop}
                 onChangeText={(text) => handleChange("PreviousCrop", text)}
                 style={styles.input}
@@ -1009,11 +970,10 @@ const InspectionScreen = () => {
                 </HelperText>
               )}
 
-
               <Text style={styles.label}>Source of Seed</Text>
               <TextInput
                 placeholder="Enter Source of Seed"
-                placeholderTextColor="#141414ff"
+                placeholderTextColor="#666"
                 value={formData.SourceOfSeed}
                 onChangeText={(text) => handleChange("SourceOfSeed", text)}
                 style={[
@@ -1026,7 +986,6 @@ const InspectionScreen = () => {
                   {errors.SourceOfSeed}
                 </HelperText>
               )}
-
 
               <Text style={styles.label}>Year</Text>
               <Dropdown
@@ -1062,7 +1021,6 @@ const InspectionScreen = () => {
                 {errors.Season}
               </HelperText>
 
-
               <Text style={styles.label}>Crop Condition</Text>
               <Dropdown
                 style={[styles.dropdown, errors.CropCondition && styles.inputError]}
@@ -1093,7 +1051,7 @@ const InspectionScreen = () => {
                   <Text style={styles.label}>Inspected Area</Text>
                   <TextInput
                     placeholder="Enter area"
-                    placeholderTextColor="#141414ff"
+                    placeholderTextColor="#666"
                     value={formData.InspectedArea.toString()}
                     onChangeText={(text) => handleChange("InspectedArea", text)}
                     keyboardType="numeric"
@@ -1108,7 +1066,7 @@ const InspectionScreen = () => {
                   <Text style={styles.label}>Field Count</Text>
                   <TextInput
                     placeholder="Enter field count"
-                    placeholderTextColor="#141414ff"
+                    placeholderTextColor="#666"
                     value={formData.FieldCount.toString()}
                     onChangeText={(text) => handleChange("FieldCount", text)}
                     keyboardType="numeric"
@@ -1131,7 +1089,7 @@ const InspectionScreen = () => {
 
             <Card.Content style={styles.content}>
               <Text style={styles.sectionDescription}>
-                Please fill in the nature and number of plants for each offtype count (1-10)
+                Please fill in the number of plants for each offtype count
               </Text>
 
               {offtypes.map((offtype, index) => (
@@ -1149,6 +1107,7 @@ const InspectionScreen = () => {
                 onPress={addMoreOfftypes}
                 style={styles.addMoreButton}
                 icon="plus"
+                textColor="#2E7D32"
               >
                 Add More Offtypes
               </Button>
@@ -1179,12 +1138,12 @@ const InspectionScreen = () => {
                   <Text style={styles.label}>Reason</Text>
                   <TextInput
                     placeholder="Enter reason"
-                    placeholderTextColor="#141414ff"
+                    placeholderTextColor="#666"
                     value={formData.Reason}
                     onChangeText={(text) => handleChange("Reason", text)}
                     multiline
                     numberOfLines={3}
-                    style={styles.input}
+                    style={[styles.input, styles.textArea]}
                   />
                   <HelperText type="error" visible={!!errors.Reason}>
                     {errors.Reason}
@@ -1206,7 +1165,7 @@ const InspectionScreen = () => {
               <Text style={styles.label}>Estimated Seed Yield</Text>
               <TextInput
                 placeholder="Enter estimated yield"
-                placeholderTextColor="#141414ff"
+                placeholderTextColor="#666"
                 value={formData.EstimatedSeedYield}
                 onChangeText={(text) => handleChange("EstimatedSeedYield", text)}
                 style={styles.input}
@@ -1218,10 +1177,10 @@ const InspectionScreen = () => {
               <Text style={styles.label}>Grower Representative</Text>
               <TextInput
                 placeholder="Enter representative name"
-                placeholderTextColor="#141414ff"
+                placeholderTextColor="#666"
                 value={agreementIds.Authorizedname}
                 onChangeText={(text) => handleChange("GrowerRepresentative", text)}
-                style={styles.input}
+                style={[styles.input, styles.disabledInput]}
               />
               <HelperText type="error" visible={!!errors.GrowerRepresentative}>
                 {errors.GrowerRepresentative}
@@ -1230,67 +1189,18 @@ const InspectionScreen = () => {
               <Text style={styles.label}>Remarks</Text>
               <TextInput
                 placeholder="Enter remarks"
-                placeholderTextColor="#141414ff"
+                placeholderTextColor="#666"
                 value={formData.Remarks}
                 onChangeText={(text) => handleChange("Remarks", text)}
                 multiline
                 numberOfLines={3}
-                style={styles.input}
+                style={[styles.input, styles.textArea]}
               />
               <HelperText type="error" visible={!!errors.Remarks}>
                 {errors.Remarks}
               </HelperText>
             </Card.Content>
           </Card>
-
-          {/* Location Details Card */}
-          {/* <Card style={styles.card}>
-            <View style={styles.header}>
-              <MaterialCommunityIcons name="map-marker" size={30} color="#2E7D32" />
-              <Text style={styles.headerTitle}>Location Details</Text>
-            </View>
-
-            <Card.Content style={styles.content}>
-              <View style={styles.row}>
-                <View style={styles.halfInput}>
-                  <Text style={styles.label}>Latitude</Text>
-                  <TextInput
-                    placeholder="Enter latitude"
-                    placeholderTextColor="#141414ff"
-                    value={formData.Latitude.toString()}
-                    onChangeText={(text) => handleChange("Latitude", text)}
-                    keyboardType="numeric"
-                    style={styles.input}
-                  />
-                  <HelperText type="error" visible={!!errors.Latitude}>
-                    {errors.Latitude}
-                  </HelperText>
-                </View>
-
-                <View style={styles.halfInput}>
-                  <Text style={styles.label}>Longitude</Text>
-                  <TextInput
-                    placeholder="Enter longitude"
-                    placeholderTextColor="#141414ff"
-                    value={formData.Longitude.toString()}
-                    onChangeText={(text) => handleChange("Longitude", text)}
-                    keyboardType="numeric"
-                    style={styles.input}
-                  />
-                  <HelperText type="error" visible={!!errors.Longitude}>
-                    {errors.Longitude}
-                  </HelperText>
-                </View>
-              </View>
-
-              <ImagePickerField
-                label="Capture Image"
-                value={formData.GeoImage}
-                onPress={() => launchCameraForField("GeoImage")}
-                field="GeoImage"
-              />
-            </Card.Content>
-          </Card> */}
 
           {/* Signatures Card */}
           <Card style={styles.card}>
@@ -1359,7 +1269,7 @@ const InspectionScreen = () => {
             <Button
               mode="text"
               onPress={() => setSignatureModalVisible(false)}
-              textColor="#636161ff"
+              textColor="#636161"
             >
               Close
             </Button>

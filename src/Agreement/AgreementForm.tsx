@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { View, StyleSheet, TextInput, ScrollView } from "react-native";
 import { Card, Text, Divider, Button } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -7,7 +7,9 @@ import CommonPicker from "../CommonComponent/CommonDropdown";
 import { fetchCommodityTypes, fetchCommodity, fetchVariety } from "../Service/fetchCommodity";
 import useForm from "../Form/UseForm";
 import { useFormData } from "../Constants/FormContext";
+import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation } from "@react-navigation/native";
+import { BackHandler } from "react-native";
 
 const AgreementFormSimple: React.FC = () => {
   const { state, updateState } = useForm();
@@ -22,11 +24,31 @@ const AgreementFormSimple: React.FC = () => {
   const [commodities, setCommodities] = useState<any[]>([]);
   const [varieties, setVarieties] = useState<any[]>([]);
 
+  // 🆕 Season dropdown states
+  const [seasonData, setSeasonData] = useState<any[]>([]);
+  const [subSeasonList, setSubSeasonList] = useState<any[]>([]);
+  const [selectedSeason, setSelectedSeason] = useState("");
+  const [selectedSubSeason, setSelectedSubSeason] = useState("");
+
   const aadharNumber = state.form?.aadharNumber || "";
   const selectedCommodityType = state.form?.commodityType || "";
   const selectedCommodity = state.form?.commodity || "";
   const selectedVariety = state.form?.variety || "";
 
+  // Handle Android Back Button
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        navigation.navigate("Dashboard" as never);
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      return () => subscription.remove();
+    }, [navigation])
+  );
+
+  // Fetch Commodity Data
   useEffect(() => {
     (async () => {
       try {
@@ -69,35 +91,81 @@ const AgreementFormSimple: React.FC = () => {
     })();
   }, [selectedCommodity]);
 
+  // 🆕 Fetch Season and SubSeason Data
+  const fetchSeasonData = async () => {
+    try {
+      setLoading(true);
+      const response = await apiClient.get(
+        "/api/season?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED"
+      );
+      const dropdownList = response.data?.map((item: any) => ({
+        label: item?.name,
+        value: item?.id,
+      }));
+      setSeasonData(dropdownList || []);
+    } catch (error) {
+      console.error("❌ Season API error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSeasonSelect = async (value: string) => {
+    setSelectedSeason(value);
+    if (!value) {
+      setSubSeasonList([]);
+      setSelectedSubSeason("");
+      return;
+    }
+    try {
+      const response = await apiClient.get(`/api/subseason/${value}`);
+      const formattedData = response.data.map((item: any) => ({
+        label: item.name,
+        value: item.id,
+      }));
+      setSubSeasonList(formattedData);
+    } catch (error) {
+      console.log("Error fetching subseason:", error);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      if (!aadharNumber || aadharNumber.length !== 12) {
-        setAadharData([]);
-        return;
-      }
-      try {
-        setLoading(true);
-        const params = new URLSearchParams();
-        params.append("AadharNo", aadharNumber);
-        params.append("ApprovalStatus", "PENDING");
-        params.append("ApprovalStatus", "APPROVED");
-        params.append("ApprovalStatus", "REJECTED");
-        if (selectedCommodity) params.append("CommodityId", selectedCommodity);
-        if (selectedVariety) params.append("VarietyId", selectedVariety);
+    fetchSeasonData();
+  }, []);
 
-        const url = `/api/mobile/farmer/distribution/list?${params.toString()}`;
-        const res = await apiClient.get(url);
-        setAadharData(res.data || []);
-      } catch (error) {
-        console.error(error);
-        setAadharData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [aadharNumber, selectedCommodity, selectedVariety]);
 
+  const handleFilter = async () => {
+    if (!aadharNumber || aadharNumber.length !== 12) {
+      setAadharData([]);
+      alert("Please enter a valid 12-digit Aadhar number");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      params.append("AadharNo", aadharNumber);
+      params.append("ApprovalStatus", "PENDING");
+      params.append("ApprovalStatus", "APPROVED");
+      params.append("ApprovalStatus", "REJECTED");
+      if (selectedCommodity) params.append("CommodityId", selectedCommodity);
+      if (selectedVariety) params.append("VarietyId", selectedVariety);
+      if (selectedSeason) params.append("SeasonId", selectedSeason);
+      if (selectedSubSeason) params.append("SubSeasonId", selectedSubSeason);
+
+      const url = `/api/mobile/farmer/distribution/list?${params.toString()}`;
+      const res = await apiClient.get(url);
+      setAadharData(res.data || []);
+    } catch (error) {
+      console.error(error);
+      setAadharData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  // Commodity change handlers
   const handleCommodityTypeChange = (value: string) => {
     updateState({
       form: { ...state.form, commodityType: value, commodity: "", variety: "" },
@@ -112,20 +180,21 @@ const AgreementFormSimple: React.FC = () => {
   };
 
   const handleNext = (record: any) => {
-     const formPayload = {
-    farmerId: record.farmerid,
-    varietyId: record.varietyid || null,
-    commodityId: record.commodityid || null,
-    centerTargetId: record.centertargetid || null,
+    const formPayload = {
+      // farmerDistributionId: record.farmerid,
+      // farmerId: record.id,
+      farmerDistributionId: record.id,
+      farmerId: record.farmerid,
+      varietyId: record.varietyid || null,
+      commodityId: record.commodityid || null,
+      centerTargetId: record.centertargetid || null,
+      billNumber: record.billnumber,
+      area: record.area,
+      lotNo: record.lotno,
+      cropClassSeeds: record.cropclass,
+      DistributionType: record.distributiontype,
+    };
 
-    // Additional fields
-    billNumber: record.billnumber,
-    area: record.area ,
-    lotNo: record.lotno ,
-    cropClassSeeds: record.cropclass, // if the field has a space in key
-    DistributionType : record.distributiontype
-  };
-   
     setFormData(formPayload);
     navigation.navigate("Agreementland" as never);
   };
@@ -147,6 +216,7 @@ const AgreementFormSimple: React.FC = () => {
             maxLength={12}
             style={styles.input}
           />
+
 
           <Text style={styles.label}>Commodity Type (Optional)</Text>
           <CommonPicker
@@ -170,6 +240,36 @@ const AgreementFormSimple: React.FC = () => {
             }
             items={varieties}
           />
+
+
+          {/* 🆕 Year Dropdown */}
+          <Text style={styles.label}>Year (Optional)</Text>
+          <CommonPicker
+            selectedValue={selectedSeason}
+            onValueChange={(value) => handleSeasonSelect(value)}
+            items={seasonData}
+          />
+
+          {/* 🆕 Season Dropdown */}
+          <Text style={styles.label}>Season (Optional)</Text>
+          <CommonPicker
+            selectedValue={selectedSubSeason}
+            onValueChange={(value) => setSelectedSubSeason(value)}
+            items={subSeasonList}
+          />
+
+          <Button
+  mode="contained"
+  onPress={handleFilter}
+  style={styles.filterButton}
+  labelStyle={styles.filterButtonLabel}
+ 
+>
+  Search Farmer
+</Button>
+
+
+
         </Card.Content>
       </Card>
 
@@ -179,18 +279,21 @@ const AgreementFormSimple: React.FC = () => {
         aadharData.map((record, index) => (
           <Card key={record.id || index} style={styles.farmerCard}>
             <Card.Content>
-              <Text style={styles.sectionTitle}>
-             
-                Farmer Details
-              </Text>
+              <Text style={styles.sectionTitle}>Farmer Details</Text>
               <Divider style={styles.headerDivider} />
 
               {[
-                    { label: "Farmer Name", value: record.farmername},
-                { label: "Relation", value: ` ${record.relation} of ${record.relative}` },
-                { label: "Variety", value: record.varietyname },
+                {
+                  label: "Farmer",
+                  value: `${record.farmername} ${record.relation} of ${record.relative}`
+                },
+
                 { label: "Center", value: record.centername },
-                { label: "Commodity", value: record.commodityname },
+                { label: "Crop Coblic Commodity", value: record.commodityname },
+                { label: "Variety", value: record.varietyname },
+                { label: "Year", value: record.season },
+                { label: "Season", value: record.subseason },
+
               ].map((item, idx) => (
                 <View key={idx} style={styles.detailRow}>
                   <MaterialCommunityIcons name="chevron-right" size={20} color="#4CAF50" />
@@ -207,7 +310,7 @@ const AgreementFormSimple: React.FC = () => {
                 style={styles.submitButton}
                 contentStyle={styles.submitButtonContent}
               >
-                Next
+                Create Agreement
               </Button>
             </Card.Content>
           </Card>
@@ -222,10 +325,38 @@ const AgreementFormSimple: React.FC = () => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f5f5" },
+  filterButton: {
+  marginTop: 16,
+  borderRadius: 10,
+  backgroundColor: "#4CAF50", // vibrant blue
+  elevation: 3,               // subtle shadow for Android
+  shadowColor: "#000",        // subtle shadow for iOS
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.2,
+  shadowRadius: 3,
+  height: 39,
+  justifyContent: "center",
+},
+
+filterButtonLabel: {
+  color: "#fff",
+  fontSize: 16,
+  fontWeight: "600",
+  letterSpacing: 0.5,
+},
   scrollContent: { padding: 16, paddingBottom: 30 },
   sectionCard: { marginBottom: 16, borderRadius: 12, elevation: 2, backgroundColor: "white" },
   label: { fontWeight: "600", color: "#455A64", marginBottom: 8, fontSize: 14 },
-  input: { backgroundColor: "white", height: 50, fontSize: 14, borderRadius: 8, paddingHorizontal: 10, marginBottom: 10, borderWidth: 1, borderColor: "#ddd" },
+  input: {
+    backgroundColor: "white",
+    height: 50,
+    fontSize: 14,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
   sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#2E7D32", marginBottom: 16 },
   headerDivider: { backgroundColor: "#E0E0E0", height: 1, marginVertical: 8 },
   farmerCard: { marginBottom: 16, borderRadius: 12, backgroundColor: "#fff", elevation: 3 },

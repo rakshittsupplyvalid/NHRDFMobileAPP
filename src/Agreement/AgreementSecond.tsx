@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+ import React, { useState, useEffect, useCallback } from "react";
 import {
     StyleSheet,
     View,
@@ -9,7 +9,8 @@ import {
     Platform,
     Alert,
     Image,
-    TextInput as RNTextInput
+    TextInput as RNTextInput,
+    Dimensions
 } from "react-native";
 import { Button, Text, Card, Checkbox, HelperText, Divider, TextInput } from "react-native-paper";
 import { MaterialIcons } from "@expo/vector-icons";
@@ -31,9 +32,9 @@ import CustomDateTimePicker from "../CommonComponent/DateTimePicker";
 import { launchCamera, CameraOptions } from 'react-native-image-picker';
 import * as FileSystem from "expo-file-system";
 import axios from "axios";
-
-
 import RNFS from 'react-native-fs';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 interface NomineeType {
     nomineename: string;
@@ -85,13 +86,10 @@ const AgreementSecond: React.FC = () => {
     const { formData } = useFormData();
     const { state, updateState } = useForm();
 
+    // This will log the formData whenever this screen renders
+    console.log("🔥 Third screen data:", formData);
 
-
-
-   // This will log the formData whenever this screen renders
-  console.log("AgreementSecond formData:", formData);
-
-    // Nominees and witnesses state
+    // Nominees and witnesses state - MIN 1 Nominee, MAX 2 Witnesses
     const [nominees, setNominees] = useState<NomineeType[]>([
         {
             nomineename: "",
@@ -119,6 +117,7 @@ const AgreementSecond: React.FC = () => {
             ifsc: "",
         },
     ]);
+
     const [witnesses, setWitnesses] = useState<WitnessType[]>([
         {
             witnessname: "",
@@ -138,6 +137,7 @@ const AgreementSecond: React.FC = () => {
             pincode: "",
         },
     ]);
+
     const [statesList, setStatesList] = useState([]);
     const [nomineeErrors, setNomineeErrors] = useState<{ [key: string]: string }[]>([]);
     const [witnessErrors, setWitnessErrors] = useState<{ [key: string]: string }[]>([]);
@@ -157,10 +157,11 @@ const AgreementSecond: React.FC = () => {
     const [witnessDistrictsList, setWitnessDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
     const [witnessCitiesList, setWitnessCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
     const [isAgreementAccepted, setIsAgreementAccepted] = useState(false);
-    const [witnessSignatureUri, setWitnessSignatureUri] = useState<string[] | null>([]);
-    const [nomineeSignatureUri, setNomineeSignatureUri] = useState<string[] | null>([]);
+    const [witnessSignatureUri, setWitnessSignatureUri] = useState<string[]>([]);
+    const [nomineeSignatureUri, setNomineeSignatureUri] = useState<string[]>([]);
     const [nomineeProfilePhotos, setNomineeProfilePhotos] = useState<string[]>([]);
     const [witnessProfilePhotos, setWitnessProfilePhotos] = useState<string[]>([]);
+    const [activeSection, setActiveSection] = useState<string | null>(null);
 
     // ✅ FIXED: Improved signature data handler with functional updates
     useFocusEffect(
@@ -346,10 +347,6 @@ const AgreementSecond: React.FC = () => {
         setNomineeErrors(newErrors);
     };
 
-
-
-
-
     const validateWitnessField = (index: number, field: string, value: string) => {
         const newErrors = [...witnessErrors];
         let error = '';
@@ -365,11 +362,6 @@ const AgreementSecond: React.FC = () => {
                     error = 'Valid 10-digit mobile number starting with 6-9';
                 }
                 break;
-                // case 'witnessemail':
-                //     if (value && !isValidEmail(value)) {
-                //         error = 'Please enter a valid email address';
-                //     }
-                break;
             case 'addrline':
                 if (!isValidAddress(value)) {
                     error = 'Address must be at least 1 character';
@@ -380,11 +372,6 @@ const AgreementSecond: React.FC = () => {
                     error = 'Pincode must be 6 digits';
                 }
                 break;
-            // case 'villagename':
-            //     if (value && !/^[a-zA-Z\s]{2,25}$/.test(value)) {
-            //         error = 'Village name must be 2-25 letters only';
-            //     }
-            //     break;
             case 'stateid':
                 if (!value) {
                     error = 'State is required';
@@ -408,7 +395,6 @@ const AgreementSecond: React.FC = () => {
 
     const isFormValid = () => {
         const nomineeValid = nominees.every((nominee, index) => {
-
             const hasRequiredFields =
                 nominee.nomineename &&
                 nominee.mobileno &&
@@ -421,7 +407,7 @@ const AgreementSecond: React.FC = () => {
                 nominee.stateid &&
                 nominee.districtid &&
                 nominee.subdistrictid &&
-                nomineeProfilePhotos[index]; // ✅ Passbook Required
+                nomineeProfilePhotos[index];
 
             const hasNoErrors = Object.keys(nomineeErrors[index] || {}).every(
                 (key) => !nomineeErrors[index][key]
@@ -437,7 +423,7 @@ const AgreementSecond: React.FC = () => {
                 witness.stateid &&
                 witness.districtid &&
                 witness.subdistrictid &&
-                witnessSignatureUri[index];;
+                witnessSignatureUri[index];
 
             const hasNoErrors = Object.keys(witnessErrors[index] || {}).every(
                 (key) => !witnessErrors[index][key]
@@ -449,12 +435,11 @@ const AgreementSecond: React.FC = () => {
         return nomineeValid && witnessValid && isAgreementAccepted;
     };
 
-
     // Back handler
     useFocusEffect(
         useCallback(() => {
             const onBackPress = () => {
-                navigation.navigate("Agreement Form" as never);
+                navigation.navigate("Agreementland" as never);
                 return true;
             };
 
@@ -797,14 +782,12 @@ const AgreementSecond: React.FC = () => {
 
     useFocusEffect(
         React.useCallback(() => {
-            debugger
             const params = route.params as { signatureUri?: string; type?: string, index?: number } | undefined;
 
             if (params?.signatureUri && params?.type) {
                 console.log("🖋️ Received Signature URI:", params.signatureUri);
                 console.log("📄 Signature Type:", params.type);
 
-                // ✅ Fixed line — using plain 'base64' instead of EncodingType
                 FileSystem.readAsStringAsync(params.signatureUri, {
                     encoding: 'base64',
                 })
@@ -812,7 +795,6 @@ const AgreementSecond: React.FC = () => {
                         const base64Image = `data:image/png;base64,${base64Data}`;
                         console.log("✅ Base64 Image:", base64Image.substring(0, 100) + "...");
 
-                        // Convert Base64 → Blob for multipart upload
                         const base64ToBlob = (base64, type = "image/png") => {
                             const byteCharacters = atob(base64.split(",")[1]);
                             const byteNumbers = new Array(byteCharacters.length);
@@ -828,21 +810,20 @@ const AgreementSecond: React.FC = () => {
                         console.log("📏 Blob Size:", imageBlob.size);
 
                         const formData = new FormData();
-
                         console.log("✅ FormData Ready for Upload");
                     })
                     .catch((err) => console.error("❌ Error reading file:", err));
 
                 if (params.type === "nominee") {
                     setNomineeSignatureUri((prev) => {
-                        const updated = [...(prev || [])];
-                        updated[params?.index] = params.signatureUri;
+                        const updated = [...prev];
+                        updated[params.index || 0] = params.signatureUri || '';
                         return updated;
                     });
                 } else if (params.type === "witness") {
                     setWitnessSignatureUri((prev) => {
-                        const updated = [...(prev || [])];
-                        updated[params?.index] = params.signatureUri;
+                        const updated = [...prev];
+                        updated[params.index || 0] = params.signatureUri || '';
                         return updated;
                     });
                 }
@@ -856,13 +837,8 @@ const AgreementSecond: React.FC = () => {
     // Base64 string ko file me convert karo
     const base64ToFile = async (base64String: any, fileName: any) => {
         try {
-            // Remove data:image prefix if exists
             const base64Data = base64String.replace(/^data:image\/\w+;base64,/, '');
-
-            // File path
             const filePath = `${RNFS.CachesDirectoryPath}/${fileName}`;
-
-            // Write file
             await RNFS.writeFile(filePath, base64Data, 'base64');
 
             return {
@@ -890,38 +866,36 @@ const AgreementSecond: React.FC = () => {
         try {
             const requestData = new FormData();
 
-            // 🔹 Append main contextual data first
-            requestData.append("FarmerDistributionId", formData?.DistributedFarmerid || "");
-            requestData.append("FarmerId", formData?.Farmerid || "");
-            requestData.append("CenterTargetId", formData?.CenterTargetId || "");
-            requestData.append("LandDetailId", formData?.selectedLandId || "");
-            requestData.append("CertificateNo", formData?.Certificate);
-            requestData.append("SurveyNo", formData?.Survey);
-            requestData.append("VarietyId", formData?.VarietyId || "");
+            // Append main contextual data
+            requestData.append("CodeNo", formData?.CodeNumber || "");
+            requestData.append("FarmerDistributionId", formData?.farmerDistributionId || "");
+            requestData.append("FarmerId", formData?.farmerId || "");
+            requestData.append("CenterTargetId", formData?.centerTargetId || "");
+            requestData.append("LandDetailId", formData?.landId || "");
+            requestData.append("CertificateNo", formData?.Certificate || "");
+            requestData.append("SurveyNo", formData?.Survey || "");
+            requestData.append("VarietyId", formData?.varietyId || "");
             requestData.append("DuringYear", formData?.Year?.toString() || "");
-            requestData.append("SeedClass", formData?.seeds?.toString() || "");
-            requestData.append("CommodityId", formData?.CommodityId || "");
-            requestData.append("PlantingMaterial", formData?.distributiontype || "");
-            requestData.append("Area", formData?.AreaFromAadhar || "0");
+            requestData.append("SeedClass", formData?.cropClassSeeds?.toString() || "");
+            requestData.append("CommodityId", formData?.commodityId || "");
+            requestData.append("PlantingMaterial", formData?.DistributionType || "");
+            requestData.append("Area", formData?.area?.toString() || "0");
             requestData.append("AuthorizedName", state.form.authorizedSignatory || "");
+            requestData.append("BillNumber", formData?.billNumber || "");
             requestData.append("TagNumber", state.form.TagNumber || "");
-            requestData.append("AuthorizedName", state.form.authorizedSignatory || "");
-            requestData.append("BillNumber", formData?.BillNumber || "");
-            requestData.append("TagNumber", formData?.TagNumber || "");
-            requestData.append("LotNumber", formData?.LotNumber || "");
-            requestData.append("DuringYear", formData?.LotNumber || "");
+            requestData.append("LotNumber", formData?.lotNo || "");
+
             // Convert Base64 signature to file
-            const convertedSignature = await base64ToFile(signaturePhoto, "signature.png");
-
-            // Append in FormData
-            if (convertedSignature) {
-                requestData.append("Signature", {
-                    uri: convertedSignature.uri,
-                    type: convertedSignature.type,
-                    name: convertedSignature.name,
-                } as any);
+            if (signaturePhoto) {
+                const convertedSignature = await base64ToFile(signaturePhoto, "signature.png");
+                if (convertedSignature) {
+                    requestData.append("Signature", {
+                        uri: convertedSignature.uri,
+                        type: convertedSignature.type,
+                        name: convertedSignature.name,
+                    } as any);
+                }
             }
-
 
             if (profilePhoto) {
                 requestData.append("ProfFile", {
@@ -933,11 +907,12 @@ const AgreementSecond: React.FC = () => {
 
             let nominees_update = nominees?.map((x, i) => ({
                 ...x,
-                signature: nomineeSignatureUri[i]
+                signature: nomineeSignatureUri[i] || ''
             }))
 
             // ========== NOMINEES - Array Index Format ==========
-            nominees_update.forEach(async (nominee, index) => {
+            for (let index = 0; index < nominees_update.length; index++) {
+                const nominee = nominees_update[index];
                 requestData.append(`NomiNee[${index}].nomineename`, nominee.nomineename || '');
                 requestData.append(`NomiNee[${index}].gender`, nominee.gender || 'NONE');
                 requestData.append(`NomiNee[${index}].mobileno`, nominee.mobileno || '');
@@ -980,15 +955,16 @@ const AgreementSecond: React.FC = () => {
                 }
 
                 console.log(`✅ Nominee ${index} added:`, nominee.nomineename);
-            });
+            }
 
             let witnesses_update = witnesses?.map((x, i) => ({
                 ...x,
-                signature: witnessSignatureUri[i]
+                signature: witnessSignatureUri[i] || ''
             }))
 
             // ========== WITNESSES - Array Index Format ==========
-            witnesses_update.forEach(async (witness, index) => {
+            for (let index = 0; index < witnesses_update.length; index++) {
+                const witness = witnesses_update[index];
                 requestData.append(`Witness[${index}].witnessname`, witness.witnessname || '');
                 requestData.append(`Witness[${index}].witnessmobileno`, witness.witnessmobileno || '');
                 requestData.append(`Witness[${index}].witnessemail`, witness.witnessemail || '');
@@ -1023,12 +999,6 @@ const AgreementSecond: React.FC = () => {
                 }
 
                 console.log(`✅ Witness ${index} added:`, witness.witnessname);
-            });
-
-            // 🔹 Log everything before sending
-            console.log("🚀 Sending this FormData:");
-            for (let [key, value] of (requestData as any).entries()) {
-                console.log(`➡️ ${key}:`, value);
             }
 
             const token = await retrieveToken();
@@ -1083,7 +1053,7 @@ const AgreementSecond: React.FC = () => {
             age--;
         }
 
-        return age;
+        return age.toString();
     };
 
     const formatDate = (date: Date) => {
@@ -1147,19 +1117,50 @@ const AgreementSecond: React.FC = () => {
         }
     };
 
+    const toggleSection = (section: string) => {
+        setActiveSection(activeSection === section ? null : section);
+    };
+
+    const renderSectionHeader = (title: string, section: string, count?: number) => (
+        <TouchableOpacity 
+            style={styles.sectionHeader} 
+            onPress={() => toggleSection(section)}
+            activeOpacity={0.7}
+        >
+            <View style={styles.sectionHeaderLeft}>
+                <MaterialIcons 
+                    name={activeSection === section ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
+                    size={24} 
+                    color="#70B04F" 
+                />
+                <Text style={styles.sectionTitle}>{title}</Text>
+                {count !== undefined && (
+                    <View style={styles.countBadge}>
+                        <Text style={styles.countText}>{count}</Text>
+                    </View>
+                )}
+            </View>
+            <MaterialIcons 
+                name="info-outline" 
+                size={20} 
+                color="#666" 
+            />
+        </TouchableOpacity>
+    );
+
     return (
         <View style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
             {/* Header */}
             <View style={styles.headerContainer}>
                 <TouchableOpacity
                     style={styles.backButton}
-                    onPress={() => navigation.navigate("Agreement Form" as never)}
+                    onPress={() => navigation.navigate("Agreementland" as never)}
                     activeOpacity={0.7}
                 >
                     <MaterialIcons name="arrow-back" size={24} color="#fff" />
                 </TouchableOpacity>
                 <Text style={styles.headerText}>Nominee & Witness Details</Text>
-                <View style={{ width: 24 }} />
+                
             </View>
 
             <KeyboardAwareScrollView
@@ -1168,726 +1169,680 @@ const AgreementSecond: React.FC = () => {
                 enableOnAndroid={true}
                 extraScrollHeight={100}
                 keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={true}
+                showsVerticalScrollIndicator={false}
                 enableResetScrollToCoords={false}
                 bounces={false}
                 overScrollMode="never"
             >
                 {/* Nominee Section */}
                 <Card style={styles.sectionCard}>
-                    <Text style={styles.sectionTitle}>Nominee Details</Text>
-                    {nominees.map((nominee, index) => (
-                        <Card key={index} style={styles.innerCard}>
-                            <Card.Content>
-                                <Text style={styles.sectionSubTitle}>Nominee {index + 1}</Text>
+                    {renderSectionHeader("Nominee Details", "nominee", 1)}
+                    
+                    {activeSection === "nominee" && (
+                        <Card.Content style={styles.sectionContent}>
+                            <View style={styles.requiredInfo}>
+                                <MaterialIcons name="info" size={16} color="#FF6B35" />
+                                <Text style={styles.requiredInfoText}>Minimum 1 Nominee Required</Text>
+                            </View>
 
-                                {/* REQUIRED FIELDS - Name and Mobile Only */}
-                                <Text style={styles.label}>Name *</Text>
-                                <RNTextInput
-                                    placeholder="Full Name"
-                                    value={nominee.nomineename}
-                                    onChangeText={(text) => updateNominee(index, "nomineename", text)}
-                                    style={[
-                                        styles.simpleInput,
-                                        nomineeErrors[index]?.nomineename && styles.inputError
-                                    ]}
-                                    maxLength={25}
-                                />
-                                {nomineeErrors[index]?.nomineename ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.nomineename}>
-                                        {nomineeErrors[index]?.nomineename}
-                                    </HelperText>
-                                ) : null}
+                            {nominees.map((nominee, index) => (
+                                <Card key={index} style={styles.innerCard}>
+                                    <Card.Content>
+                                        <Text style={styles.sectionSubTitle}>Nominee </Text>
 
-                                <Text style={styles.label}>Mobile number *</Text>
-                                <RNTextInput
-                                    placeholder="Mobile Number"
-                                    keyboardType="phone-pad"
-                                    value={nominee.mobileno}
-                                    onChangeText={(text) => {
-                                        const numericText = text.replace(/[^0-9]/g, "");
-                                        updateNominee(index, "mobileno", numericText);
-                                    }}
-                                    style={[
-                                        styles.simpleInput,
-                                        nomineeErrors[index]?.mobileno && styles.inputError
-                                    ]}
-                                    maxLength={10}
-                                />
-                                {nomineeErrors[index]?.mobileno ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.mobileno}>
-                                        {nomineeErrors[index]?.mobileno}
-                                    </HelperText>
-                                ) : null}
+                                        {/* Name and Mobile - Required */}
+                                        <View style={styles.row}>
+                                            <View style={styles.halfInput}>
+                                                <Text style={styles.label}>Name *</Text>
+                                                <RNTextInput
+                                                    placeholder="Full Name"
+                                                    value={nominee.nomineename}
+                                                    onChangeText={(text) => updateNominee(index, "nomineename", text)}
+                                                    style={[
+                                                        styles.simpleInput,
+                                                        nomineeErrors[index]?.nomineename && styles.inputError
+                                                    ]}
+                                                    maxLength={25}
+                                                />
+                                                {nomineeErrors[index]?.nomineename ? (
+                                                    <HelperText type="error" visible={!!nomineeErrors[index]?.nomineename}>
+                                                        {nomineeErrors[index]?.nomineename}
+                                                    </HelperText>
+                                                ) : null}
+                                            </View>
 
-                                {/* OPTIONAL FIELDS - Rest of the fields */}
-                                <Text style={styles.label}>Gender</Text>
-                                <Dropdown
-                                    style={[styles.dropdown, nomineeErrors[index]?.gender && styles.dropdownError]}
-                                    placeholderStyle={styles.placeholderStyle}
-                                    selectedTextStyle={styles.selectedTextStyle}
-                                    data={[
-                                        { label: "Male", value: "Male" },
-                                        { label: "Female", value: "Female" },
-                                        { label: "Other", value: "Other" },
-                                    ]}
-                                    labelField="label"
-                                    valueField="value"
-                                    placeholder="Select Gender"
-                                    value={nominee.gender}
-                                    onChange={(item) => updateNominee(index, "gender", item.value)}
-                                />
-                                {nomineeErrors[index]?.gender ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.gender}>
-                                        {nomineeErrors[index]?.gender}
-                                    </HelperText>
-                                ) : null}
+                                            <View style={styles.halfInput}>
+                                                <Text style={styles.label}>Mobile *</Text>
+                                                <RNTextInput
+                                                    placeholder="Mobile Number"
+                                                    keyboardType="phone-pad"
+                                                    value={nominee.mobileno}
+                                                    onChangeText={(text) => {
+                                                        const numericText = text.replace(/[^0-9]/g, "");
+                                                        updateNominee(index, "mobileno", numericText);
+                                                    }}
+                                                    style={[
+                                                        styles.simpleInput,
+                                                        nomineeErrors[index]?.mobileno && styles.inputError
+                                                    ]}
+                                                    maxLength={10}
+                                                />
+                                                {nomineeErrors[index]?.mobileno ? (
+                                                    <HelperText type="error" visible={!!nomineeErrors[index]?.mobileno}>
+                                                        {nomineeErrors[index]?.mobileno}
+                                                    </HelperText>
+                                                ) : null}
+                                            </View>
+                                        </View>
 
-                                <Text style={styles.label}>Year</Text>
-                                <YearPickerInput
-                                    value={nominee.year}
-                                    onChange={(year) => updateNominee(index, "year", year)}
-                                />
-                                {nomineeErrors[index]?.year ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.year}>
-                                        {nomineeErrors[index]?.year}
-                                    </HelperText>
-                                ) : null}
+                                        {/* Gender and Relation */}
+                                        <View style={styles.row}>
+                                            <View style={styles.halfInput}>
+                                                <Text style={styles.label}>Gender</Text>
+                                                <Dropdown
+                                                    style={[styles.dropdown, nomineeErrors[index]?.gender && styles.dropdownError]}
+                                                    placeholderStyle={styles.placeholderStyle}
+                                                    selectedTextStyle={styles.selectedTextStyle}
+                                                    data={[
+                                                        { label: "Male", value: "Male" },
+                                                        { label: "Female", value: "Female" },
+                                                        { label: "Other", value: "Other" },
+                                                    ]}
+                                                    labelField="label"
+                                                    valueField="value"
+                                                    placeholder="Select Gender"
+                                                    value={nominee.gender}
+                                                    onChange={(item) => updateNominee(index, "gender", item.value)}
+                                                />
+                                            </View>
 
-                                <Text style={styles.label}>Date of Birth</Text>
-                                <CustomDateTimePicker
-                                    value={nominee.dob ? new Date(nominee.dob) : new Date()}
-                                    onChange={(date) => {
-                                        const formattedDate = date.toISOString().split("T")[0];
-                                        const age = calculateAge(formattedDate);
-                                        console.log("Calculated Age:", age);
-                                        updateNominee(index, "dob", formattedDate);
-                                        updateNominee(index, "age", age.toString());
-                                    }}
-                                    mode="date"
-                                />
+                                            <View style={styles.halfInput}>
+                                                <Text style={styles.label}>Relation *</Text>
+                                                <CommonPicker
+                                                    selectedValue={nominee.relation || ""}
+                                                    onValueChange={(value) => updateNominee(index, "relation", value)}
+                                                    items={[
+                                                        { label: "S/O", value: "S/O" },
+                                                        { label: "D/O", value: "D/O" },
+                                                        { label: "W/O", value: "W/O" },
+                                                    ]}
+                                                />
+                                                {nomineeErrors[index]?.relation ? (
+                                                    <HelperText type="error" visible={!!nomineeErrors[index]?.relation}>
+                                                        {nomineeErrors[index]?.relation}
+                                                    </HelperText>
+                                                ) : null}
+                                            </View>
+                                        </View>
 
-                                <Text style={styles.label}>Email Address</Text>
-                                <RNTextInput
-                                    placeholder="Email Address"
-                                    keyboardType="email-address"
-                                    value={nominee.email}
-                                    onChangeText={(text) => updateNominee(index, "email", text)}
-                                    style={[
-                                        styles.simpleInput,
-                                        nomineeErrors[index]?.email && styles.inputError
-                                    ]}
-                                    maxLength={50}
-                                />
-                                {nomineeErrors[index]?.email ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.email}>
-                                        {nomineeErrors[index]?.email}
-                                    </HelperText>
-                                ) : null}
+                                        {/* Date of Birth and Year */}
+                                        <View style={styles.row}>
+                                            <View style={styles.halfInput}>
+                                                <Text style={styles.label}>Date of Birth</Text>
+                                                <CustomDateTimePicker
+                                                    value={nominee.dob ? new Date(nominee.dob) : new Date()}
+                                                    onChange={(date) => {
+                                                        const formattedDate = date.toISOString().split("T")[0];
+                                                        const age = calculateAge(formattedDate);
+                                                        updateNominee(index, "dob", formattedDate);
+                                                        updateNominee(index, "age", age);
+                                                    }}
+                                                    mode="date"
+                                                />
+                                            </View>
 
-                                <Text style={styles.label}>Relation *</Text>
-                                <CommonPicker
-                                    selectedValue={nominee.relation || ""}
-                                    onValueChange={(value) => updateNominee(index, "relation", value)}
-                                    items={[
-                                        { label: "S/O", value: "S/O" },
-                                        { label: "D/O", value: "D/O" },
-                                        { label: "W/O", value: "W/O" },
-                                    ]}
-                                />
-                                {nomineeErrors[index]?.relation ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.relation}>
-                                        {nomineeErrors[index]?.relation}
-                                    </HelperText>
-                                ) : null}
+                                            <View style={styles.halfInput}>
+                                                <Text style={styles.label}>Year</Text>
+                                                <YearPickerInput
+                                                    value={nominee.year}
+                                                    onChange={(year) => updateNominee(index, "year", year)}
+                                                />
+                                            </View>
+                                        </View>
 
-                                <Text style={styles.label}>Address Line *</Text>
-                                <RNTextInput
-                                    placeholder="Address Line"
-                                    value={nominee.addrline}
-                                    onChangeText={(text) => updateNominee(index, "addrline", text)}
-                                    style={[
-                                        styles.simpleInput,
-                                        nomineeErrors[index]?.addrline && styles.inputError
-                                    ]}
-                                    maxLength={200}
-                                />
-                                {nomineeErrors[index]?.addrline ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.addrline}>
-                                        {nomineeErrors[index]?.addrline}
-                                    </HelperText>
-                                ) : null}
-
-                                <Text style={styles.label}>Village Name</Text>
-                                <RNTextInput
-                                    placeholder="Village Name"
-                                    value={nominee.villagename}
-                                    onChangeText={(text) => updateNominee(index, "villagename", text)}
-                                    style={[
-                                        styles.simpleInput,
-                                        nomineeErrors[index]?.villagename && styles.inputError
-                                    ]}
-                                    maxLength={100}
-                                />
-                                {nomineeErrors[index]?.villagename ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.villagename}>
-                                        {nomineeErrors[index]?.villagename}
-                                    </HelperText>
-                                ) : null}
-
-                                <Text style={styles.label}>Pincode *</Text>
-                                <RNTextInput
-                                    placeholder="Pincode"
-                                    keyboardType="numeric"
-                                    value={nominee.pincode}
-                                    onChangeText={(text) => updateNominee(index, "pincode", text)}
-                                    style={[
-                                        styles.simpleInput,
-                                        nomineeErrors[index]?.pincode && styles.inputError
-                                    ]}
-                                    maxLength={6}
-                                />
-                                {nomineeErrors[index]?.pincode ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.pincode}>
-                                        {nomineeErrors[index]?.pincode}
-                                    </HelperText>
-                                ) : null}
-
-                                <Text style={styles.label}>State *</Text>
-                                <CommonPicker
-                                    selectedValue={nominee.stateid || ""}
-                                    onValueChange={(value) => handleStateChange(value, "Nominee", index)}
-                                    items={statesList}
-                                />
-                                {nomineeErrors[index]?.stateid ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.stateid}>
-                                        {nomineeErrors[index]?.stateid}
-                                    </HelperText>
-                                ) : null}
-
-                                <Text style={styles.label}>District *</Text>
-                                <CommonPicker
-                                    selectedValue={nominee.districtid || ""}
-                                    onValueChange={(value) => handleDistrictChange(value, "Nominee", index)}
-                                    items={nomineeDistrictsList[index] || []}
-                                />
-                                {nomineeErrors[index]?.districtid ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.districtid}>
-                                        {nomineeErrors[index]?.districtid}
-                                    </HelperText>
-                                ) : null}
-
-                                <Text style={styles.label}>City *</Text>
-                                <CommonPicker
-                                    selectedValue={nominee.subdistrictid || ""}
-                                    onValueChange={(value) => handleCityChange(value, "Nominee", index)}
-                                    items={nomineeCitiesList[index] || []}
-                                />
-                                {nomineeErrors[index]?.subdistrictid ? (
-                                    <HelperText type="error" visible={!!nomineeErrors[index]?.subdistrictid}>
-                                        {nomineeErrors[index]?.subdistrictid}
-                                    </HelperText>
-                                ) : null}
-
-                                {/* Account Holder Name */}
-                                <Text style={styles.label}>Account Holder Name *</Text>
-                                <RNTextInput
-                                    placeholder="Account Holder Name"
-                                    value={nominee.accountholdername}
-                                    onChangeText={(text) => {
-                                        updateNominee(index, "accountholdername", text);
-                                        validateNomineeField(index, "accountholdername", text);
-                                    }}
-                                    style={[
-                                        styles.simpleInput,
-                                        nomineeErrors[index]?.accountholdername && styles.inputError,
-                                    ]}
-                                />
-                                {nomineeErrors[index]?.accountholdername && (
-                                    <HelperText type="error">
-                                        {nomineeErrors[index].accountholdername}
-                                    </HelperText>
-                                )}
-
-                                {/* Account Number */}
-                                <Text style={styles.label}>Account Number *</Text>
-                                <RNTextInput
-                                    placeholder="Account Number"
-                                    keyboardType="numeric"
-                                    maxLength={18}
-                                    value={nominee.raccountnumber}
-                                    onChangeText={(text) => {
-                                        const numeric = text.replace(/[^0-9]/g, "");
-                                        updateNominee(index, "raccountnumber", numeric);
-                                        validateNomineeField(index, "raccountnumber", numeric);
-                                    }}
-                                    style={[
-                                        styles.simpleInput,
-                                        nomineeErrors[index]?.raccountnumber && styles.inputError,
-                                    ]}
-                                />
-                                {nomineeErrors[index]?.raccountnumber && (
-                                    <HelperText type="error">
-                                        {nomineeErrors[index].raccountnumber}
-                                    </HelperText>
-                                )}
-
-                                {/* IFSC */}
-                                <Text style={styles.label}>IFSC Code *</Text>
-                                <RNTextInput
-                                    placeholder="IFSC Code"
-                                    value={nominee.ifsc}
-                                    maxLength={11}
-                                    onChangeText={(text) => {
-                                        const upper = text.toUpperCase();
-                                        updateNominee(index, "ifsc", upper);
-                                        validateNomineeField(index, "ifsc", upper);
-                                    }}
-                                    style={[
-                                        styles.simpleInput,
-                                        nomineeErrors[index]?.ifsc && styles.inputError,
-                                    ]}
-                                />
-                                {nomineeErrors[index]?.ifsc && (
-                                    <HelperText type="error">{nomineeErrors[index].ifsc}</HelperText>
-                                )}
-
-                                {/* Passbook Photo Required */}
-                                <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                    <Text style={{ fontWeight: "bold" }}>Passbook Photo *</Text>
-
-                                    {nomineeProfilePhotos[index] ? (
-                                        <Image
-                                            source={{ uri: nomineeProfilePhotos[index] }}
-                                            style={{ width: 250, height: 150, marginVertical: 10 }}
-                                            resizeMode="cover"
+                                       
+                                        {/* Address */}
+                                        <Text style={styles.label}>Address Line *</Text>
+                                        <RNTextInput
+                                            placeholder="Address Line"
+                                            value={nominee.addrline}
+                                            onChangeText={(text) => updateNominee(index, "addrline", text)}
+                                            style={[
+                                                styles.simpleInput,
+                                                nomineeErrors[index]?.addrline && styles.inputError
+                                            ]}
+                                            maxLength={200}
+                                            multiline
+                                            numberOfLines={2}
                                         />
-                                    ) : (
-                                        <Text style={{ color: "#777", fontStyle: "italic" }}>
-                                            No passbook photo added
-                                        </Text>
-                                    )}
+                                        {nomineeErrors[index]?.addrline ? (
+                                            <HelperText type="error" visible={!!nomineeErrors[index]?.addrline}>
+                                                {nomineeErrors[index]?.addrline}
+                                            </HelperText>
+                                        ) : null}
 
-                                    {/* PASSBOOK ERROR */}
-                                    {nomineeErrors[index]?.passbook && (
-                                        <HelperText type="error">
-                                            {nomineeErrors[index].passbook}
-                                        </HelperText>
-                                    )}
-                                </View>
+                                        {/* Location Row */}
+                                        <View style={styles.row}>
+                                            <View style={styles.thirdInput}>
+                                                <Text style={styles.label}>Pincode *</Text>
+                                                <RNTextInput
+                                                    placeholder="Pincode"
+                                                    keyboardType="numeric"
+                                                    value={nominee.pincode}
+                                                    onChangeText={(text) => updateNominee(index, "pincode", text)}
+                                                    style={[
+                                                        styles.simpleInput,
+                                                        nomineeErrors[index]?.pincode && styles.inputError
+                                                    ]}
+                                                    maxLength={6}
+                                                />
+                                            </View>
 
-                                <TouchableOpacity
-                                    style={styles.iconButton}
-                                    onPress={() => {
-                                        handleNomineeProfilePhoto(index);
-
-                                    }}
-                                >
-                                    <MaterialIcons name="photo-camera" size={26} color="#2C5EFF" />
-                                    <Text>Add Passbook Photo</Text>
-                                </TouchableOpacity>
-
-                                {/* Signature Preview */}
-                                {/* <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                    <Text style={{ fontWeight: "bold", marginBottom: 5 }}>Signature:</Text>
-                                    {nomineeSignatureUri?.[index]?.length > 0 ? (
-                                        <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                            <Text style={{ fontWeight: "bold" }}>Signature Preview:</Text>
-                                            <Image
-                                                source={{ uri: nomineeSignatureUri[index] }}
-                                                style={{ width: 250, height: 100, borderWidth: 1, borderColor: "#ccc", marginTop: 5 }}
-                                                resizeMode="contain"
-                                            />
+                                            <View style={styles.twoThirdInput}>
+                                                <Text style={styles.label}>Village Name</Text>
+                                                <RNTextInput
+                                                    placeholder="Village Name"
+                                                    value={nominee.villagename}
+                                                    onChangeText={(text) => updateNominee(index, "villagename", text)}
+                                                    style={styles.simpleInput}
+                                                    maxLength={100}
+                                                />
+                                            </View>
                                         </View>
-                                    ) : (
-                                        <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                            <Text style={{ color: '#666', fontStyle: 'italic' }}>No signature added</Text>
-                                        </View>
-                                    )}
-                                </View>
 
-                                <TouchableOpacity
-                                    style={styles.iconButton}
-                                    onPress={() => navigation.navigate("Signature", { type: "nominee", index })}
-                                >
-                                    <MaterialCommunityIcons name="signature-freehand" size={26} color="#2C5EFF" />
-                                    <Text>Add Nominee Signature</Text>
-                                </TouchableOpacity> */}
-                            </Card.Content>
-                        </Card>
-                    ))}
+                                        {/* State, District, City */}
+                                        <View style={styles.row}>
+                                            <View style={styles.thirdInput}>
+                                                <Text style={styles.label}>State *</Text>
+                                                <CommonPicker
+                                                    selectedValue={nominee.stateid || ""}
+                                                    onValueChange={(value) => handleStateChange(value, "Nominee", index)}
+                                                    items={statesList}
+                                                />
+                                            </View>
+
+                                          
+                                        </View>
+
+
+                                         <View style={styles.row}>
+                                            <View style={styles.thirdInput}>
+                                                <Text style={styles.label}>District *</Text>
+                                                <CommonPicker
+                                                    selectedValue={nominee.districtid || ""}
+                                                    onValueChange={(value) => handleDistrictChange(value, "Nominee", index)}
+                                                    items={nomineeDistrictsList[index] || []}
+                                                />
+                                            </View>
+
+                                            <View style={styles.thirdInput}>
+                                                <Text style={styles.label}>City *</Text>
+                                                <CommonPicker
+                                                    selectedValue={nominee.subdistrictid || ""}
+                                                    onValueChange={(value) => handleCityChange(value, "Nominee", index)}
+                                                    items={nomineeCitiesList[index] || []}
+                                                />
+                                            </View>
+
+
+                                         </View>
+
+                                        {/* Bank Details */}
+                                        <Text style={styles.sectionSubTitle}>Bank Account Details</Text>
+                                        
+                                        <Text style={styles.label}>Account Holder Name *</Text>
+                                        <RNTextInput
+                                            placeholder="Account Holder Name"
+                                            value={nominee.accountholdername}
+                                            onChangeText={(text) => {
+                                                updateNominee(index, "accountholdername", text);
+                                                validateNomineeField(index, "accountholdername", text);
+                                            }}
+                                            style={[
+                                                styles.simpleInput,
+                                                nomineeErrors[index]?.accountholdername && styles.inputError,
+                                            ]}
+                                        />
+                                        {nomineeErrors[index]?.accountholdername && (
+                                            <HelperText type="error">
+                                                {nomineeErrors[index].accountholdername}
+                                            </HelperText>
+                                        )}
+
+                                        <View style={styles.row}>
+                                            <View style={styles.halfInput}>
+                                                <Text style={styles.label}>Account Number *</Text>
+                                                <RNTextInput
+                                                    placeholder="Account Number"
+                                                    keyboardType="numeric"
+                                                    maxLength={18}
+                                                    value={nominee.raccountnumber}
+                                                    onChangeText={(text) => {
+                                                        const numeric = text.replace(/[^0-9]/g, "");
+                                                        updateNominee(index, "raccountnumber", numeric);
+                                                        validateNomineeField(index, "raccountnumber", numeric);
+                                                    }}
+                                                    style={[
+                                                        styles.simpleInput,
+                                                        nomineeErrors[index]?.raccountnumber && styles.inputError,
+                                                    ]}
+                                                />
+                                                {nomineeErrors[index]?.raccountnumber && (
+                                                    <HelperText type="error">
+                                                        {nomineeErrors[index].raccountnumber}
+                                                    </HelperText>
+                                                )}
+                                            </View>
+
+                                            <View style={styles.halfInput}>
+                                                <Text style={styles.label}>IFSC Code *</Text>
+                                                <RNTextInput
+                                                    placeholder="IFSC Code"
+                                                    value={nominee.ifsc}
+                                                    maxLength={11}
+                                                    onChangeText={(text) => {
+                                                        const upper = text.toUpperCase();
+                                                        updateNominee(index, "ifsc", upper);
+                                                        validateNomineeField(index, "ifsc", upper);
+                                                    }}
+                                                    style={[
+                                                        styles.simpleInput,
+                                                        nomineeErrors[index]?.ifsc && styles.inputError,
+                                                    ]}
+                                                />
+                                                {nomineeErrors[index]?.ifsc && (
+                                                    <HelperText type="error">{nomineeErrors[index].ifsc}</HelperText>
+                                                )}
+                                            </View>
+                                        </View>
+
+                                        {/* Passbook Photo */}
+                                        <View style={styles.photoSection}>
+                                            <Text style={styles.photoLabel}>Passbook Photo *</Text>
+                                            {nomineeProfilePhotos[index] ? (
+                                                <Image
+                                                    source={{ uri: nomineeProfilePhotos[index] }}
+                                                    style={styles.photoPreview}
+                                                    resizeMode="cover"
+                                                />
+                                            ) : (
+                                                <View style={styles.photoPlaceholder}>
+                                                    <MaterialIcons name="photo-library" size={32} color="#ccc" />
+                                                    <Text style={styles.photoPlaceholderText}>No passbook photo added</Text>
+                                                </View>
+                                            )}
+                                            <TouchableOpacity
+                                                style={styles.photoButton}
+                                                onPress={() => handleNomineeProfilePhoto(index)}
+                                            >
+                                                <MaterialIcons name="photo-camera" size={20} color="#fff" />
+                                                <Text style={styles.photoButtonText}>Capture Passbook</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </Card.Content>
+                                </Card>
+                            ))}
+                        </Card.Content>
+                    )}
                 </Card>
 
                 {/* Witness Section */}
                 <Card style={styles.sectionCard}>
-                    <Text style={styles.sectionTitle}>Witness Details</Text>
-                    {witnesses.map((witness, index) => (
-                        <Card key={index} style={styles.innerCard}>
-                            <Card.Content>
-                                <Text style={styles.sectionSubTitle}>Witness {index + 1}</Text>
+                    {renderSectionHeader("Witness Details", "witness", witnesses.length)}
+                    
+                    {activeSection === "witness" && (
+                        <Card.Content style={styles.sectionContent}>
+                            <View style={styles.requiredInfo}>
+                                <MaterialIcons name="info" size={16} color="#FF6B35" />
+                                <Text style={styles.requiredInfoText}>
+                                    {witnesses.length === 0 ? "Minimum 1 Witness Required" : 
+                                     witnesses.length === 1 ? "Add 1 more witness (Optional)" : 
+                                     "Maximum 2 Witnesses Reached"}
+                                </Text>
+                            </View>
 
-                                <Text style={styles.label}>Name *</Text>
-                                <RNTextInput
-                                    placeholder="Full Name"
-                                    value={witness.witnessname}
-                                    onChangeText={(text) => updateWitness(index, "witnessname", text)}
-                                    style={[
-                                        styles.simpleInput,
-                                        witnessErrors[index]?.witnessname && styles.inputError
-                                    ]}
-                                    maxLength={20}
-                                />
-                                {witnessErrors[index]?.witnessname ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.witnessname}>
-                                        {witnessErrors[index]?.witnessname}
-                                    </HelperText>
-                                ) : null}
-
-                                <Text style={styles.label}>Mobile Number *</Text>
-                                <RNTextInput
-                                    placeholder="Mobile Number"
-                                    keyboardType="phone-pad"
-                                    value={witness.witnessmobileno}
-                                    onChangeText={(text) => {
-                                        const numericText = text.replace(/[^0-9]/g, "");
-                                        updateWitness(index, "witnessmobileno", numericText);
-                                    }}
-                                    style={[
-                                        styles.simpleInput,
-                                        witnessErrors[index]?.witnessmobileno && styles.inputError
-                                    ]}
-                                    maxLength={10}
-                                />
-                                {witnessErrors[index]?.witnessmobileno ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.witnessmobileno}>
-                                        {witnessErrors[index]?.witnessmobileno}
-                                    </HelperText>
-                                ) : null}
-
-                                <Text style={styles.label}>Email Address</Text>
-                                <RNTextInput
-                                    placeholder="Email Address"
-                                    keyboardType="email-address"
-                                    value={witness.witnessemail}
-                                    onChangeText={(text) => updateWitness(index, "witnessemail", text)}
-                                    style={[
-                                        styles.simpleInput,
-                                        witnessErrors[index]?.witnessemail && styles.inputError
-                                    ]}
-                                    maxLength={50}
-                                />
-                                {witnessErrors[index]?.witnessemail ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.witnessemail}>
-                                        {witnessErrors[index]?.witnessemail}
-                                    </HelperText>
-                                ) : null}
-
-                                <Text style={styles.label}>Address *</Text>
-                                <RNTextInput
-                                    placeholder="Address Line"
-                                    value={witness.addrline}
-                                    onChangeText={(text) => updateWitness(index, "addrline", text)}
-                                    style={[
-                                        styles.simpleInput,
-                                        witnessErrors[index]?.addrline && styles.inputError
-                                    ]}
-                                    maxLength={200}
-                                />
-                                {witnessErrors[index]?.addrline ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.addrline}>
-                                        {witnessErrors[index]?.addrline}
-                                    </HelperText>
-                                ) : null}
-
-                                <Text style={styles.label}>Pincode *</Text>
-                                <RNTextInput
-                                    placeholder="Pincode"
-                                    keyboardType="numeric"
-                                    value={witness.pincode}
-                                    onChangeText={(text) => updateWitness(index, "pincode", text)}
-                                    style={[
-                                        styles.simpleInput,
-                                        witnessErrors[index]?.pincode && styles.inputError
-                                    ]}
-                                    maxLength={6}
-                                />
-                                {witnessErrors[index]?.pincode ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.pincode}>
-                                        {witnessErrors[index]?.pincode}
-                                    </HelperText>
-                                ) : null}
-
-                                <Text style={styles.label}>State *</Text>
-                                <CommonPicker
-                                    selectedValue={witness.stateid || ""}
-                                    onValueChange={(value) => handleStateChange(value, "Witness", index)}
-                                    items={statesList}
-                                />
-                                {witnessErrors[index]?.stateid ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.stateid}>
-                                        {witnessErrors[index]?.stateid}
-                                    </HelperText>
-                                ) : null}
-
-                                <Text style={styles.label}>District *</Text>
-                                <CommonPicker
-                                    selectedValue={witness.districtid || ""}
-                                    onValueChange={(value) => handleDistrictChange(value, "Witness", index)}
-                                    items={witnessDistrictsList[index] || []}
-                                />
-                                {witnessErrors[index]?.districtid ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.districtid}>
-                                        {witnessErrors[index]?.districtid}
-                                    </HelperText>
-                                ) : null}
-
-                                <Text style={styles.label}>City *</Text>
-                                <CommonPicker
-                                    selectedValue={witness.subdistrictid || ""}
-                                    onValueChange={(value) => handleCityChange(value, "Witness", index)}
-                                    items={witnessCitiesList[index] || []}
-                                />
-                                {witnessErrors[index]?.subdistrictid ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.subdistrictid}>
-                                        {witnessErrors[index]?.subdistrictid}
-                                    </HelperText>
-                                ) : null}
-
-                                <Text style={styles.label}>Village name</Text>
-                                <RNTextInput
-                                    placeholder="Village Name"
-                                    value={witness.villagename}
-                                    onChangeText={(text) => updateWitness(index, "villagename", text)}
-                                    style={[
-                                        styles.simpleInput,
-                                        witnessErrors[index]?.villagename && styles.inputError
-                                    ]}
-                                    maxLength={100}
-                                />
-                                {witnessErrors[index]?.villagename ? (
-                                    <HelperText type="error" visible={!!witnessErrors[index]?.villagename}>
-                                        {witnessErrors[index]?.villagename}
-                                    </HelperText>
-                                ) : null}
-
-                                {/* <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                    <Text style={{ fontWeight: "bold", marginBottom: 5 }}>Profile Document:</Text>
-                                    {witnessProfilePhotos[index] ? (
-                                        <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                            <Text style={{ fontWeight: "bold" }}>Profile Photo Preview:</Text>
-                                            <Image
-                                                source={{ uri: witnessProfilePhotos[index] }}
-                                                style={{ width: 250, height: 150, borderWidth: 1, borderColor: "#ccc", marginTop: 5 }}
-                                                resizeMode="cover"
-                                            />
+                            {witnesses.map((witness, index) => (
+                                <Card key={index} style={styles.innerCard}>
+                                    <Card.Content>
+                                        <View style={styles.witnessHeader}>
+                                            <Text style={styles.sectionSubTitle}>Witness {index + 1}</Text>
+                                            {witnesses.length > 1 && (
+                                                <TouchableOpacity 
+                                                    style={styles.deleteButton}
+                                                    onPress={() => deleteWitness(index)}
+                                                >
+                                                    <MaterialIcons name="delete" size={20} color="#ff4444" />
+                                                </TouchableOpacity>
+                                            )}
                                         </View>
-                                    ) : (
-                                        <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                            <Text style={{ color: '#666', fontStyle: 'italic' }}>No profile photo added</Text>
+
+                                        {/* Name and Mobile */}
+                                        <View style={styles.row}>
+                                            <View style={styles.halfInput}>
+                                                <Text style={styles.label}>Name *</Text>
+                                                <RNTextInput
+                                                    placeholder="Full Name"
+                                                    value={witness.witnessname}
+                                                    onChangeText={(text) => updateWitness(index, "witnessname", text)}
+                                                    style={[
+                                                        styles.simpleInput,
+                                                        witnessErrors[index]?.witnessname && styles.inputError
+                                                    ]}
+                                                    maxLength={20}
+                                                />
+                                                {witnessErrors[index]?.witnessname ? (
+                                                    <HelperText type="error" visible={!!witnessErrors[index]?.witnessname}>
+                                                        {witnessErrors[index]?.witnessname}
+                                                    </HelperText>
+                                                ) : null}
+                                            </View>
+
+                                            <View style={styles.halfInput}>
+                                                <Text style={styles.label}>Mobile *</Text>
+                                                <RNTextInput
+                                                    placeholder="Mobile Number"
+                                                    keyboardType="phone-pad"
+                                                    value={witness.witnessmobileno}
+                                                    onChangeText={(text) => {
+                                                        const numericText = text.replace(/[^0-9]/g, "");
+                                                        updateWitness(index, "witnessmobileno", numericText);
+                                                    }}
+                                                    style={[
+                                                        styles.simpleInput,
+                                                        witnessErrors[index]?.witnessmobileno && styles.inputError
+                                                    ]}
+                                                    maxLength={10}
+                                                />
+                                                {witnessErrors[index]?.witnessmobileno ? (
+                                                    <HelperText type="error" visible={!!witnessErrors[index]?.witnessmobileno}>
+                                                        {witnessErrors[index]?.witnessmobileno}
+                                                    </HelperText>
+                                                ) : null}
+                                            </View>
                                         </View>
-                                    )}
-                                </View> */}
-                                {/* 
-                                <TouchableOpacity
-                                    style={styles.iconButton}
-                                    onPress={() => handleWitnessProfilePhoto(index)}
+
+                                     
+
+                                        {/* Address */}
+                                        <Text style={styles.label}>Address *</Text>
+                                        <RNTextInput
+                                            placeholder="Address Line"
+                                            value={witness.addrline}
+                                            onChangeText={(text) => updateWitness(index, "addrline", text)}
+                                            style={[
+                                                styles.simpleInput,
+                                                witnessErrors[index]?.addrline && styles.inputError
+                                            ]}
+                                            maxLength={200}
+                                            multiline
+                                            numberOfLines={2}
+                                        />
+                                        {witnessErrors[index]?.addrline ? (
+                                            <HelperText type="error" visible={!!witnessErrors[index]?.addrline}>
+                                                {witnessErrors[index]?.addrline}
+                                            </HelperText>
+                                        ) : null}
+
+                                        {/* Location Details */}
+                                        <View style={styles.row}>
+                                            <View style={styles.thirdInput}>
+                                                <Text style={styles.label}>Pincode *</Text>
+                                                <RNTextInput
+                                                    placeholder="Pincode"
+                                                    keyboardType="numeric"
+                                                    value={witness.pincode}
+                                                    onChangeText={(text) => updateWitness(index, "pincode", text)}
+                                                    style={[
+                                                        styles.simpleInput,
+                                                        witnessErrors[index]?.pincode && styles.inputError
+                                                    ]}
+                                                    maxLength={6}
+                                                />
+                                            </View>
+
+                                            <View style={styles.twoThirdInput}>
+                                                <Text style={styles.label}>Village Name</Text>
+                                                <RNTextInput
+                                                    placeholder="Village Name"
+                                                    value={witness.villagename}
+                                                    onChangeText={(text) => updateWitness(index, "villagename", text)}
+                                                    style={styles.simpleInput}
+                                                    maxLength={100}
+                                                />
+                                            </View>
+                                        </View>
+
+                                        {/* State, District, City */}
+                                        <View style={styles.row}>
+                                            <View style={styles.thirdInput}>
+                                                <Text style={styles.label}>State *</Text>
+                                                <CommonPicker
+                                                    selectedValue={witness.stateid || ""}
+                                                    onValueChange={(value) => handleStateChange(value, "Witness", index)}
+                                                    items={statesList}
+                                                />
+                                            </View>
+
+                                            {/* <View style={styles.thirdInput}>
+                                                <Text style={styles.label}>District *</Text>
+                                                <CommonPicker
+                                                    selectedValue={witness.districtid || ""}
+                                                    onValueChange={(value) => handleDistrictChange(value, "Witness", index)}
+                                                    items={witnessDistrictsList[index] || []}
+                                                />
+                                            </View>
+
+                                            <View style={styles.thirdInput}>
+                                                <Text style={styles.label}>City *</Text>
+                                                <CommonPicker
+                                                    selectedValue={witness.subdistrictid || ""}
+                                                    onValueChange={(value) => handleCityChange(value, "Witness", index)}
+                                                    items={witnessCitiesList[index] || []}
+                                                />
+                                            </View> */}
+                                        </View>
+
+                                             <View style={styles.row}>
+                                                <View style={styles.thirdInput}>
+                                                <Text style={styles.label}>District *</Text>
+                                                <CommonPicker
+                                                    selectedValue={witness.districtid || ""}
+                                                    onValueChange={(value) => handleDistrictChange(value, "Witness", index)}
+                                                    items={witnessDistrictsList[index] || []}
+                                                />
+                                            </View>
+                                             <View style={styles.thirdInput}>
+                                                <Text style={styles.label}>City *</Text>
+                                                <CommonPicker
+                                                    selectedValue={witness.subdistrictid || ""}
+                                                    onValueChange={(value) => handleCityChange(value, "Witness", index)}
+                                                    items={witnessCitiesList[index] || []}
+                                                />
+                                            </View> 
+
+                                             </View>
+
+                                        {/* Signature Section */}
+                                        <View style={styles.photoSection}>
+                                            <Text style={styles.photoLabel}>Signature *</Text>
+                                            {witnessSignatureUri?.[index] ? (
+                                                <Image
+                                                    source={{ uri: witnessSignatureUri[index] }}
+                                                    style={styles.signaturePreview}
+                                                    resizeMode="contain"
+                                                />
+                                            ) : (
+                                                <View style={styles.photoPlaceholder}>
+                                                    <MaterialCommunityIcons name="signature-freehand" size={32} color="#ccc" />
+                                                    <Text style={styles.photoPlaceholderText}>No signature added</Text>
+                                                    <Text style={styles.requiredText}>Signature is required</Text>
+                                                </View>
+                                            )}
+                                            <TouchableOpacity
+                                                style={styles.photoButton}
+                                                onPress={() => navigation.navigate("Signature", { type: "witness", index })}
+                                            >
+                                                <MaterialCommunityIcons name="signature-freehand" size={20} color="#fff" />
+                                                <Text style={styles.photoButtonText}>Capture Signature</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    </Card.Content>
+                                </Card>
+                            ))}
+
+                            {witnesses.length < 2 && (
+                                <Button 
+                                    mode="outlined" 
+                                    onPress={addWitness} 
+                                    style={styles.addButton}
+                                    icon="plus"
                                 >
-                                    <MaterialIcons name="photo-camera" size={26} color="#2C5EFF" />
-                                    <Text>Add Profile Document Photo</Text>
-                                </TouchableOpacity> */}
-
-                                {/* Signature Preview */}
-
-                                <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                    <Text style={{ fontWeight: "bold", marginBottom: 5 }}>Signature:</Text>
-
-                                    {witnessSignatureUri?.[index] ? (
-                                        <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                            <Text style={{ fontWeight: "bold" }}>Signature Preview:</Text>
-                                            <Image
-                                                source={{ uri: witnessSignatureUri[index] }}
-                                                style={{ width: 250, height: 100, borderWidth: 1, borderColor: "#ccc", marginTop: 5 }}
-                                                resizeMode="contain"
-                                            />
-                                        </View>
-                                    ) : (
-                                        <View style={{ marginVertical: 10, alignItems: "center" }}>
-                                            <Text style={{ color: '#666', fontStyle: 'italic' }}>No signature added</Text>
-                                            <Text style={{ color: 'red', marginTop: 5 }}>Witness signature is required</Text>
-                                        </View>
-                                    )}
-                                </View>
-
-                                <TouchableOpacity
-                                    style={styles.iconButton}
-                                    onPress={() => navigation.navigate("Signature", { type: "witness", index })}
-                                >
-                                    <MaterialCommunityIcons name="signature-freehand" size={26} color="#2C5EFF" />
-                                    <Text>Add Witness Signature</Text>
-                                </TouchableOpacity>
-
-
-                              
-                                {witnesses.length > 1 && (
-                                    <Button
-                                        mode="outlined"
-                                        icon="delete"
-                                        onPress={() => deleteWitness(index)}
-                                        textColor="red"
-                                        style={{ marginVertical: 10, borderColor: "red" }}
-                                    >
-                                        Delete Witness
-                                    </Button>
-                                )}
-                            </Card.Content>
-                        </Card>
-                    ))}
-                    {witnesses.length < 2 && (
-                        <Button mode="outlined" onPress={addWitness} style={{ marginVertical: 10 }}>
-                            Add Another Witness
-                        </Button>
+                                    Add Witness {witnesses.length + 1}
+                                </Button>
+                            )}
+                        </Card.Content>
                     )}
                 </Card>
 
                 {/* Signature & Profile Section */}
-                <Card style={styles.signatureCard}>
-                    <Card.Content>
-                        <Text style={styles.cardTitle}>Signature & Profile Verification</Text>
-                        <Divider style={styles.divider} />
+                <Card style={styles.sectionCard}>
+                    {renderSectionHeader("Signature & Profile Verification", "signature")}
+                    
+                    {activeSection === "signature" && (
+                        <Card.Content style={styles.sectionContent}>
+                            <View style={styles.photoGrid}>
+                                <View style={styles.photoBlock}>
+                                    <View style={styles.photoHeader}>
+                                        <MaterialIcons name="gesture" size={22} color="#007AFF" />
+                                        <Text style={styles.photoLabel}>Signature</Text>
+                                    </View>
 
-                        <View style={styles.photoGrid}>
-                            <View style={styles.photoBlock}>
-                                <View style={styles.photoHeader}>
-                                    <MaterialIcons name="gesture" size={22} color="#007AFF" />
-                                    <Text style={styles.photoLabel}>Signature</Text>
+                                    {signaturePhoto ? (
+                                        <Image source={{ uri: signaturePhoto }} style={styles.previewImage} />
+                                    ) : (
+                                        <View style={styles.emptyBox}>
+                                            <MaterialIcons name="border-color" size={28} color="#999" />
+                                            <Text style={styles.emptyText}>No Signature Added</Text>
+                                        </View>
+                                    )}
+
+                                    <Button
+                                        mode="contained"
+                                        onPress={() =>
+                                            navigation.navigate("Signature", { type: "signature" })
+                                        }
+                                        icon={() => <MaterialIcons name="edit" size={20} color="#fff" />}
+                                        style={styles.actionButton}
+                                        contentStyle={styles.buttonContent}
+                                    >
+                                        Capture Signature
+                                    </Button>
                                 </View>
 
-                                {signaturePhoto ? (
-                                    <Image source={{ uri: signaturePhoto }} style={styles.previewImage} />
-                                ) : (
-                                    <View style={styles.emptyBox}>
-                                        <MaterialIcons name="border-color" size={28} color="#999" />
-                                        <Text style={styles.emptyText}>No Signature Added</Text>
+                                <View style={styles.photoBlock}>
+                                    <View style={styles.photoHeader}>
+                                        <MaterialIcons name="person" size={22} color="#007AFF" />
+                                        <Text style={styles.photoLabel}>Profile</Text>
                                     </View>
-                                )}
 
-                                <Button
-                                    mode="contained"
-                                    onPress={() =>
-                                        navigation.navigate("Signature", { type: "signature" })
-                                    }
-                                    icon={() => <MaterialIcons name="edit" size={20} color="#fff" />}
-                                    style={styles.actionButton}
-                                    contentStyle={styles.buttonContent}
-                                >
-                                    Capture Signature
-                                </Button>
-                            </View>
+                                    {profilePhoto ? (
+                                        <Image source={{ uri: profilePhoto }} style={styles.previewImage} />
+                                    ) : (
+                                        <View style={styles.emptyBox}>
+                                            <MaterialIcons name="photo-camera" size={28} color="#999" />
+                                            <Text style={styles.emptyText}>No Profile Photo</Text>
+                                        </View>
+                                    )}
 
-
-                            <View style={styles.photoBlock}>
-                                <View style={styles.photoHeader}>
-                                    <MaterialIcons name="person" size={22} color="#007AFF" />
-                                    <Text style={styles.photoLabel}>Profile</Text>
+                                    <Button
+                                        mode="contained"
+                                        onPress={() => openCamera(setProfilePhoto)}
+                                        icon={() => <MaterialIcons name="photo-camera" size={20} color="#fff" />}
+                                        style={[styles.actionButton, styles.profileButton]}
+                                        contentStyle={styles.buttonContent}
+                                    >
+                                        Capture Profile
+                                    </Button>
                                 </View>
-
-                                {profilePhoto ? (
-                                    <Image source={{ uri: profilePhoto }} style={styles.previewImage} />
-                                ) : (
-                                    <View style={styles.emptyBox}>
-                                        <MaterialIcons name="photo-camera" size={28} color="#999" />
-                                        <Text style={styles.emptyText}>No Profile Photo</Text>
-                                    </View>
-                                )}
-
-                                <Button
-                                    mode="contained"
-                                    onPress={() => openCamera(setProfilePhoto)}
-                                    icon={() => <MaterialIcons name="photo-camera" size={20} color="#fff" />}
-                                    style={[styles.actionButton, styles.profileButton]}
-                                    contentStyle={styles.buttonContent}
-                                >
-                                    Capture Profile
-                                </Button>
                             </View>
-                        </View>
-                    </Card.Content>
+                        </Card.Content>
+                    )}
                 </Card>
 
-                {/* Commodity Dropdown */}
-                {renderCommodityDropdown()}
-
-
+                {/* Additional Details Section */}
                 <Card style={styles.sectionCard}>
-                    <Card.Content>
-                        <Text style={styles.sectionTitle}>NHRDF Authorized Signatory</Text>
+                    {renderSectionHeader("Additional Details", "additional")}
+                    
+                    {activeSection === "additional" && (
+                        <Card.Content style={styles.sectionContent}>
+                            {/* Commodity Dropdown */}
+                            {renderCommodityDropdown()}
 
-                        {/* Authorized Signatory Name */}
-                        <Text style={styles.label}>Authorized Signatory Name</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.authorizedSignatory || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, authorizedSignatory: text } })}
-                            style={styles.input}
-                            placeholder="Enter authorized signatory name"
-                            maxLength={20}
-                        />
-
-
-
-                        <Text style={styles.label}>Tag Number</Text>
-                        <TextInput
-                            mode="outlined"
-                            value={state.form.TagNumber || ""}
-                            onChangeText={(text) => updateState({ ...state, form: { ...state.form, TagNumber: text } })}
-                            style={styles.input}
-                            placeholder="Enter Tag number"
-                            maxLength={50}
-                        />
-
-
-                    </Card.Content>
-                </Card>
-
-
-                {/* Agreement Terms and Conditions Section */}
-                <Card style={styles.sectionCard}>
-                    <Card.Content>
-                        <Text style={styles.sectionTitle}>Agreement Terms & Conditions</Text>
-
-                        <ScrollView style={styles.agreementContainer} nestedScrollEnabled={true}>
-                            <Text style={styles.agreementText}>
-                                <Text style={styles.agreementHeading}>Important Terms:{'\n\n'}</Text>
-                                • The NHRDF reserves the right to terminate this Contract Agreement without giving any notice under circumstances beyond their control.{'\n\n'}
-                                • In case of termination, the Grower will be fully responsible for disposal of seeds/bulbs/tubers produced.{'\n\n'}
-                                • This Agreement has been read & explained to the Grower in his/her own mother tongue.{'\n\n'}
-                                • The Grower hereby declares that he/she has understood fully the contents thereof.{'\n\n'}
-                                • This Agreement is signed and implemented as it is mutually understood and agreed by Grower and the NHRDF.{'\n\n'}
-                                • If any dispute arises in this matter as per this Agreement, jurisdiction will be Delhi Court, Delhi, India only.{'\n\n'}
-                                <Text style={styles.agreementNote}>
-                                    Note: The Grower is not allowed to sell the produce other than those approved under the programmes or from the fields not inspected by the NHRDF.
-                                </Text>
-                            </Text>
-                        </ScrollView>
-
-                        <View style={styles.checkboxContainer}>
-                            <Checkbox.Android
-                                status={isAgreementAccepted ? 'checked' : 'unchecked'}
-                                onPress={() => setIsAgreementAccepted(!isAgreementAccepted)}
-                                color="#70B04F"
+                            {/* Authorized Signatory */}
+                            <Text style={styles.label}>Authorized Signatory Name</Text>
+                            <TextInput
+                                mode="outlined"
+                                value={state.form.authorizedSignatory || ""}
+                                onChangeText={(text) => updateState({ ...state, form: { ...state.form, authorizedSignatory: text } })}
+                                style={styles.input}
+                                placeholder="Enter authorized signatory name"
+                                maxLength={20}
                             />
-                            <Text style={styles.checkboxLabel}>
-                                I have read and understood all the terms and conditions of this agreement and hereby accept them.
-                            </Text>
-                        </View>
-                        {!isAgreementAccepted && (
-                            <HelperText type="error" visible={!isAgreementAccepted}>
-                                Please accept the agreement terms to continue
-                            </HelperText>
-                        )}
-                    </Card.Content>
+
+                            <Text style={styles.label}>Tag Number</Text>
+                            <TextInput
+                                mode="outlined"
+                                value={state.form.TagNumber || ""}
+                                onChangeText={(text) => updateState({ ...state, form: { ...state.form, TagNumber: text } })}
+                                style={styles.input}
+                                placeholder="Enter Tag number"
+                                maxLength={50}
+                            />
+                        </Card.Content>
+                    )}
                 </Card>
 
+                {/* Agreement Terms Section */}
+                <Card style={styles.sectionCard}>
+                    {renderSectionHeader("Agreement Terms & Conditions", "agreement")}
+                    
+                    {activeSection === "agreement" && (
+                        <Card.Content style={styles.sectionContent}>
+                            <ScrollView style={styles.agreementContainer} nestedScrollEnabled={true}>
+                                <Text style={styles.agreementText}>
+                                    <Text style={styles.agreementHeading}>Important Terms:{'\n\n'}</Text>
+                                    • The NHRDF reserves the right to terminate this Contract Agreement without giving any notice under circumstances beyond their control.{'\n\n'}
+                                    • In case of termination, the Grower will be fully responsible for disposal of seeds/bulbs/tubers produced.{'\n\n'}
+                                    • This Agreement has been read & explained to the Grower in his/her own mother tongue.{'\n\n'}
+                                    • The Grower hereby declares that he/she has understood fully the contents thereof.{'\n\n'}
+                                    • This Agreement is signed and implemented as it is mutually understood and agreed by Grower and the NHRDF.{'\n\n'}
+                                    • If any dispute arises in this matter as per this Agreement, jurisdiction will be Delhi Court, Delhi, India only.{'\n\n'}
+                                    <Text style={styles.agreementNote}>
+                                        Note: The Grower is not allowed to sell the produce other than those approved under the programmes or from the fields not inspected by the NHRDF.
+                                    </Text>
+                                </Text>
+                            </ScrollView>
+
+                            <View style={styles.checkboxContainer}>
+                                <Checkbox.Android
+                                    status={isAgreementAccepted ? 'checked' : 'unchecked'}
+                                    onPress={() => setIsAgreementAccepted(!isAgreementAccepted)}
+                                    color="#70B04F"
+                                />
+                                <Text style={styles.checkboxLabel}>
+                                    I have read and understood all the terms and conditions of this agreement and hereby accept them.
+                                </Text>
+                            </View>
+                            {!isAgreementAccepted && (
+                                <HelperText type="error" visible={!isAgreementAccepted}>
+                                    Please accept the agreement terms to continue
+                                </HelperText>
+                            )}
+                        </Card.Content>
+                    )}
+                </Card>
+
+                {/* Submit Button */}
                 <Button
                     mode="contained"
                     onPress={handleSubmit}
@@ -1899,8 +1854,10 @@ const AgreementSecond: React.FC = () => {
                     icon="check"
                     disabled={!isFormValid() || isSubmitting}
                 >
-                    {isSubmitting ? "Submitting..." : "Submit Agreement"}
+                    {isSubmitting ? "Submitting..." : "SUBMIT AGREEMENT"}
                 </Button>
+
+                <View style={styles.bottomSpacer} />
             </KeyboardAwareScrollView>
         </View>
     );
@@ -1911,14 +1868,94 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: "#70B04F",
-        paddingHorizontal: 16,
-        paddingVertical: 14,
+        paddingHorizontal:23,
+        paddingVertical: 30,
         justifyContent: "space-between",
     },
-    sectionSubTitle: {
+    backButton: {
+    padding: 4,
+    marginTop: 8,   // niche shift
+},
+
+headerText: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#fff",
+    flex: 1,
+    textAlign: "center",
+    marginTop: 8,   // niche shift
+},
+
+    container: {
+        flex: 1,
+        backgroundColor: "#f5f5f5",
+    },
+    scrollContent: {
+        flexGrow: 1,
+        padding: 12,
+        paddingBottom: 20,
+    },
+    sectionCard: {
+        marginBottom: 12,
+        borderRadius: 12,
+        elevation: 2,
+        backgroundColor: "white",
+        overflow: 'hidden',
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: 16,
+        backgroundColor: '#f8f9fa',
+        borderBottomWidth: 1,
+        borderBottomColor: '#e9ecef',
+    },
+    sectionHeaderLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+    },
+    sectionTitle: {
         fontSize: 16,
+        fontWeight: "bold",
+        color: "#70B04F",
+        marginLeft: 8,
+    },
+    sectionContent: {
+        padding: 4,
+    },
+    countBadge: {
+        backgroundColor: '#70B04F',
+        borderRadius: 12,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        marginLeft: 8,
+    },
+    countText: {
+        color: '#fff',
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    requiredInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#FFF3E0',
+        padding: 12,
+        borderRadius: 8,
+        marginBottom: 12,
+        marginHorizontal: 8,
+    },
+    requiredInfoText: {
+        fontSize: 12,
+        color: '#E65100',
+        marginLeft: 8,
+        fontWeight: '500',
+    },
+    sectionSubTitle: {
+        fontSize: 15,
         fontWeight: "600",
-        marginBottom: 10,
+        marginBottom: 12,
         color: "#455A64"
     },
     innerCard: {
@@ -1926,32 +1963,146 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         elevation: 1,
         backgroundColor: "#fff",
+        marginHorizontal: 4,
     },
-    backButton: {
-        paddingHorizontal: 14,
-        paddingVertical: 20,
+    witnessHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 8,
     },
-    headerText: {
-        fontSize: 18,
+    deleteButton: {
+        padding: 4,
+    },
+    row: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 8,
+        gap: 8,
+    },
+    halfInput: {
+        flex: 1,
+    },
+    thirdInput: {
+        flex: 1,
+    },
+    twoThirdInput: {
+        flex: 2,
+        marginLeft: 8,
+    },
+    // Simple TextInput styles
+    simpleInput: {
+        height: 40,
+        borderWidth: 1,
+        borderColor: '#D1D5DB',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        backgroundColor: '#FFFFFF',
+        fontSize: 14,
+    },
+    inputError: {
+        borderColor: "#f44336",
+    },
+    label: {
+        fontSize: 13,
+        fontWeight: "600",
+        color: "#455A64",
+        marginBottom: 6,
+        marginTop: 4,
+    },
+    dropdown: {
+        height: 40,
+        borderColor: '#ccc',
+        borderWidth: 1,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        backgroundColor: '#fff',
+    },
+    dropdownError: {
+        borderColor: '#B00020',
+    },
+    placeholderStyle: {
+        fontSize: 14,
+        color: '#000',
+    },
+    selectedTextStyle: {
+        fontSize: 14,
+        color: '#000',
+    },
+    input: {
+        backgroundColor: '#fff',
+        marginBottom: 12,
+        fontSize: 14,
+    },
+    photoSection: {
+        marginVertical: 12,
+        alignItems: "center",
+    },
+    photoLabel: {
         fontWeight: "bold",
-        color: "#fff",
-        flex: 1,
-        textAlign: "center",
+        marginBottom: 8,
+        fontSize: 14,
+        color: '#455A64',
     },
-    container: {
-        flex: 1,
-        backgroundColor: "#f5f5f5",
+    photoPreview: {
+        width: '100%',
+        height: 150,
+        borderRadius: 8,
+        marginVertical: 8,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
     },
-    scrollContent: {
-        flexGrow: 1,
-        padding: 16,
-        paddingBottom: 30,
+    signaturePreview: {
+        width: '100%',
+        height: 100,
+        borderRadius: 8,
+        marginVertical: 8,
+        borderWidth: 1,
+        borderColor: '#e0e0e0',
+        backgroundColor: '#f8f9fa',
     },
-    sectionCard: {
-        marginBottom: 16,
-        borderRadius: 12,
-        elevation: 2,
-        backgroundColor: "white",
+    photoPlaceholder: {
+        width: '100%',
+        height: 120,
+        borderWidth: 1.5,
+        borderColor: "#d9d9d9",
+        borderRadius: 8,
+        justifyContent: "center",
+        alignItems: "center",
+        marginVertical: 8,
+        backgroundColor: "#fafafa",
+        borderStyle: 'dashed',
+    },
+    photoPlaceholderText: {
+        fontSize: 12,
+        color: "#999",
+        marginTop: 4,
+    },
+    requiredText: {
+        fontSize: 11,
+        color: '#ff4444',
+        marginTop: 2,
+        fontStyle: 'italic',
+    },
+    photoButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: "#007AFF",
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        marginTop: 8,
+    },
+    photoButtonText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '500',
+        marginLeft: 8,
+    },
+    addButton: {
+        marginVertical: 8,
+        borderColor: '#70B04F',
+        borderWidth: 1,
     },
     signatureCard: {
         borderRadius: 16,
@@ -1991,11 +2142,6 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginBottom: 8,
         gap: 6,
-    },
-    photoLabel: {
-        fontSize: 16,
-        fontWeight: "600",
-        color: "#333",
     },
     previewImage: {
         width: "100%",
@@ -2039,69 +2185,8 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginVertical: 10,
     },
-    dropdown: {
-        height: 40,
-        borderColor: '#ccc',
-        borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 10,
-        backgroundColor: '#fff',
-        marginBottom: 10,
-    },
-    dropdownError: {
-        borderColor: '#B00020',
-    },
-    placeholderStyle: {
-        fontSize: 14,
-        color: '#000',
-    },
-    selectedTextStyle: {
-        fontSize: 14,
-        color: '#000',
-    },
-    // Simple TextInput styles
-    simpleInput: {
-        marginBottom: 12,
-        height: 38,
-        borderWidth: 1,
-        borderColor: '#D1D5DB',
-        borderRadius: 10,   // ✅ Add this line
-        paddingHorizontal: 17,
-        backgroundColor: '#FFFFFF',
-    },
-    inputError: {
-        borderColor: "#f44336",
-    },
-    label: {
-        fontSize: 14,
-        fontWeight: "600",
-        color: "#455A64",
-        marginBottom: 8,
-        marginTop: 4,
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: "bold",
-        color: "#70B04F",
-        marginBottom: 16,
-        textAlign: "center",
-    },
-    submitButton: {
-        marginTop: 8,
-        marginBottom: 30,
-        paddingVertical: 8,
-        backgroundColor: "#2196F3",
-        borderRadius: 8,
-        elevation: 4,
-    },
-    submitButtonDisabled: {
-        backgroundColor: "#BDBDBD",
-    },
-    submitButtonContent: {
-        paddingVertical: 6,
-    },
     agreementContainer: {
-        maxHeight: 300,
+        maxHeight: 200,
         borderWidth: 1,
         borderColor: "#E0E0E0",
         borderRadius: 8,
@@ -2134,11 +2219,24 @@ const styles = StyleSheet.create({
         marginLeft: 8,
         fontSize: 14,
         color: "#455A64",
+        lineHeight: 18,
     },
-    input: {
-        backgroundColor: '#fff',
-        marginBottom: 12,
-        fontSize: 14,
+    submitButton: {
+        marginTop: 16,
+        marginBottom: 8,
+        paddingVertical: 6,
+        backgroundColor: "#70B04F",
+        borderRadius: 8,
+        elevation: 4,
+    },
+    submitButtonDisabled: {
+        backgroundColor: "#BDBDBD",
+    },
+    submitButtonContent: {
+        paddingVertical: 8,
+    },
+    bottomSpacer: {
+        height: 20,
     },
 });
 
