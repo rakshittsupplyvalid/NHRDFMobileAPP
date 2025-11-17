@@ -1,4 +1,5 @@
 // utils/fetchCommodity.ts
+import { Alert } from "react-native";
 import apiClient from "../Service/apiInterceptors";
 
 // Fetch all commodity types (first dropdown)
@@ -14,7 +15,12 @@ export const fetchCommodityTypes = async () => {
       label: item.name,
       value: item.id, // this will be used in next API
     }));
+
+
   } catch (error: any) {
+    Alert.alert("Error", "Failed to fetch commodity types.");
+    console.error("Error fetching commodity types:", error);
+        
     
     return [];
   }
@@ -42,7 +48,7 @@ export const fetchCommodity = async (commodityTypeId: string) => {
 export const fetchVariety = async (VarietyId: string) => {
   try {
     const res = await apiClient.get(
-      `/api/mobile/variety/list?CommodityId=CMM2025111006232817434264651&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`
+      `/api/mobile/variety/list?CommodityId=${VarietyId}&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED`
     );
 
     return res.data.map((item: any) => ({

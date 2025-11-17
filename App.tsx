@@ -19,7 +19,7 @@ const theme = {
   roundness: 10, // global roundness for inputs/buttons
   colors: {
     ...MD3LightTheme.colors,
-    primary: '#1565C0',           // Focus + Button color
+    primary: '#aa0404ff',           // Focus + Button color
     secondary: '#1565C0',
     outline: '#BDBDBD',           // Border color for TextInput
     background: '#F5F5F5',
@@ -29,7 +29,7 @@ const theme = {
   },
 };
 
-const App = () => {
+const App = () => { 
   const [isLoading, setIsLoading] = useState(true);
   const [userToken, setUserToken] = useState<string | null>(null);
 

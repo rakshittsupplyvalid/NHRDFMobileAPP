@@ -183,14 +183,14 @@ const styles = StyleSheet.create({
     borderColor: '#ccc',
     borderRadius: 5,
     overflow: 'hidden',
-  
   marginTop: 50,     
   },
   webview: {
     flex: 1,
   },
   buttonContainer: {
-      position: 'absolute',
+  
+  position: 'absolute',
   top: 5,             // ✅ shift top
   left: 0,
   right: 0,

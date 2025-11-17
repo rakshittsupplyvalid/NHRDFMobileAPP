@@ -18,7 +18,7 @@ const YearPickerInput: React.FC<YearPickerInputProps> = ({ value, onChange }) =>
   const [visible, setVisible] = useState<boolean>(false);
 
   const currentYear = new Date().getFullYear();
-  const years: number[] = Array.from(
+  const years: number[ ] = Array.from(
     { length: currentYear - 1960 + 1 },
     (_, i) => currentYear - i
   );

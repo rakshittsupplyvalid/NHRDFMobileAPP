@@ -284,7 +284,7 @@ const InspectionScreen = () => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.navigate("AgreementListScreen");
+        navigation.navigate("Agreement List");
         return true;
       };
 

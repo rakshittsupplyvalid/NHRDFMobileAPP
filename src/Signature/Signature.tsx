@@ -20,8 +20,8 @@ const Signature: React.FC = () => {
   const handleSave = (signatureData: string) => {
     setSignature(signatureData);
     navigation.navigate('Agreement', {
-      type, // nominee / witness
-      signatureUri: signatureData, // captured image
+      type, 
+      signatureUri: signatureData, 
       index: index,
     });
   };

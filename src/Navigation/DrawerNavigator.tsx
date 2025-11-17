@@ -11,7 +11,7 @@ import AgreementListScreen from '../AgreementList/AgreementList';
 import NomineeScreen from '../AgreementList/NomineeList';
 import WitnessScreen from '../AgreementList/WitnessList';
 import Signature from '../Signature/Signature';
-import CameraExample from '../Agreement/CameraExample';
+
 import Agreementland from '../Agreement/Agreementland';
 
 import InspectionScreen from '../inspection/IInspectionScreen';
@@ -190,7 +190,6 @@ export default function DrawerNavigator() {
   }}
 />
 
-      <Drawer.Screen name="CameraExample" component={CameraExample} />
       <Drawer.Screen name="Agreement" component={AgreementSecond} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
             <Drawer.Screen name="Agreementland" component={Agreementland} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
       <Drawer.Screen name="NomineeScreen" component={NomineeScreen} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />

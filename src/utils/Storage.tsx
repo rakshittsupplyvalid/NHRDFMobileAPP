@@ -1,6 +1,6 @@
-// src/utils/storage.ts
-import { MMKVLoader } from 'react-native-mmkv-storage';
+// // src/utils/storage.ts
+// import { MMKVLoader } from 'react-native-mmkv-storage';
 
-const Storage = new MMKVLoader().initialize();
+// const Storage = new MMKVLoader().initialize();
 
-export default Storage;
+// export default Storage;

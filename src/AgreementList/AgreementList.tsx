@@ -1,70 +1,36 @@
 import React, { useEffect, useState, useCallback } from "react";
-import {
-  View,
-  FlatList,
-  StyleSheet,
-  ActivityIndicator,
-  BackHandler,
-  TextInput,
-} from "react-native";
-import { Card, Text, Button } from "react-native-paper";
+import { View, StyleSheet, TextInput, ScrollView , ActivityIndicator } from "react-native";
+import { Card, Text, Divider, Button } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useNavigation, useFocusEffect } from "@react-navigation/native";
-import apiClient, { retrieveToken } from "../Service/apiInterceptors";
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { DrawerParamList } from "../Type/type";
+import apiClient from "../Service/apiInterceptors";
+import CommonPicker from "../CommonComponent/CommonDropdown";
+import { fetchCommodityTypes, fetchCommodity, fetchVariety } from "../Service/fetchCommodity";
+import { useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
+import { BackHandler } from "react-native";
 
-type AgreementListScreenNavigationProp = NativeStackNavigationProp<
-  DrawerParamList,
-  "AgreementListScreen"
->;
+const AgreementListScreen: React.FC = () => {
+  const navigation = useNavigation<any>();
 
-const AgreementListScreen = () => {
-  const [agreements, setAgreements] = useState([]);
+  const [agreements, setAgreements] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [aadhar, setAadhar] = useState("");
 
-  const navigation = useNavigation<AgreementListScreenNavigationProp>();
+  // Dropdown data
+  const [commodityTypes, setCommodityTypes] = useState<any[]>([]);
+  const [commodities, setCommodities] = useState<any[]>([]);
+  const [varieties, setVarieties] = useState<any[]>([]);
+  const [seasonData, setSeasonData] = useState<any[]>([]);
+  const [subSeasonList, setSubSeasonList] = useState<any[]>([]);
 
-  // ✅ Auto API call when Aadhar becomes exactly 12 digits
-  useEffect(() => {
-    if (aadhar.length === 12) {
-      fetchAgreements();
-    }
-  }, [aadhar]);
+  // Form state
+  const [aadharNumber, setAadharNumber] = useState("");
+  const [selectedCommodityType, setSelectedCommodityType] = useState("");
+  const [selectedCommodity, setSelectedCommodity] = useState("");
+  const [selectedVariety, setSelectedVariety] = useState("");
+  const [selectedSeason, setSelectedSeason] = useState("");
+  const [selectedSubSeason, setSelectedSubSeason] = useState("");
 
-  // ✅ Fetch API only if Aadhar is 12 digits
-  const fetchAgreements = async () => {
-    try {
-      if (aadhar.trim().length !== 12) return; // safety stop
-
-      setLoading(true);
-
-      const token = await retrieveToken();
-      if (!token) {
-        console.log("Token missing, login again");
-        setLoading(false);
-        return;
-      }
-
-      let url =
-        `/api/agreement/list?AadharNo=${aadhar}` +
-        "&ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED";
-
-      console.log("Final URL:", url);
-
-      const response = await apiClient.get(url);
-      setAgreements(response.data);
-
-      console.log("Agreements fetched:", response.data);
-    } catch (error) {
-      console.log("API Error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // ✅ Android Back Button → Dashboard
+  // Handle Android Back Button
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
@@ -72,284 +38,506 @@ const AgreementListScreen = () => {
         return true;
       };
 
-      const sub = BackHandler.addEventListener(
-        "hardwareBackPress",
-        onBackPress
-      );
-      return () => sub.remove();
+      const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
+      return () => subscription.remove();
     }, [navigation])
   );
 
-  const handleNominee = (item) => {
+  // Fetch Commodity Data
+  useEffect(() => {
+    (async () => {
+      try {
+        const data = await fetchCommodityTypes();
+        setCommodityTypes(data);
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCommodityType) {
+      setCommodities([]);
+      setVarieties([]);
+      return;
+    }
+    (async () => {
+      try {
+        const items = await fetchCommodity(selectedCommodityType);
+        setCommodities(items);
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+  }, [selectedCommodityType]);
+
+  useEffect(() => {
+    if (!selectedCommodity) {
+      setVarieties([]);
+      return;
+    }
+    (async () => {
+      try {
+        const items = await fetchVariety(selectedCommodity);
+        setVarieties(items);
+      } catch (error) {
+        console.error(error);
+      }
+    })();
+  }, [selectedCommodity]);
+
+  // Fetch Season and SubSeason Data
+  const fetchSeasonData = async () => {
+    try {
+      const response = await apiClient.get(
+        "/api/season?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED"
+      );
+      const dropdownList = response.data?.map((item: any) => ({
+        label: item?.name,
+        value: item?.id,
+      }));
+      setSeasonData(dropdownList || []);
+    } catch (error) {
+      console.error("Season API error:", error);
+    }
+  };
+
+  const handleSeasonSelect = async (value: string) => {
+    setSelectedSeason(value);
+    if (!value) {
+      setSubSeasonList([]);
+      setSelectedSubSeason("");
+      return;
+    }
+    try {
+      const response = await apiClient.get(`/api/subseason/${value}`);
+      const formattedData = response.data.map((item: any) => ({
+        label: item.name,
+        value: item.id,
+      }));
+      setSubSeasonList(formattedData);
+    } catch (error) {
+      console.log("Error fetching subseason:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchSeasonData();
+  }, []);
+
+
+
+  const handleSearch = async () => {
+    if (!aadharNumber || aadharNumber.length !== 12) {
+      setAgreements([]);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      params.append("AadharNo", aadharNumber);
+      params.append("ApprovalStatus", "PENDING");
+      params.append("ApprovalStatus", "APPROVED");
+      params.append("ApprovalStatus", "REJECTED");
+      if (selectedCommodity) params.append("CommodityId", selectedCommodity);
+      if (selectedVariety) params.append("VarietyId", selectedVariety);
+      if (selectedSeason) params.append("SeasonId", selectedSeason);
+      if (selectedSubSeason) params.append("SubSeasonId", selectedSubSeason);
+
+      const url = `/api/agreement/list?${params.toString()}`;
+      const res = await apiClient.get(url);
+      setAgreements(res.data || []);
+    } catch (error) {
+      console.error(error);
+      setAgreements([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Commodity change handlers
+  const handleCommodityTypeChange = (value: string) => {
+    setSelectedCommodityType(value);
+    setSelectedCommodity("");
+    setSelectedVariety("");
+    setCommodities([]);
+    setVarieties([]);
+  };
+
+  const handleCommodityChange = (value: string) => {
+    setSelectedCommodity(value);
+    setSelectedVariety("");
+    setVarieties([]);
+  };
+
+  const clearAll = () => {
+    setAadharNumber("");
+    setAgreements([]);
+    setSelectedCommodityType("");
+    setSelectedCommodity("");
+    setSelectedVariety("");
+    setSelectedSeason("");
+    setSelectedSubSeason("");
+  };
+
+  const handleNominee = (item: any) => {
     navigation.navigate("NomineeScreen", { agreementId: item.id });
   };
 
-  const handleWitness = (item) => {
+  const handleWitness = (item: any) => {
     navigation.navigate("WitnessScreen", { agreementId: item.id });
   };
 
-  const handleInspection = (item) => {
-    navigation.navigate("InspectionScreen", { agreementId: item.id });
+  const handleInspection = (item: any, inspectionType: string) => {
+    navigation.navigate("InspectionScreen", { 
+      agreementId: item.id,
+      inspectionType: inspectionType,
+      agreementData: item
+    });
   };
 
-  const renderItem = ({ item }) => (
-    <Card style={styles.card}>
-      <Card.Content>
-        <View style={styles.header}>
-          <MaterialCommunityIcons
-            name="office-building"
-            size={24}
-            color="#70B04F"
-          />
-          <Text style={styles.centerName}>{item.centername}</Text>
-        </View>
+  const getInspectionStatus = (item: any, inspectionType: string) => {
+    const inspectionKey = `${inspectionType.toLowerCase()}InspectionStatus`;
+    return item[inspectionKey] || 'pending';
+  };
 
-        <View style={styles.row}>
-          <MaterialCommunityIcons name="account" size={22} color="#70B04F" />
-          <Text style={styles.label}>Farmer</Text>
-          <Text style={styles.value}>{item.farmername}</Text>
-        </View>
-
-        <View style={styles.row}>
-          <MaterialCommunityIcons name="seed" size={22} color="#70B04F" />
-          <Text style={styles.label}>Commodity</Text>
-          <Text style={styles.value}>{item.commodityname}</Text>
-        </View>
-
-        <View style={styles.row}>
-          <MaterialCommunityIcons name="numeric" size={22} color="#70B04F" />
-          <Text style={styles.label}>Lot Number</Text>
-          <Text style={styles.value}>{item.lotnumber}</Text>
-        </View>
-
-        <View style={styles.row}>
-          <MaterialCommunityIcons
-            name="file-document"
-            size={22}
-            color="#70B04F"
-          />
-          <Text style={styles.label}>Bill Number</Text>
-          <Text style={styles.value}>{item.billnumber}</Text>
-        </View>
-
-        <View style={styles.row}>
-          <MaterialCommunityIcons
-            name="seed-outline"
-            size={22}
-            color="#70B04F"
-          />
-          <Text style={styles.label}>Planting Material</Text>
-          <Text style={styles.value}>{item.plantingmaterial}</Text>
-        </View>
-      </Card.Content>
-
-      <Card.Actions style={styles.actions}>
-        <Button
-          icon="account-group"
-          mode="contained"
-          onPress={() => handleNominee(item)}
-          style={[styles.btn, styles.containedBtn]}
-        >
-          Nominee
-        </Button>
-
-        <Button
-          icon="account-tie"
-          mode="contained"
-          onPress={() => handleWitness(item)}
-          style={[styles.btn, styles.outlineBtn]}
-        >
-          Witness
-        </Button>
-
-        <Button
-          icon="magnify"
-          mode="contained"
-          onPress={() => handleInspection(item)}
-          style={[styles.btn, styles.inspectBtn]}
-        >
-          Inspection
-        </Button>
-      </Card.Actions>
-    </Card>
-  );
+  const getInspectionIcon = (inspectionType: string) => {
+    switch (inspectionType) {
+      case 'First': return "clipboard-check";
+      case 'Second': return "clipboard-text";
+      case 'Third': return "clipboard-list";
+      case 'Fourth': return "clipboard-account";
+      default: return "clipboard-check";
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      {/* ✅ Aadhar Stylish Auto Search UI */}
-      <View style={styles.searchContainer}>
-        <View style={styles.cardWrapper}>
-          <View style={styles.inputWrapper}>
-            <MaterialCommunityIcons
-              name="card-account-details"
-              size={26}
-              color="#4CAF50"
-              style={{ marginRight: 12 }}
-            />
+    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+      {/* Search Section */}
+      <Card style={styles.sectionCard}>
+        <Card.Content>
+          <Text style={styles.label}>Aadhar Number *</Text>
+          <TextInput
+            placeholder="Enter 12-digit Aadhar"
+            value={aadharNumber}
+            onChangeText={(text) => setAadharNumber(text.replace(/[^0-9]/g, ""))}
+            keyboardType="number-pad"
+            maxLength={12}
+            style={styles.input}
+          />
 
-            <TextInput
-              placeholder="Enter Aadhar Number"
-              value={aadhar}
-              maxLength={12}
-              keyboardType="numeric"
-              onChangeText={(text) => setAadhar(text)}
-              style={styles.stylishInput}
-              placeholderTextColor="#9BA0A8"
-            />
+          <Text style={styles.label}>Commodity Type (Optional)</Text>
+          <CommonPicker
+            selectedValue={selectedCommodityType}
+            onValueChange={handleCommodityTypeChange}
+            items={commodityTypes}
+          />
+
+          <Text style={styles.label}>Commodity (Optional)</Text>
+          <CommonPicker
+            selectedValue={selectedCommodity}
+            onValueChange={handleCommodityChange}
+            items={commodities}
+          />
+
+          <Text style={styles.label}>Variety (Optional)</Text>
+          <CommonPicker
+            selectedValue={selectedVariety}
+            onValueChange={(val) => setSelectedVariety(val)}
+            items={varieties}
+          />
+
+          <Text style={styles.label}>Year (Optional)</Text>
+          <CommonPicker
+            selectedValue={selectedSeason}
+            onValueChange={handleSeasonSelect}
+            items={seasonData}
+          />
+
+          <Text style={styles.label}>Season (Optional)</Text>
+          <CommonPicker
+            selectedValue={selectedSubSeason}
+            onValueChange={(value) => setSelectedSubSeason(value)}
+            items={subSeasonList}
+          />
+
+          <View style={styles.buttonRow}>
+            <Button
+              mode="outlined"
+              onPress={clearAll}
+              style={styles.clearButton}
+              labelStyle={styles.clearButtonLabel}
+            >
+              Clear All
+            </Button>
+            
+            <Button
+              mode="contained"
+              onPress={handleSearch}
+              style={styles.searchButton}
+              labelStyle={styles.searchButtonLabel}
+              disabled={aadharNumber.length !== 12}
+            >
+              Search Agreements
+            </Button>
           </View>
+        </Card.Content>
+      </Card>
 
-          {aadhar.length > 0 && aadhar.length < 12 && (
-            <Text style={styles.helper}>Aadhar number must be 12 digits</Text>
-          )}
-        </View>
-      </View>
+      {loading &&   <ActivityIndicator size="small" color="#4CAF50" />}
 
+      {/* Agreements List */}
+      {agreements.length > 0 &&
+        agreements.map((agreement, index) => (
+          <Card key={agreement.id || index} style={styles.agreementCard}>
+            <Card.Content>
+              <Text style={styles.sectionTitle}>Agreement Details</Text>
+              <Divider style={styles.headerDivider} />
 
-      {loading ? (
-        <View style={styles.loader}>
-          <ActivityIndicator size="large" color="#70B04F" />
-        </View>
-      ) : (
-        <FlatList
-          data={agreements}
-          renderItem={renderItem}
-          keyExtractor={(item, index) => item.id + "_" + index}
-          showsVerticalScrollIndicator={false}
-        />
+              {[
+                { label: "Farmer", value: agreement.farmername },
+                { label: "Center", value: agreement.centername },
+                { label: "Commodity", value: agreement.commodityname },
+                { label: "Variety", value: agreement.varietyname },
+                { label: "Lot Number", value: agreement.lotnumber },
+                { label: "Year", value: agreement.season },
+                { label: "Season", value: agreement.subseason },
+              ].map((item, idx) => (
+                <View key={idx} style={styles.detailRow}>
+                  <MaterialCommunityIcons name="chevron-right" size={20} color="#4CAF50" />
+                  <View style={styles.detailContent}>
+                    <Text style={styles.detailLabel}>{item.label}</Text>
+                    <Text style={styles.detailValue}>{String(item.value || "—")}</Text>
+                  </View>
+                </View>
+              ))}
+
+              {/* Four Stage Inspection - Now with same style as Nominee/Witness */}
+              <View style={styles.inspectionSection}>
+                <Text style={styles.inspectionTitle}>Four Stage Inspection</Text>
+                <View style={styles.inspectionGrid}>
+                  {['First', 'Second', 'Third', 'Fourth'].map((inspectionType) => {
+                    const status = getInspectionStatus(agreement, inspectionType);
+                    return (
+                      <Button
+                        key={inspectionType}
+                        mode="outlined"
+                        onPress={() => handleInspection(agreement, inspectionType)}
+                        style={[
+                          styles.inspectionButton,
+                          status === 'completed' && styles.completedInspection
+                        ]}
+                        labelStyle={[
+                          styles.inspectionButtonLabel,
+                          status === 'completed' && styles.completedInspectionLabel
+                        ]}
+                        icon={getInspectionIcon(inspectionType)}
+                      >
+                        {status === 'completed' ? 'Completed' : inspectionType}
+                      </Button>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.actionRow}>
+                <Button
+                  mode="outlined"
+                  onPress={() => handleNominee(agreement)}
+                  style={styles.actionButton}
+                  labelStyle={styles.actionButtonLabel}
+                  icon="account-group"
+                >
+                  View Nominee
+                </Button>
+
+                <Button
+                  mode="outlined"
+                  onPress={() => handleWitness(agreement)}
+                  style={styles.actionButton}
+                  labelStyle={styles.actionButtonLabel}
+                  icon="account-tie"
+                >
+                  View Witness
+                </Button>
+              </View>
+            </Card.Content>
+          </Card>
+        ))}
+
+   
+
+      {aadharNumber.length === 0 && (
+        <Text style={styles.initialText}>
+          ** Enter Aadhar number to search agreements **
+        </Text>
       )}
-    </View>
+    </ScrollView>
   );
 };
 
-export default AgreementListScreen;
-
-/* ✅ FINAL CLEAN UI STYLES */
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 12,
-    backgroundColor: "#f0f4f7",
+  container: { 
+    flex: 1, 
+    backgroundColor: "#f5f5f5" 
   },
-
-    searchContainer: {
-    padding: 16,
-    backgroundColor: "#F4F6F9",
+  scrollContent: { 
+    padding: 16, 
+    paddingBottom: 30 
   },
-
-  cardWrapper: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 16,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    elevation: 5,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
+  sectionCard: { 
+    marginBottom: 16, 
+    borderRadius: 12, 
+    elevation: 2, 
+    backgroundColor: "white" 
   },
-
-  inputWrapper: {
-    flexDirection: "row",
-    alignItems: "center",
+  label: { 
+    fontWeight: "600", 
+    color: "#455A64", 
+    marginBottom: 8, 
+    fontSize: 14 
   },
-
-  stylishInput: {
-    flex: 1,
-    fontSize: 16,
-    color: "#333",
-    paddingVertical: 8,
-  },
-
-  helper: {
-    color: "red",
-    marginTop: 6,
-    fontSize: 13,
-    marginLeft: 4,
-  },
-
-
-
-  card: {
-    marginBottom: 15,
-    borderRadius: 16,
-    backgroundColor: "#fff",
-    elevation: 5,
-    paddingVertical: 10,
-  },
-
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
+  input: {
+    backgroundColor: "white",
+    height: 50,
+    fontSize: 14,
+    borderRadius: 8,
     paddingHorizontal: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#ddd",
   },
-
-  centerName: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginLeft: 8,
-    color: "#333",
-    flex: 1,
-  },
-
-  row: {
+  buttonRow: {
     flexDirection: "row",
-    alignItems: "flex-start",
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    backgroundColor: "#f9fafb",
+    gap: 12,
+    marginTop: 16,
+  },
+  clearButton: {
+    flex: 1,
+    borderColor: "#ff6b6b",
+  },
+  clearButtonLabel: {
+    color: "#ff6b6b",
+    fontSize: 14,
+  },
+  searchButton: {
+    flex: 2,
     borderRadius: 10,
-    marginVertical: 5,
-    flexWrap: "wrap",
+    backgroundColor: "#4CAF50",
+    elevation: 3,
+    height: 39,
+    justifyContent: "center",
   },
-
-  label: {
-    fontSize: 15,
-    color: "#444",
-    fontWeight: "500",
-    marginLeft: 10,
-    width: 120,
-  },
-
-  value: {
-    fontSize: 15,
-    color: "#70B04F",
+  searchButtonLabel: {
+    color: "#fff",
+    fontSize: 16,
     fontWeight: "600",
-    flexShrink: 1,
-    flex: 1,
-    textAlign: "right",
   },
-
-  actions: {
+  agreementCard: { 
+    marginBottom: 16, 
+    borderRadius: 12, 
+    backgroundColor: "#fff", 
+    elevation: 3 
+  },
+  sectionTitle: { 
+    fontSize: 18, 
+    fontWeight: "bold", 
+    color: "#2E7D32", 
+    marginBottom: 16 
+  },
+  headerDivider: { 
+    backgroundColor: "#E0E0E0", 
+    height: 1, 
+    marginVertical: 8 
+  },
+  detailRow: { 
+    flexDirection: "row", 
+    alignItems: "center", 
+    marginVertical: 6 
+  },
+  detailContent: { 
+    marginLeft: 8 
+  },
+  detailLabel: { 
+    fontSize: 14, 
+    color: "#555", 
+    fontWeight: "500" 
+  },
+  detailValue: { 
+    fontSize: 14, 
+    color: "#1F2937", 
+    fontWeight: "600", 
+    marginTop: 2 
+  },
+  inspectionSection: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 8,
+  },
+  inspectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 12,
+    textAlign: "center",
+  },
+  inspectionGrid: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    paddingHorizontal: 10,
-    paddingTop: 10,
+    flexWrap: "wrap",
     gap: 8,
   },
-
-  btn: {
+  inspectionButton: {
     flex: 1,
-    borderRadius: 12,
-    paddingVertical: 6,
-    elevation: 3,
+    minWidth: '48%',
+    borderRadius: 8,
+    borderColor: "#666",
+    marginBottom: 8,
   },
-
-  containedBtn: {
-    backgroundColor: "#70B04F",
+  completedInspection: {
+    backgroundColor: "#4CAF50",
+    borderColor: "#4CAF50",
   },
-
-  outlineBtn: {
-    backgroundColor: "#4C8E3B",
+  inspectionButtonLabel: {
+    fontSize: 13,
+    color: "#333",
   },
-
-  inspectBtn: {
-    backgroundColor: "#3A6F2A",
+  completedInspectionLabel: {
+    color: "white",
+    fontWeight: "700",
   },
-
-  loader: {
+  actionRow: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 16,
+  },
+  actionButton: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    borderRadius: 8,
+    borderColor: "#666",
+  },
+  actionButtonLabel: {
+    fontSize: 12,
+  },
+  loadingText: { 
+    textAlign: "center", 
+    marginTop: 10, 
+    color: "#666" 
+  },
+  noDataText: { 
+    marginTop: 16, 
+    textAlign: "center", 
+    color: "#999", 
+    fontStyle: "italic" 
+  },
+  initialText: {
+    marginTop: 16,
+    textAlign: "center",
+    color: "red",
+    fontSize: 14,
   },
 });
+
+export default AgreementListScreen;

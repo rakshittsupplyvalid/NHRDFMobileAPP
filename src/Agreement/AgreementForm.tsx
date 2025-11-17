@@ -316,7 +316,7 @@ const AgreementFormSimple: React.FC = () => {
           </Card>
         ))}
 
-      {!loading && aadharNumber.length === 12 && aadharData.length === 0 && (
+      {!loading && aadharNumber.length  === 12 && aadharData.length === 0 && (
         <Text style={styles.noFarmerSelected}>No records found for this Aadhar.</Text>
       )}
     </ScrollView>

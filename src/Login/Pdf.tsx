@@ -22,7 +22,8 @@ export default function Pdff() {
 
       // Share the PDF
       if (await Sharing.isAvailableAsync()) {
-        await Sharing.shareAsync(uri);
+        await Sharing.shareAsync(uri);  
+      
       } else {
         Alert.alert("Sharing not available on this device");
       }
