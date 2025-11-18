@@ -8,6 +8,7 @@ export const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: "#F4F9F4",
   },
+  
    
   iconButton: {
     backgroundColor: "#EAF0FF",
@@ -21,6 +22,17 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
+  imagePreviewContainer: {
+  alignItems: 'center',
+  marginTop: 8,
+},
+
+imagePreviewText: {
+  marginTop: 4,
+  fontSize: 12,
+  color: '#2E7D32',
+  fontStyle: 'italic',
+},
   placeholderStyle: { 
     color: "#666", 
     fontSize: 14 

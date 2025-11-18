@@ -13,9 +13,7 @@ const Login = ({ navigation }: any) => {
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
-  const [loading, setLoading] = useState(false);
-
-  
+  const [loading, setLoading] = useState(false);   
   const primaryColor = '#6ba94bff';
 
 

@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback, useEffect } from "react";
 import {
   View,
@@ -9,9 +10,7 @@ import {
   ActivityIndicator,
   Image,
   BackHandler,
-  TextInput,
-      PermissionsAndroid,
-    
+  TextInput
 } from "react-native";
 import {
   Card,
@@ -59,6 +58,8 @@ interface FormDataType {
   CommodityId: string;
   FarmerId: string;
   FarmerDistributionId: string;
+  Year: string;
+  Season: string;
 }
 
 interface OfftypeData {
@@ -94,8 +95,6 @@ const InspectionScreen = () => {
     const day = String(today.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
-
-  // State Management
   const [formData, setFormData] = useState<FormDataType>({
     InspectionNo: "",
     InspectionDate: getTodayDate(), // Auto-set today's date
@@ -123,7 +122,10 @@ const InspectionScreen = () => {
     CommodityId: "",
     FarmerId: "",
     FarmerDistributionId: "",
+    Year: "",
+    Season: "",
   });
+    
 
   const [agreementIds, setAgreementIds] = useState<AgreementIdsType>({
     VarietyId: "",
@@ -151,15 +153,18 @@ const InspectionScreen = () => {
   const [isFirstInspection, setIsFirstInspection] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dateField, setDateField] = useState<string | null>(null);
-  const [selectedSeason, setSelectedSeason] = useState(null);
+  const [selectedSeason, setSelectedSeason] = useState<string | null>(null);
   const [seasonData, setSeasonData] = useState<any[]>([]);
   const [seedList, setSeedList] = useState<any[]>([]);
   const [signatureModalVisible, setSignatureModalVisible] = useState(false);
   const [currentSignatureField, setCurrentSignatureField] = useState<string | null>(null);
   const [subSeasonList, setSubSeasonList] = useState([]);
-  const [selectedSubSeason, setSelectedSubSeason] = useState(null);
+  const [selectedSubSeason, setSelectedSubSeason] = useState("");
   const [classSeedList, setClassSeedList] = useState([]);
   const [loadingClassSeed, setLoadingClassSeed] = useState(false);
+
+  // Track if form has been submitted to show helper texts
+  const [formSubmitted, setFormSubmitted] = useState(false);
 
   // Camera Options
   const cameraOptions: CameraOptions = {
@@ -167,59 +172,6 @@ const InspectionScreen = () => {
     quality: 0.8,
     cameraType: 'back',
     saveToPhotos: true,
-  };
-
-  // Camera Permission and Functions
-  const requestCameraPermission = async () => {
-    if (Platform.OS === "android") {
-      try {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.CAMERA,
-          {
-            title: "Camera Permission",
-            message: "App needs access to your camera to take pictures.",
-            buttonNeutral: "Ask Me Later",
-            buttonNegative: "Cancel",
-            buttonPositive: "OK",
-          }
-        );
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
-      } catch (err) {
-        console.warn(err);
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const openCamera = async () => {
-    const hasPermission = await requestCameraPermission();
-    if (!hasPermission) {
-      Alert.alert("Permission Denied", "Camera permission is required.");
-      return;
-    }
-
-    launchCamera(cameraOptions, (response) => {
-      if (response.didCancel) {
-        console.log("User cancelled image picker");
-      } else if (response.errorCode) {
-        console.log("ImagePicker Error: ", response.errorMessage);
-        Alert.alert("Camera Error", response.errorMessage || "Failed to capture image");
-      } else if (response.assets && response.assets.length > 0) {
-        const uri = response.assets[0].uri;
-        console.log("📸 Captured GeoImage:", uri);
-        setFormData(prev => ({
-          ...prev,
-          GeoImage: uri || null
-        }));
-        
-        // Clear any previous errors
-        setErrors(prev => ({
-          ...prev,
-          GeoImage: ""
-        }));
-      }
-    });
   };
 
   // API Calls
@@ -348,6 +300,25 @@ const InspectionScreen = () => {
     }, [navigation])
   );
 
+  // Camera Functions
+  const launchCameraForField = (field: string) => {
+    launchCamera(cameraOptions, (response) => {
+      if (response.didCancel) {
+        console.log('User cancelled camera');
+      } else if (response.errorCode) {
+        Alert.alert('Error', `Camera Error: ${response.errorMessage}`);
+      } else if (response.assets && response.assets[0]) {
+        const imageUri = response.assets[0].uri;
+        if (imageUri) {
+          setFormData(prev => ({
+            ...prev,
+            [field]: imageUri
+          }));
+        }
+      }
+    });
+  };
+
   // Signature Functions
   const openSignatureModal = (field: string) => {
     setCurrentSignatureField(field);
@@ -399,19 +370,55 @@ const InspectionScreen = () => {
     setDateField(null);
   };
 
-  const openDatePicker = (field: string) => {
+  const  openDatePicker = (field: string) => {
     setDateField(field);
     setShowDatePicker(true);
   };
 
-  const displayDate = (dateString: string) => {
-    if (!dateString) return "Select date";
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    });
+ const displayDate = (dateString: string) => {
+  if (!dateString) return "Select date";
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+};
+
+  // Helper Text Functions
+  const shouldShowHelperText = (field: string): boolean => {
+    // Don't show helper text for Reason field
+    if (field === 'Reason') return false;
+    
+    // Show helper text if form is submitted and field is empty/invalid
+    if (formSubmitted) {
+      return !formData[field as keyof FormDataType] || 
+             formData[field as keyof FormDataType]?.toString().trim() === "" ||
+             errors[field] !== "";
+    }
+    
+    return errors[field] !== "";
+  };
+
+  const getHelperText = (field: string): string => {
+    if (errors[field]) {
+      return errors[field];
+    }
+    
+    // Don't show required helper for Reason field
+    if (field === 'Reason') return "";
+    
+    const requiredFields = [
+      'InspectionNo', 'InspectionDate', 'HarvestingDate', 'DurationFrom', 'DurationTo',
+      'SourceOfSeed', 'PreviousCrop', 'CropCondition', 'InspectedArea', 'FieldCount',
+      'EstimatedSeedYield', 'GrowerRepresentative', 'Remarks', 'Year', 'Season'
+    ];
+    
+    if (requiredFields.includes(field) && (!formData[field as keyof FormDataType] || formData[field as keyof FormDataType]?.toString().trim() === "")) {
+      return "This field is required";
+    }
+    
+    return "";
   };
 
   // Offtype Handlers
@@ -483,7 +490,8 @@ const InspectionScreen = () => {
       'EstimatedSeedYield',
       'GrowerRepresentative',
       'Remarks',
-      'GeoImage', // Make GeoImage required
+      'Year',
+      'Season',
     ];
 
     if (requiredFields.includes(field) && (!value || value.toString().trim() === "")) {
@@ -545,7 +553,8 @@ const InspectionScreen = () => {
   const validateForm = (): boolean => {
     const requiredFields = [
       'InspectionNo', 'InspectionDate', 'HarvestingDate', 'DurationFrom', 'DurationTo',
-      'SourceOfSeed', 'PreviousCrop', 'CropCondition', 'GeoImage' // GeoImage is now required
+      'SourceOfSeed', 'PreviousCrop', 'CropCondition', 'InspectedArea', 'FieldCount',
+      'EstimatedSeedYield', 'GrowerRepresentative', 'Remarks', 'Year', 'Season'
     ];
 
     let isValid = true;
@@ -558,16 +567,6 @@ const InspectionScreen = () => {
         isValid = false;
       }
     });
-
-    if (!selectedSeason) {
-      newErrors.Year = "Year is required";
-      isValid = false;
-    }
-
-    if (!selectedSubSeason) {
-      newErrors.Season = "Season is required";
-      isValid = false;
-    }
 
     if (formData.InspectedArea <= 0) {
       newErrors.InspectedArea = "Please enter a valid area";
@@ -593,6 +592,9 @@ const InspectionScreen = () => {
   };
 
   const handleSubmit = async () => {
+    // Set form as submitted to show all helper texts
+    setFormSubmitted(true);
+
     if (!validateForm()) {
       Alert.alert("Validation Error", "Please fill all required fields correctly");
       return;
@@ -613,7 +615,6 @@ const InspectionScreen = () => {
       requestData.append("CommodityId", agreementIds.CommodityId);
       requestData.append("FarmerId", agreementIds.FarmerId);
       requestData.append("FarmerDistributionId", agreementIds.FarmerDistributionId);
-      requestData.append("GrowerRepresentative",  agreementIds.Authorizedname);
 
       Object.keys(formData).forEach(key => {
         const value = formData[key as keyof FormDataType];
@@ -634,9 +635,7 @@ const InspectionScreen = () => {
 
       requestData.append("Offtypes", JSON.stringify(offtypesData));
 
-      // Handle GeoImage upload
       if (formData.GeoImage) {
-        console.log("📤 Uploading GeoImage:", formData.GeoImage);
         requestData.append("GeoImage", {
           uri: formData.GeoImage,
           type: 'image/jpeg',
@@ -659,7 +658,7 @@ const InspectionScreen = () => {
         requestData.append("CenterInchargeSignature", inchargeFile as any);
       }
 
-      console.log("🚀 Submitting Inspection Data with GeoImage...");
+      console.log("🚀 Submitting Inspection Data...");
 
       const response = await apiClient.post(
         `/api/inspection/${agreementId}`,
@@ -715,9 +714,9 @@ const InspectionScreen = () => {
           ))}
         </View>
       </RadioButton.Group>
-      {errors[field] && (
+      {shouldShowHelperText(field) && (
         <HelperText type="error" visible={true}>
-          {errors[field]}
+          {getHelperText(field)}
         </HelperText>
       )}
     </View>
@@ -736,14 +735,11 @@ const InspectionScreen = () => {
         {value ? "Retake Photo" : "Take Photo"}
       </Button>
       {value && (
-        <View style={styles.imagePreviewContainer}>
-          <Image source={{ uri: value }} style={styles.previewImage} />
-          <Text style={styles.imagePreviewText}>Photo captured successfully</Text>
-        </View>
+        <Image source={{ uri: value }} style={styles.previewImage} />
       )}
-      {errors[field] && (
+      {shouldShowHelperText(field) && (
         <HelperText type="error" visible={true}>
-          {errors[field]}
+          {getHelperText(field)}
         </HelperText>
       )}
     </View>
@@ -791,9 +787,9 @@ const InspectionScreen = () => {
           Add Signature
         </Button>
       )}
-      {errors[field] && (
+      {shouldShowHelperText(field) && (
         <HelperText type="error" visible={true}>
-          {errors[field]}
+          {getHelperText(field)}
         </HelperText>
       )}
     </View>
@@ -901,9 +897,9 @@ const InspectionScreen = () => {
                 }}
                 mode="modal"
               />
-              {errors.InspectionNo && (
+              {shouldShowHelperText("InspectionNo") && (
                 <HelperText type="error" visible>
-                  {errors.InspectionNo}
+                  {getHelperText("InspectionNo")}
                 </HelperText>
               )}
 
@@ -916,9 +912,11 @@ const InspectionScreen = () => {
                     </Text>
                     <Text style={styles.todayBadge}>Today</Text>
                   </View>
-                  <HelperText type="error" visible={!!errors.InspectionDate}>
-                    {errors.InspectionDate}
-                  </HelperText>
+                  {shouldShowHelperText("InspectionDate") && (
+                    <HelperText type="error" visible>
+                      {getHelperText("InspectionDate")}
+                    </HelperText>
+                  )}
                 </View>
 
                 <View style={styles.halfInput}>
@@ -931,41 +929,47 @@ const InspectionScreen = () => {
                   >
                     {displayDate(formData.HarvestingDate)}
                   </Button>
-                  <HelperText type="error" visible={!!errors.HarvestingDate}>
-                    {errors.HarvestingDate}
-                  </HelperText>
+                  {shouldShowHelperText("HarvestingDate") && (
+                    <HelperText type="error" visible>
+                      {getHelperText("HarvestingDate")}
+                    </HelperText>
+                  )}
                 </View>
               </View>
 
               <View style={styles.row}>
                 <View style={styles.halfInput}>
                   <Text style={styles.label}>Duration From</Text>
-                  <Button
-                    mode="outlined"
-                    onPress={() => openDatePicker("DurationFrom")}
+                  <Button 
+                    mode="outlined" 
+                    onPress={() => openDatePicker("DurationFrom")} 
                     style={styles.dateButton}
                     textColor="#2E7D32"
                   >
                     {displayDate(formData.DurationFrom)}
                   </Button>
-                  <HelperText type="error" visible={!!errors.DurationFrom}>
-                    {errors.DurationFrom}
-                  </HelperText>
+                  {shouldShowHelperText("DurationFrom") && (
+                    <HelperText type="error" visible>
+                      {getHelperText("DurationFrom")}
+                    </HelperText>
+                  )}
                 </View>
 
                 <View style={styles.halfInput}>
                   <Text style={styles.label}>Duration To</Text>
-                  <Button
-                    mode="outlined"
-                    onPress={() => openDatePicker("DurationTo")}
+                  <Button 
+                    mode="outlined" 
+                    onPress={() => openDatePicker("DurationTo")} 
                     style={styles.dateButton}
                     textColor="#2E7D32"
                   >
                     {displayDate(formData.DurationTo)}
                   </Button>
-                  <HelperText type="error" visible={!!errors.DurationTo}>
-                    {errors.DurationTo}
-                  </HelperText>
+                  {shouldShowHelperText("DurationTo") && (
+                    <HelperText type="error" visible>
+                      {getHelperText("DurationTo")}
+                    </HelperText>
+                  )}
                 </View>
               </View>
 
@@ -1016,9 +1020,9 @@ const InspectionScreen = () => {
                 onChangeText={(text) => handleChange("PreviousCrop", text)}
                 style={styles.input}
               />
-              {errors.PreviousCrop && (
+              {shouldShowHelperText("PreviousCrop") && (
                 <HelperText type="error" visible>
-                  {errors.PreviousCrop}
+                  {getHelperText("PreviousCrop")}
                 </HelperText>
               )}
 
@@ -1033,32 +1037,36 @@ const InspectionScreen = () => {
                   errors.SourceOfSeed && { borderColor: "red" }
                 ]}
               />
-              {errors.SourceOfSeed && (
+              {shouldShowHelperText("SourceOfSeed") && (
                 <HelperText type="error" visible={true}>
-                  {errors.SourceOfSeed}
+                  {getHelperText("SourceOfSeed")}
                 </HelperText>
               )}
 
-             
               <Text style={styles.label}>Year</Text>
               <Dropdown
-                style={[styles.dropdown, errors.Year && { borderColor: "red" }]}
+                style={[
+                  styles.dropdown,
+                  errors.Year && { borderColor: "red" }
+                ]}
                 data={seasonData}
-                value={selectedSeason}
+                value={formData.Year}
                 placeholder={!loading ? "Select Year" : "Loading..."}
                 labelField="label"
                 valueField="value"
-                onChange={(item) => handleSeasonSelect(item.value)}
+                onChange={(item) => handleChange("Year", item.value)}
                 mode="modal"
               />
 
-              <HelperText type="error" visible={!!errors.Year}>
-                {errors.Year}
-              </HelperText>
+              {shouldShowHelperText("Year") && (
+                <HelperText type="error" visible={true}>
+                  {getHelperText("Year")}
+                </HelperText>
+              )}
 
               <Text style={styles.label}>Season</Text>
               <Dropdown
-                style={[styles.dropdown, errors.Season && { borderColor: "red" }]}
+                style={styles.dropdown}
                 data={subSeasonList}
                 labelField="label"
                 valueField="value"
@@ -1066,13 +1074,15 @@ const InspectionScreen = () => {
                 value={selectedSubSeason}
                 onChange={(item) => {
                   setSelectedSubSeason(item.value);
-                  setErrors(prev => ({ ...prev, Season: "" }));
+                  console.log("Selected SubSeason:", item);
                 }}
               />
 
-              <HelperText type="error" visible={!!errors.Season}>
-                {errors.Season}
-              </HelperText>
+              {shouldShowHelperText("Season") && (
+                <HelperText type="error" visible={true}>
+                  {getHelperText("Season")}
+                </HelperText>
+              )}
 
               <Text style={styles.label}>Crop Condition</Text>
               <Dropdown
@@ -1093,9 +1103,9 @@ const InspectionScreen = () => {
                 onChange={(item) => handleChange("CropCondition", item.value)}
                 mode="modal"
               />
-              {errors.CropCondition && (
+              {shouldShowHelperText("CropCondition") && (
                 <HelperText type="error" visible>
-                  {errors.CropCondition}
+                  {getHelperText("CropCondition")}
                 </HelperText>
               )}
 
@@ -1110,9 +1120,11 @@ const InspectionScreen = () => {
                     keyboardType="numeric"
                     style={styles.input}
                   />
-                  <HelperText type="error" visible={!!errors.InspectedArea}>
-                    {errors.InspectedArea}
-                  </HelperText>
+                  {shouldShowHelperText("InspectedArea") && (
+                    <HelperText type="error" visible>
+                      {getHelperText("InspectedArea")}
+                    </HelperText>
+                  )}
                 </View>
 
                 <View style={styles.halfInput}>
@@ -1125,22 +1137,13 @@ const InspectionScreen = () => {
                     keyboardType="numeric"
                     style={styles.input}
                   />
-                  <HelperText type="error" visible={!!errors.FieldCount}>
-                    {errors.FieldCount}
-                  </HelperText>
+                  {shouldShowHelperText("FieldCount") && (
+                    <HelperText type="error" visible>
+                      {getHelperText("FieldCount")}
+                    </HelperText>
+                  )}
                 </View>
-
-
-
               </View>
-              
-                 {/* Geo Image Field */}
-              <ImagePickerField
-                label="Geo Tagged Image *"
-                value={formData.GeoImage}
-                onPress={openCamera}
-                field="GeoImage"
-              />
             </Card.Content>
           </Card>
 
@@ -1209,9 +1212,7 @@ const InspectionScreen = () => {
                     numberOfLines={3}
                     style={[styles.input, styles.textArea]}
                   />
-                  <HelperText type="error" visible={!!errors.Reason}>
-                    {errors.Reason}
-                  </HelperText>
+                  {/* Reason field doesn't show helper text as per requirement */}
                 </>
               )}
 
@@ -1234,9 +1235,11 @@ const InspectionScreen = () => {
                 onChangeText={(text) => handleChange("EstimatedSeedYield", text)}
                 style={styles.input}
               />
-              <HelperText type="error" visible={!!errors.EstimatedSeedYield}>
-                {errors.EstimatedSeedYield}
-              </HelperText>
+              {shouldShowHelperText("EstimatedSeedYield") && (
+                <HelperText type="error" visible>
+                  {getHelperText("EstimatedSeedYield")}
+                </HelperText>
+              )}
 
               <Text style={styles.label}>Grower Representative</Text>
               <TextInput
@@ -1246,9 +1249,11 @@ const InspectionScreen = () => {
                 onChangeText={(text) => handleChange("GrowerRepresentative", text)}
                 style={[styles.input, styles.disabledInput]}
               />
-              <HelperText type="error" visible={!!errors.GrowerRepresentative}>
-                {errors.GrowerRepresentative}
-              </HelperText>
+              {shouldShowHelperText("GrowerRepresentative") && (
+                <HelperText type="error" visible>
+                  {getHelperText("GrowerRepresentative")}
+                </HelperText>
+              )}
 
               <Text style={styles.label}>Remarks</Text>
               <TextInput
@@ -1260,9 +1265,11 @@ const InspectionScreen = () => {
                 numberOfLines={3}
                 style={[styles.input, styles.textArea]}
               />
-              <HelperText type="error" visible={!!errors.Remarks}>
-                {errors.Remarks}
-              </HelperText>
+              {shouldShowHelperText("Remarks") && (
+                <HelperText type="error" visible>
+                  {getHelperText("Remarks")}
+                </HelperText>
+              )}
             </Card.Content>
           </Card>
 

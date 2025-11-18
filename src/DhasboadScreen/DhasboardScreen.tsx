@@ -63,12 +63,12 @@ const DashboardScreen = () => {
         <View style={styles.header}>
           <View>
             <Text style={styles.headerTitle}>Dashboard</Text>
-            <Text style={styles.subTitle}>Good Afternoon</Text>
+            {/* <Text style={styles.subTitle}>Good Afternoon</Text> */}
           </View>
-          <Image
+          {/* <Image
             source={{ uri: 'https://randomuser.me/api/portraits/women/44.jpg' }}
             style={styles.profilePic}
-          />
+          /> */}
         </View>
 
         <Divider style={styles.divider} />
@@ -82,12 +82,12 @@ const DashboardScreen = () => {
                 size={26}
                 color="#fff"
               />
-              <Text style={styles.cardTitle}>Agreement Form</Text>
+              <Text style={styles.cardTitle}>Agreement List</Text>
             </View>
-            <Text style={styles.cardSubtitle}>Create & View Agreements</Text>
+            <Text style={styles.cardSubtitle}>View Agreements</Text>
             <View style={styles.cardFooter}>
               <Text style={styles.cardInfo}>
-                Agreement Count: {countData ?? 'No Data'}
+                Agreement Created {countData ?? 'No Data'}
               </Text>
               <Button
                 mode="outlined"
@@ -96,7 +96,7 @@ const DashboardScreen = () => {
                 textColor="#fff"
                 onPress={() => navigation.navigate('Agreement List')}
               >
-                Open
+                 View
               </Button>
             </View>
           </Card.Content>
@@ -115,15 +115,15 @@ const DashboardScreen = () => {
               />
               <Text style={styles.cardTitle}>Inspection Report</Text>
             </View>
-            <Text style={styles.cardSubtitle}>Manage Site Inspections</Text>
+            <Text style={styles.cardSubtitle}>View Inspections</Text>
             <View style={styles.cardFooter}>
-              <Text style={styles.cardInfo}>Pending Reports: 5</Text>
+              <Text style={styles.cardInfo}>Total inspection: 5</Text>
               <Button
                 mode="outlined"
                 compact
                 style={styles.actionBtn}
                 textColor="#fff"
-                onPress={() => {}}
+                              onPress={() => navigation.navigate('Inspection List')}
               >
                 View
               </Button>
@@ -151,17 +151,6 @@ const DashboardScreen = () => {
             </Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.quickCard}>
-            <MaterialCommunityIcons
-              name="clipboard-text"
-              size={36}
-              color="#70B04F"
-            />
-            <Text style={styles.quickTitle}>Inspection Report</Text>
-            <Text style={styles.quickDesc}>
-              Submit inspection reports easily
-            </Text>
-          </TouchableOpacity>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -221,11 +210,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginLeft: 10,
+  
   },
   cardSubtitle: {
-    color: '#E6FFE0',
+    color: '#fff',
     fontSize: 14,
     marginBottom: 16,
+    marginTop : 15
   },
   cardFooter: {
     flexDirection: 'row',
@@ -235,12 +226,15 @@ const styles = StyleSheet.create({
   cardInfo: {
     color: '#fff',
     fontSize: 14,
+    marginBottom : 25  
   },
   actionBtn: {
     borderColor: '#fff',
     borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 2,
+    paddingHorizontal: 10,
+  
+
+   
   },
   sectionTitle: {
     fontSize: 18,

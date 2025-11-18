@@ -25,4 +25,5 @@ export default StyleSheet.create({
     borderColor: '#D1D5DB',
     borderRadius: 10,
   },
+
 });

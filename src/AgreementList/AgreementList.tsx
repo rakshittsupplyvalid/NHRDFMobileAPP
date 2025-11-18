@@ -301,8 +301,8 @@ const AgreementListScreen: React.FC = () => {
                 { label: "Commodity", value: agreement.commodityname },
                 { label: "Variety", value: agreement.varietyname },
                 { label: "Lot Number", value: agreement.lotnumber },
-                { label: "Year", value: agreement.season },
-                { label: "Season", value: agreement.subseason },
+                { label: "Year", value: agreement.year },
+                { label: "Season", value: agreement.season },
               ].map((item, idx) => (
                 <View key={idx} style={styles.detailRow}>
                   <MaterialCommunityIcons name="chevron-right" size={20} color="#4CAF50" />

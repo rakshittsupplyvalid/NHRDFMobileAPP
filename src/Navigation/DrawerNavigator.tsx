@@ -15,6 +15,7 @@ import Signature from '../Signature/Signature';
 import Agreementland from '../Agreement/Agreementland';
 
 import InspectionScreen from '../inspection/IInspectionScreen';
+import InspectionList from '../inspection/InspectionList';
 
 
 const Drawer = createDrawerNavigator();
@@ -59,7 +60,7 @@ function CustomDrawerContent(props: any) {
         <DrawerItem
           label="Dhasboard"
           icon={({ color, size }) => <MaterialCommunityIcons name="view-dashboard" size={size} color={color} />}
-            onPress={() => {
+          onPress={() => {
             props.navigation.reset({
               index: 0,
               routes: [{ name: 'Dashboard' }],
@@ -71,7 +72,7 @@ function CustomDrawerContent(props: any) {
         <DrawerItem
           label="Agreement Form"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
-               onPress={() => {
+          onPress={() => {
             props.navigation.reset({
               index: 0,
               routes: [{ name: 'Agreement Form' }],
@@ -90,12 +91,21 @@ function CustomDrawerContent(props: any) {
 
 
 
-        
+        <DrawerItem
+          label="Inspection List"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('Inspection List')}
+          labelStyle={styles.drawerLabel}
+        />
+
+
+
+
         <DrawerItem
           label="InspectionScreen"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Inspection Screen')}
-            style={{ display: 'none' }}
+          style={{ display: 'none' }}
         />
 
         {/* Hidden Screen */}
@@ -107,7 +117,7 @@ function CustomDrawerContent(props: any) {
         />
 
 
-         <DrawerItem
+        <DrawerItem
           label="Agreementland"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document-outline" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Agreementland')}
@@ -164,7 +174,7 @@ export default function DrawerNavigator() {
         },
       }}
     >
-    
+
 
 
       <Drawer.Screen
@@ -180,20 +190,21 @@ export default function DrawerNavigator() {
 
       <Drawer.Screen name="Agreement Form" component={AgreementForm} />
       <Drawer.Screen name="Agreement List" component={AgreementListScreen} />
-     
+      <Drawer.Screen name="Inspection List" component={InspectionList} />
+
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
-        <Drawer.Screen
-  name="InspectionScreen"
-  component={InspectionScreen}
-  options={{
-    drawerItemStyle: { display: 'none' }, // hides from the drawer
-  }}
-/>
+      <Drawer.Screen
+        name="InspectionScreen"
+        component={InspectionScreen}
+        options={{
+          drawerItemStyle: { display: 'none' }, // hides from the drawer
+        }}
+      />
 
       <Drawer.Screen name="Agreement" component={AgreementSecond} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
-            <Drawer.Screen name="Agreementland" component={Agreementland} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
+      <Drawer.Screen name="Agreementland" component={Agreementland} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
       <Drawer.Screen name="NomineeScreen" component={NomineeScreen} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
-    
+
 
       <Drawer.Screen name="WitnessScreen" component={WitnessScreen} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
     </Drawer.Navigator>
@@ -257,8 +268,8 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#ccc',
     backgroundColor: '#fff',
-    position : 'relative',
-    bottom : 50
+    position: 'relative',
+    bottom: 50
   },
 
   logoutButton: {
