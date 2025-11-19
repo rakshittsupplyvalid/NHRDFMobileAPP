@@ -9,7 +9,8 @@ import {
   ActivityIndicator,
   Image,
   BackHandler,
-  TextInput
+  TextInput,
+  PermissionsAndroid,
 } from "react-native";
 import {
   Card,
@@ -25,7 +26,7 @@ import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/nativ
 import { launchCamera, CameraOptions } from 'react-native-image-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import RNFS from 'react-native-fs';
-
+import * as Location from 'expo-location';
 import { styles } from "./InspectionScreen.styles";
 import apiClient, { retrieveToken } from "../Service/apiInterceptors";
 import SignatureView from "../Signature/SignatureScreen";
@@ -50,6 +51,7 @@ interface FormDataType {
   Latitude: number;
   Longitude: number;
   GeoImage: string | null;
+  GeoLocation?: { latitude: number; longitude: number } | null;
   GrowerSignature: string | null;
   OfficerSignature: string | null;
   CenterInchargeSignature: string | null;
@@ -59,9 +61,11 @@ interface FormDataType {
   FarmerDistributionId: string;
 }
 
+// Updated Offtype interface to match API structure
 interface OfftypeData {
-  nature: string;
-  count: string;
+  naturetype: string;
+  numberofplants: string;
+  discription: string;
 }
 
 interface FormErrorsType {
@@ -93,10 +97,9 @@ const InspectionScreen = () => {
     return `${year}-${month}-${day}`;
   };
 
-  // State Management
   const [formData, setFormData] = useState<FormDataType>({
     InspectionNo: "",
-    InspectionDate: getTodayDate(), // Auto-set today's date
+    InspectionDate: getTodayDate(),
     HarvestingDate: "",
     DurationFrom: "",
     DurationTo: "",
@@ -114,6 +117,7 @@ const InspectionScreen = () => {
     Latitude: 0,
     Longitude: 0,
     GeoImage: null,
+    GeoLocation: null,
     GrowerSignature: null,
     OfficerSignature: null,
     CenterInchargeSignature: null,
@@ -134,28 +138,36 @@ const InspectionScreen = () => {
     Authorizedname: ""
   });
 
-  // Offtypes State
-  const [offtypes, setOfftypes] = useState<OfftypeData[]>([
-    { nature: "", count: "" },
-    { nature: "", count: "" },
-  ]);
+  // Updated Offtypes State - exactly 10 entries with API structure
+  const [offtypes, setOfftypes] = useState<OfftypeData[]>(
+    Array.from({ length: 10 }, () => ({
+      naturetype: "",
+      numberofplants: "",
+      discription: ""
+    }))
+  );
 
   const [errors, setErrors] = useState<FormErrorsType>({});
-  const [offtypeErrors, setOfftypeErrors] = useState<{ [key: string]: string }[]>(
-    Array(10).fill({ nature: "", count: "" })
+
+  const [offtypeErrors, setOfftypeErrors] = useState(
+    Array.from({ length: 10 }, () => ({
+      naturetype: "",
+      numberofplants: ""
+    }))
   );
+
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isFirstInspection, setIsFirstInspection] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dateField, setDateField] = useState<string | null>(null);
-  const [selectedSeason, setSelectedSeason] = useState<string | null>(null);
+  const [selectedSeason, setSelectedSeason] = useState(null);
   const [seasonData, setSeasonData] = useState<any[]>([]);
   const [seedList, setSeedList] = useState<any[]>([]);
   const [signatureModalVisible, setSignatureModalVisible] = useState(false);
   const [currentSignatureField, setCurrentSignatureField] = useState<string | null>(null);
   const [subSeasonList, setSubSeasonList] = useState([]);
-  const [selectedSubSeason, setSelectedSubSeason] = useState("");
+  const [selectedSubSeason, setSelectedSubSeason] = useState(null);
   const [classSeedList, setClassSeedList] = useState([]);
   const [loadingClassSeed, setLoadingClassSeed] = useState(false);
 
@@ -165,6 +177,69 @@ const InspectionScreen = () => {
     quality: 0.8,
     cameraType: 'back',
     saveToPhotos: true,
+  };
+
+  // Camera Permission and Functions
+  const requestCameraPermission = async () => {
+    if (Platform.OS === "android") {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          {
+            title: "Camera Permission",
+            message: "App needs access to your camera to take pictures.",
+            buttonNeutral: "Ask Me Later",
+            buttonNegative: "Cancel",
+            buttonPositive: "OK",
+          }
+        );
+        return granted === PermissionsAndroid.RESULTS.GRANTED;
+      } catch (err) {
+        console.warn(err);
+        return false;
+      }
+    }
+    return true;
+  };
+
+  const openCamera = async () => {
+    const hasCameraPermission = await requestCameraPermission();
+    if (!hasCameraPermission) {
+      Alert.alert("Permission Denied", "Camera permission is required.");
+      return;
+    }
+
+    const { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert("Permission Denied", "Location permission is required to geo-tag photos.");
+      return;
+    }
+
+    const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+    const { latitude, longitude } = location.coords;
+    console.log("📍 Current Location:", latitude, longitude);
+
+    launchCamera(cameraOptions, (response) => {
+      if (response.didCancel) {
+        console.log("User cancelled image picker");
+      } else if (response.errorCode) {
+        console.log("ImagePicker Error: ", response.errorMessage);
+        Alert.alert("Camera Error", response.errorMessage || "Failed to capture image");
+      } else if (response.assets && response.assets.length > 0) {
+        const uri = response.assets[0].uri;
+
+        setFormData(prev => ({
+          ...prev,
+          GeoImage: uri || null,
+          GeoLocation: { latitude, longitude },
+        }));
+
+        setErrors(prev => ({
+          ...prev,
+          GeoImage: ""
+        }));
+      }
+    });
   };
 
   // API Calls
@@ -293,25 +368,6 @@ const InspectionScreen = () => {
     }, [navigation])
   );
 
-  // Camera Functions
-  const launchCameraForField = (field: string) => {
-    launchCamera(cameraOptions, (response) => {
-      if (response.didCancel) {
-        console.log('User cancelled camera');
-      } else if (response.errorCode) {
-        Alert.alert('Error', `Camera Error: ${response.errorMessage}`);
-      } else if (response.assets && response.assets[0]) {
-        const imageUri = response.assets[0].uri;
-        if (imageUri) {
-          setFormData(prev => ({
-            ...prev,
-            [field]: imageUri
-          }));
-        }
-      }
-    });
-  };
-
   // Signature Functions
   const openSignatureModal = (field: string) => {
     setCurrentSignatureField(field);
@@ -363,43 +419,53 @@ const InspectionScreen = () => {
     setDateField(null);
   };
 
-  const  openDatePicker = (field: string) => {
+  const openDatePicker = (field: string) => {
     setDateField(field);
     setShowDatePicker(true);
   };
 
- const displayDate = (dateString: string) => {
-  if (!dateString) return "Select date";
-  const date = new Date(dateString);
-  return date.toLocaleDateString('en-GB', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  });
-};
-
-
-  // Offtype Handlers
-  const handleOfftypeChange = (index: number, field: keyof OfftypeData, value: string) => {
-    const updatedOfftypes = [...offtypes];
-    updatedOfftypes[index] = {
-      ...updatedOfftypes[index],
-      [field]: value
-    };
-    setOfftypes(updatedOfftypes);
-
-    validateOfftypeField(index, field, value);
+  const displayDate = (dateString: string) => {
+    if (!dateString) return "Select date";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
   };
 
-  const validateOfftypeField = (index: number, field: keyof OfftypeData, value: string) => {
-    let error = "";
+  // FIXED: Improved handleOfftypeChange with better input handling
+  const handleOfftypeChange = (index: number, field: string, value: string) => {
+    // Only allow numbers and limit to 2 digits
+    let filteredValue = value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
 
-    if (field === 'count' && value && (isNaN(Number(value)) || Number(value) < 0)) {
-      error = "Please enter a valid number";
+    // Limit to 2 digits maximum
+    if (filteredValue.length > 2) {
+      filteredValue = filteredValue.slice(0, 2);
     }
 
-    if (field === 'nature' && value && value.length > 100) {
-      error = "Nature should be less than 100 characters";
+    setOfftypes(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: filteredValue };
+      return updated;
+    });
+
+    validateOfftypeField(index, field, filteredValue);
+  };
+
+  const validateOfftypeField = (index: number, field: string, value: string) => {
+    let error = "";
+
+    if (field === "numberofplants") {
+      if (!value || value.trim() === "") {
+        error = "This field is required";
+      } else if (isNaN(Number(value)) || Number(value) < 0) {
+        error = "Please enter a valid number";
+      } else if (Number(value) > 99) {
+        error = "Maximum 99 plants allowed";
+      } else if (Number(value) === 0) {
+        error = "Number cannot be zero";
+      }
     }
 
     const updatedErrors = [...offtypeErrors];
@@ -407,27 +473,8 @@ const InspectionScreen = () => {
       ...updatedErrors[index],
       [field]: error
     };
+
     setOfftypeErrors(updatedErrors);
-  };
-
-  const addMoreOfftypes = () => {
-    setOfftypes(prev => [...prev, { nature: "", count: "" }]);
-    setOfftypeErrors(prev => [...prev, { nature: "", count: "" }]);
-  };
-
-  const removeOfftype = (index: number) => {
-    if (offtypes.length > 2) {
-      const updatedOfftypes = [...offtypes];
-      const updatedErrors = [...offtypeErrors];
-
-      updatedOfftypes.splice(index, 1);
-      updatedErrors.splice(index, 1);
-
-      setOfftypes(updatedOfftypes);
-      setOfftypeErrors(updatedErrors);
-    } else {
-      Alert.alert("Cannot Remove", "Minimum 2 offtype entries are required");
-    }
   };
 
   // Validation
@@ -448,6 +495,7 @@ const InspectionScreen = () => {
       'EstimatedSeedYield',
       'GrowerRepresentative',
       'Remarks',
+      'GeoImage',
     ];
 
     if (requiredFields.includes(field) && (!value || value.toString().trim() === "")) {
@@ -509,7 +557,7 @@ const InspectionScreen = () => {
   const validateForm = (): boolean => {
     const requiredFields = [
       'InspectionNo', 'InspectionDate', 'HarvestingDate', 'DurationFrom', 'DurationTo',
-      'SourceOfSeed', 'PreviousCrop', 'CropCondition'
+      'SourceOfSeed', 'PreviousCrop', 'CropCondition', 'GeoImage'
     ];
 
     let isValid = true;
@@ -523,6 +571,16 @@ const InspectionScreen = () => {
       }
     });
 
+    if (!selectedSeason) {
+      newErrors.Year = "Year is required";
+      isValid = false;
+    }
+
+    if (!selectedSubSeason) {
+      newErrors.Season = "Season is required";
+      isValid = false;
+    }
+
     if (formData.InspectedArea <= 0) {
       newErrors.InspectedArea = "Please enter a valid area";
       isValid = false;
@@ -533,8 +591,18 @@ const InspectionScreen = () => {
       isValid = false;
     }
 
+    // Validate offtypes - all 10 entries must have numberofplants filled
+    const hasEmptyOfftypes = offtypes.some(offtype =>
+      !offtype.numberofplants || offtype.numberofplants.toString().trim() === ""
+    );
+
+    if (hasEmptyOfftypes) {
+      Alert.alert("Validation Error", "Please fill all 10 offtype entries with number of plants");
+      isValid = false;
+    }
+
     const hasOfftypeErrors = offtypeErrors.some(error =>
-      error.nature !== "" || error.count !== ""
+      error.numberofplants !== ""
     );
 
     if (hasOfftypeErrors) {
@@ -563,11 +631,14 @@ const InspectionScreen = () => {
       const token = await retrieveToken();
       const requestData = new FormData();
 
+      // Agreement data
       requestData.append("VarietyId", agreementIds.VarietyId);
       requestData.append("CommodityId", agreementIds.CommodityId);
       requestData.append("FarmerId", agreementIds.FarmerId);
       requestData.append("FarmerDistributionId", agreementIds.FarmerDistributionId);
+      requestData.append("GrowerRepresentative", agreementIds.Authorizedname);
 
+      // Form fields
       Object.keys(formData).forEach(key => {
         const value = formData[key as keyof FormDataType];
         if (value !== null && value !== undefined) {
@@ -579,39 +650,45 @@ const InspectionScreen = () => {
         }
       });
 
-      const offtypesData = offtypes.map((offtype, index) => ({
-        countNumber: index + 1,
-        natureOfOfftype: offtype.nature,
-        numberOfPlants: offtype.count ? parseInt(offtype.count) : 0
+      // Offtypes - convert string values to numbers for API
+      const offtypesData = offtypes.map(o => ({
+        naturetype: null,
+        numberofplants: Number(o.numberofplants) || 0,
+        discription: null
       }));
 
       requestData.append("Offtypes", JSON.stringify(offtypesData));
 
+      // GeoImage
       if (formData.GeoImage) {
         requestData.append("GeoImage", {
           uri: formData.GeoImage,
-          type: 'image/jpeg',
-          name: 'geo_image.jpg',
+          type: "image/jpeg",
+          name: "geo_image.jpg",
         } as any);
       }
 
+      // Grower Signature
       if (formData.GrowerSignature) {
         const growerFile = await base64ToFile(formData.GrowerSignature, "grower_signature.png");
         requestData.append("GrowerSignature", growerFile as any);
       }
 
+      // Officer Signature
       if (formData.OfficerSignature) {
         const officerFile = await base64ToFile(formData.OfficerSignature, "officer_signature.png");
         requestData.append("OfficerSignature", officerFile as any);
       }
 
+      // Center Incharge Signature
       if (formData.CenterInchargeSignature) {
         const inchargeFile = await base64ToFile(formData.CenterInchargeSignature, "center_incharge_signature.png");
         requestData.append("CenterInchargeSignature", inchargeFile as any);
       }
 
-      console.log("🚀 Submitting Inspection Data...");
+      console.log("🚀 Submitting Inspection Data with Offtypes:", offtypesData);
 
+      // API CALL
       const response = await apiClient.post(
         `/api/inspection/${agreementId}`,
         requestData,
@@ -687,7 +764,19 @@ const InspectionScreen = () => {
         {value ? "Retake Photo" : "Take Photo"}
       </Button>
       {value && (
-        <Image source={{ uri: value }} style={styles.previewImage} />
+        <View style={styles.imagePreviewContainer}>
+          <Image source={{ uri: value }} style={styles.previewImage} />
+
+          {formData.GeoLocation && (
+            <View style={styles.geoOverlay}>
+              <Text style={styles.geoText}>
+                Lat: {formData.GeoLocation.latitude.toFixed(6)} | Lon: {formData.GeoLocation.longitude.toFixed(6)}
+              </Text>
+            </View>
+          )}
+
+          <Text style={styles.imagePreviewText}>Photo captured successfully</Text>
+        </View>
       )}
       {errors[field] && (
         <HelperText type="error" visible={true}>
@@ -747,8 +836,8 @@ const InspectionScreen = () => {
     </View>
   );
 
-  // Offtype Field Component
-  const OfftypeField = ({ index, nature, count, errors }: any) => (
+  // FIXED: Updated OfftypeField with maxLength and better input handling
+  const OfftypeField = ({ index, offtype, onChange, errors }: any) => (
     <View style={styles.offtypeRow}>
       <View style={styles.countNumber}>
         <Text style={styles.countNumberText}>{index + 1}</Text>
@@ -756,36 +845,27 @@ const InspectionScreen = () => {
 
       <View style={styles.offtypeInputs}>
         <View style={styles.offtypeInputContainer}>
-          <Text style={styles.offtypeLabel}>Number of Plant of Offtypes</Text>
+          <Text style={styles.offtypeLabel}>Number of Plant of Offtypes *</Text>
+
           <TextInput
-            placeholder="Enter number"
-            value={count}
-            onChangeText={(text) => handleOfftypeChange(index, 'count', text)}
+            placeholder="Enter number (1-99)"
+            value={offtype.numberofplants}
+            onChangeText={(text) => onChange(index, "numberofplants", text)}
             keyboardType="numeric"
+            maxLength={2} // Maximum 2 digits allowed
             style={[
               styles.offtypeInput,
-              errors.count && styles.inputError
+              errors?.numberofplants && styles.inputError
             ]}
           />
-          {errors.count ? (
+
+          {errors?.numberofplants ? (
             <HelperText type="error" visible={true}>
-              {errors.count}
+              {errors.numberofplants}
             </HelperText>
           ) : null}
         </View>
       </View>
-
-      {offtypes.length > 2 && (
-        <Button
-          mode="text"
-          onPress={() => removeOfftype(index)}
-          style={styles.removeButton}
-          textColor="#FF3B30"
-          icon="delete"
-        >
-          Remove
-        </Button>
-      )}
     </View>
   );
 
@@ -827,6 +907,7 @@ const InspectionScreen = () => {
             </View>
 
             <Card.Content style={styles.content}>
+              {/* ... (rest of the inspection details form remains same) ... */}
               <Text style={styles.label}>Inspection No.</Text>
               <Dropdown
                 style={[styles.dropdown, errors.InspectionNo && styles.inputError]}
@@ -888,9 +969,9 @@ const InspectionScreen = () => {
               <View style={styles.row}>
                 <View style={styles.halfInput}>
                   <Text style={styles.label}>Duration From</Text>
-                  <Button 
-                    mode="outlined" 
-                    onPress={() => openDatePicker("DurationFrom")} 
+                  <Button
+                    mode="outlined"
+                    onPress={() => openDatePicker("DurationFrom")}
                     style={styles.dateButton}
                     textColor="#2E7D32"
                   >
@@ -903,9 +984,9 @@ const InspectionScreen = () => {
 
                 <View style={styles.halfInput}>
                   <Text style={styles.label}>Duration To</Text>
-                  <Button 
-                    mode="outlined" 
-                    onPress={() => openDatePicker("DurationTo")} 
+                  <Button
+                    mode="outlined"
+                    onPress={() => openDatePicker("DurationTo")}
                     style={styles.dateButton}
                     textColor="#2E7D32"
                   >
@@ -989,7 +1070,7 @@ const InspectionScreen = () => {
 
               <Text style={styles.label}>Year</Text>
               <Dropdown
-                style={[styles.dropdown]}
+                style={[styles.dropdown, errors.Year && { borderColor: "red" }]}
                 data={seasonData}
                 value={selectedSeason}
                 placeholder={!loading ? "Select Year" : "Loading..."}
@@ -1005,7 +1086,7 @@ const InspectionScreen = () => {
 
               <Text style={styles.label}>Season</Text>
               <Dropdown
-                style={styles.dropdown}
+                style={[styles.dropdown, errors.Season && { borderColor: "red" }]}
                 data={subSeasonList}
                 labelField="label"
                 valueField="value"
@@ -1013,7 +1094,7 @@ const InspectionScreen = () => {
                 value={selectedSubSeason}
                 onChange={(item) => {
                   setSelectedSubSeason(item.value);
-                  console.log("Selected SubSeason:", item);
+                  setErrors(prev => ({ ...prev, Season: "" }));
                 }}
               />
 
@@ -1077,6 +1158,14 @@ const InspectionScreen = () => {
                   </HelperText>
                 </View>
               </View>
+
+              {/* Geo Image Field */}
+              <ImagePickerField
+                label="Geo Tagged Image *"
+                value={formData.GeoImage}
+                onPress={openCamera}
+                field="GeoImage"
+              />
             </Card.Content>
           </Card>
 
@@ -1089,30 +1178,23 @@ const InspectionScreen = () => {
 
             <Card.Content style={styles.content}>
               <Text style={styles.sectionDescription}>
-                Please fill in the number of plants for each offtype count
+                Please fill in the number of plants for all 10 offtype entries (Numbers 1-99 only)
               </Text>
 
               {offtypes.map((offtype, index) => (
                 <OfftypeField
                   key={index}
                   index={index}
-                  nature={offtype.nature}
-                  count={offtype.count}
+                  offtype={offtype}
+                  onChange={handleOfftypeChange}
                   errors={offtypeErrors[index]}
                 />
               ))}
 
-              <Button
-                mode="outlined"
-                onPress={addMoreOfftypes}
-                style={styles.addMoreButton}
-                icon="plus"
-                textColor="#2E7D32"
-              >
-                Add More Offtypes
-              </Button>
+
             </Card.Content>
           </Card>
+
 
           {/* Standards & Report Card */}
           <Card style={styles.card}>
@@ -1230,7 +1312,7 @@ const InspectionScreen = () => {
             </Card.Content>
           </Card>
 
-          {/* Submit Button */}
+
           <Button
             mode="contained"
             onPress={handleSubmit}
@@ -1241,6 +1323,7 @@ const InspectionScreen = () => {
           >
             {submitting ? "Submitting..." : "Submit Inspection"}
           </Button>
+
         </View>
       </ScrollView>
 

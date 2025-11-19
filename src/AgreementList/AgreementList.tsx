@@ -1,13 +1,11 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { View, StyleSheet, TextInput, ScrollView , ActivityIndicator } from "react-native";
+import { View, StyleSheet, TextInput, ScrollView, ActivityIndicator, BackHandler, Modal } from "react-native";
 import { Card, Text, Divider, Button } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import apiClient from "../Service/apiInterceptors";
 import CommonPicker from "../CommonComponent/CommonDropdown";
 import { fetchCommodityTypes, fetchCommodity, fetchVariety } from "../Service/fetchCommodity";
-import { useFocusEffect } from "@react-navigation/native";
-import { useNavigation } from "@react-navigation/native";
-import { BackHandler } from "react-native";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 
 const AgreementListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
@@ -30,6 +28,14 @@ const AgreementListScreen: React.FC = () => {
   const [selectedSeason, setSelectedSeason] = useState("");
   const [selectedSubSeason, setSelectedSubSeason] = useState("");
 
+  // Inspections state
+  const [agreementInspections, setAgreementInspections] = useState<{ [key: string]: any[] }>({});
+  const [inspectionsCount, setInspectionsCount] = useState<{ [key: string]: number }>({});
+
+  // Modal state
+  const [inspectionModalVisible, setInspectionModalVisible] = useState(false);
+  const [selectedInspection, setSelectedInspection] = useState<any>(null);
+
   // Handle Android Back Button
   useFocusEffect(
     useCallback(() => {
@@ -37,7 +43,6 @@ const AgreementListScreen: React.FC = () => {
         navigation.navigate("Dashboard" as never);
         return true;
       };
-
       const subscription = BackHandler.addEventListener("hardwareBackPress", onBackPress);
       return () => subscription.remove();
     }, [navigation])
@@ -125,8 +130,6 @@ const AgreementListScreen: React.FC = () => {
     fetchSeasonData();
   }, []);
 
-
-
   const handleSearch = async () => {
     if (!aadharNumber || aadharNumber.length !== 12) {
       setAgreements([]);
@@ -156,7 +159,29 @@ const AgreementListScreen: React.FC = () => {
     }
   };
 
-  // Commodity change handlers
+  const handleFetchInspections = async (agreementId: string) => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      params.append("AgreementCode", agreementId);
+      params.append("ApprovalStatus", "PENDING");
+      params.append("ApprovalStatus", "APPROVED");
+      params.append("ApprovalStatus", "REJECTED");
+
+      const url = `/api/inspection?${params.toString()}`;
+      const res = await apiClient.get(url);
+      const inspections = res.data || [];
+      console.log("Fetched inspections for agreement", agreementId, inspections);
+
+      setAgreementInspections((prev) => ({ ...prev, [agreementId]: inspections }));
+      setInspectionsCount((prev) => ({ ...prev, [agreementId]: inspections.length }));
+    } catch (error) {
+      console.error("Error fetching inspections:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCommodityTypeChange = (value: string) => {
     setSelectedCommodityType(value);
     setSelectedCommodity("");
@@ -179,6 +204,8 @@ const AgreementListScreen: React.FC = () => {
     setSelectedVariety("");
     setSelectedSeason("");
     setSelectedSubSeason("");
+    setAgreementInspections({});
+    setInspectionsCount({});
   };
 
   const handleNominee = (item: any) => {
@@ -189,26 +216,36 @@ const AgreementListScreen: React.FC = () => {
     navigation.navigate("WitnessScreen", { agreementId: item.id });
   };
 
-  const handleInspection = (item: any, inspectionType: string) => {
-    navigation.navigate("InspectionScreen", { 
-      agreementId: item.id,
-      inspectionType: inspectionType,
-      agreementData: item
-    });
-  };
+  const handleInspection = (agreement: any, inspectionType: string) => {
+    const inspections = agreementInspections[agreement.id] || [];
+    const foundInspection = inspections.find(
+      (ins) => ins.inspectionno.toUpperCase() === inspectionType.toUpperCase()
+    );
 
-  const getInspectionStatus = (item: any, inspectionType: string) => {
-    const inspectionKey = `${inspectionType.toLowerCase()}InspectionStatus`;
-    return item[inspectionKey] || 'pending';
+    if (foundInspection) {
+      setSelectedInspection(foundInspection);
+      setInspectionModalVisible(true);
+    } else {
+      navigation.navigate("InspectionScreen", {
+        agreementId: agreement.id,
+        inspectionType,
+        agreementData: agreement,
+      });
+    }
   };
 
   const getInspectionIcon = (inspectionType: string) => {
     switch (inspectionType) {
-      case 'First': return "clipboard-check";
-      case 'Second': return "clipboard-text";
-      case 'Third': return "clipboard-list";
-      case 'Fourth': return "clipboard-account";
-      default: return "clipboard-check";
+      case "First":
+        return "clipboard-check";
+      case "Second":
+        return "clipboard-text";
+      case "Third":
+        return "clipboard-list";
+      case "Fourth":
+        return "clipboard-account";
+      default:
+        return "clipboard-check";
     }
   };
 
@@ -228,50 +265,25 @@ const AgreementListScreen: React.FC = () => {
           />
 
           <Text style={styles.label}>Commodity Type (Optional)</Text>
-          <CommonPicker
-            selectedValue={selectedCommodityType}
-            onValueChange={handleCommodityTypeChange}
-            items={commodityTypes}
-          />
+          <CommonPicker selectedValue={selectedCommodityType} onValueChange={handleCommodityTypeChange} items={commodityTypes} />
 
           <Text style={styles.label}>Commodity (Optional)</Text>
-          <CommonPicker
-            selectedValue={selectedCommodity}
-            onValueChange={handleCommodityChange}
-            items={commodities}
-          />
+          <CommonPicker selectedValue={selectedCommodity} onValueChange={handleCommodityChange} items={commodities} />
 
           <Text style={styles.label}>Variety (Optional)</Text>
-          <CommonPicker
-            selectedValue={selectedVariety}
-            onValueChange={(val) => setSelectedVariety(val)}
-            items={varieties}
-          />
+          <CommonPicker selectedValue={selectedVariety} onValueChange={(val) => setSelectedVariety(val)} items={varieties} />
 
           <Text style={styles.label}>Year (Optional)</Text>
-          <CommonPicker
-            selectedValue={selectedSeason}
-            onValueChange={handleSeasonSelect}
-            items={seasonData}
-          />
+          <CommonPicker selectedValue={selectedSeason} onValueChange={handleSeasonSelect} items={seasonData} />
 
           <Text style={styles.label}>Season (Optional)</Text>
-          <CommonPicker
-            selectedValue={selectedSubSeason}
-            onValueChange={(value) => setSelectedSubSeason(value)}
-            items={subSeasonList}
-          />
+          <CommonPicker selectedValue={selectedSubSeason} onValueChange={(value) => setSelectedSubSeason(value)} items={subSeasonList} />
 
           <View style={styles.buttonRow}>
-            <Button
-              mode="outlined"
-              onPress={clearAll}
-              style={styles.clearButton}
-              labelStyle={styles.clearButtonLabel}
-            >
+            <Button mode="outlined" onPress={clearAll} style={styles.clearButton} labelStyle={styles.clearButtonLabel}>
               Clear All
             </Button>
-            
+
             <Button
               mode="contained"
               onPress={handleSearch}
@@ -285,7 +297,7 @@ const AgreementListScreen: React.FC = () => {
         </Card.Content>
       </Card>
 
-      {loading &&   <ActivityIndicator size="small" color="#4CAF50" />}
+      {loading && <ActivityIndicator size="small" color="#4CAF50" />}
 
       {/* Agreements List */}
       {agreements.length > 0 &&
@@ -295,15 +307,7 @@ const AgreementListScreen: React.FC = () => {
               <Text style={styles.sectionTitle}>Agreement Details</Text>
               <Divider style={styles.headerDivider} />
 
-              {[
-                { label: "Farmer", value: agreement.farmername },
-                { label: "Center", value: agreement.centername },
-                { label: "Commodity", value: agreement.commodityname },
-                { label: "Variety", value: agreement.varietyname },
-                { label: "Lot Number", value: agreement.lotnumber },
-                { label: "Year", value: agreement.year },
-                { label: "Season", value: agreement.season },
-              ].map((item, idx) => (
+              {[{ label: "Farmer", value: agreement.farmername }, { label: "Center", value: agreement.centername }, { label: "Commodity", value: agreement.commodityname }, { label: "Variety", value: agreement.varietyname }, { label: "Lot Number", value: agreement.lotnumber }, { label: "Year", value: agreement.year }, { label: "Season", value: agreement.season }].map((item, idx) => (
                 <View key={idx} style={styles.detailRow}>
                   <MaterialCommunityIcons name="chevron-right" size={20} color="#4CAF50" />
                   <View style={styles.detailContent}>
@@ -313,53 +317,57 @@ const AgreementListScreen: React.FC = () => {
                 </View>
               ))}
 
-              {/* Four Stage Inspection - Now with same style as Nominee/Witness */}
+              <Button
+                mode="contained"
+                onPress={() => handleFetchInspections(agreement.id)}
+                style={{ marginTop: 12, backgroundColor: "#2196F3" }}
+                labelStyle={{ color: "#fff" }}
+              >
+                {`View Inspections (${inspectionsCount[agreement.id] ?? 0})`}
+              </Button>
+
+              {/* Inspection Buttons */}
               <View style={styles.inspectionSection}>
                 <Text style={styles.inspectionTitle}>Four Stage Inspection</Text>
-                <View style={styles.inspectionGrid}>
-                  {['First', 'Second', 'Third', 'Fourth'].map((inspectionType) => {
-                    const status = getInspectionStatus(agreement, inspectionType);
-                    return (
-                      <Button
-                        key={inspectionType}
-                        mode="outlined"
-                        onPress={() => handleInspection(agreement, inspectionType)}
-                        style={[
-                          styles.inspectionButton,
-                          status === 'completed' && styles.completedInspection
-                        ]}
-                        labelStyle={[
-                          styles.inspectionButtonLabel,
-                          status === 'completed' && styles.completedInspectionLabel
-                        ]}
-                        icon={getInspectionIcon(inspectionType)}
-                      >
-                        {status === 'completed' ? 'Completed' : inspectionType}
-                      </Button>
-                    );
-                  })}
-                </View>
+                 <View style={styles.inspectionGrid}>
+  {["First", "Second", "Third", "Fourth"].map((inspectionType) => {
+    const inspections = agreementInspections[agreement.id] || [];
+    const foundInspection = inspections.find(
+      (ins) => ins.inspectionno.toUpperCase() === inspectionType.toUpperCase()
+    );
+
+    // If inspection exists, show "See X Inspection"; else show "Create"
+    const buttonTitle = foundInspection ? `See ${inspectionType} Inspection` : `Create ${inspectionType}`;
+
+    return (
+      <Button
+        key={inspectionType}
+        mode={foundInspection ? "contained" : "outlined"}
+        onPress={() => handleInspection(agreement, inspectionType)}
+        style={[
+          styles.inspectionButton,
+          foundInspection && styles.completedInspection
+        ]}
+        labelStyle={[
+          styles.inspectionButtonLabel,
+          foundInspection && styles.completedInspectionLabel
+        ]}
+        icon={getInspectionIcon(inspectionType)}
+      >
+        {buttonTitle}
+      </Button>
+    );
+  })}
+</View>
+
               </View>
 
               {/* Action Buttons */}
               <View style={styles.actionRow}>
-                <Button
-                  mode="outlined"
-                  onPress={() => handleNominee(agreement)}
-                  style={styles.actionButton}
-                  labelStyle={styles.actionButtonLabel}
-                  icon="account-group"
-                >
+                <Button mode="outlined" onPress={() => handleNominee(agreement)} style={styles.actionButton} labelStyle={styles.actionButtonLabel} icon="account-group">
                   View Nominee
                 </Button>
-
-                <Button
-                  mode="outlined"
-                  onPress={() => handleWitness(agreement)}
-                  style={styles.actionButton}
-                  labelStyle={styles.actionButtonLabel}
-                  icon="account-tie"
-                >
+                <Button mode="outlined" onPress={() => handleWitness(agreement)} style={styles.actionButton} labelStyle={styles.actionButtonLabel} icon="account-tie">
                   View Witness
                 </Button>
               </View>
@@ -367,177 +375,89 @@ const AgreementListScreen: React.FC = () => {
           </Card>
         ))}
 
-   
-
       {aadharNumber.length === 0 && (
-        <Text style={styles.initialText}>
-          ** Enter Aadhar number to search agreements **
-        </Text>
+        <Text style={styles.initialText}>** Enter Aadhar number to search agreements **</Text>
       )}
+
+      {/* Inspection Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={inspectionModalVisible}
+        onRequestClose={() => setInspectionModalVisible(false)}
+      >
+        <View style={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}>
+          <View style={{
+            width: '90%',
+            backgroundColor: '#fff',
+            borderRadius: 12,
+            padding: 16,
+          }}>
+            {selectedInspection && (
+              <>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12 }}>
+                  {selectedInspection.inspectionno} Inspection
+                </Text>
+
+                <Text><Text style={{ fontWeight: '600' }}>Farmer:</Text> {selectedInspection.farmername}</Text>
+                <Text><Text style={{ fontWeight: '600' }}>Center:</Text> {selectedInspection.centername}</Text>
+                <Text><Text style={{ fontWeight: '600' }}>Crop:</Text> {selectedInspection.crop}</Text>
+                <Text><Text style={{ fontWeight: '600' }}>Variety:</Text> {selectedInspection.variety}</Text>
+                <Text><Text style={{ fontWeight: '600' }}>Crop Condition:</Text> {selectedInspection.cropcondition}</Text>
+                <Text><Text style={{ fontWeight: '600' }}>Relation:</Text> {selectedInspection.relation}</Text>
+                <Text><Text style={{ fontWeight: '600' }}>Relative Name:</Text> {selectedInspection.relativename}</Text>
+                <Text><Text style={{ fontWeight: '600' }}>Inspection Date:</Text> {selectedInspection.inspectiondate}</Text>
+
+                <Button
+                  mode="contained"
+                  onPress={() => setInspectionModalVisible(false)}
+                  style={{ marginTop: 16 }}
+                >
+                  Close
+                </Button>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#f5f5f5" 
-  },
-  scrollContent: { 
-    padding: 16, 
-    paddingBottom: 30 
-  },
-  sectionCard: { 
-    marginBottom: 16, 
-    borderRadius: 12, 
-    elevation: 2, 
-    backgroundColor: "white" 
-  },
-  label: { 
-    fontWeight: "600", 
-    color: "#455A64", 
-    marginBottom: 8, 
-    fontSize: 14 
-  },
-  input: {
-    backgroundColor: "white",
-    height: 50,
-    fontSize: 14,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  buttonRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 16,
-  },
-  clearButton: {
-    flex: 1,
-    borderColor: "#ff6b6b",
-  },
-  clearButtonLabel: {
-    color: "#ff6b6b",
-    fontSize: 14,
-  },
-  searchButton: {
-    flex: 2,
-    borderRadius: 10,
-    backgroundColor: "#4CAF50",
-    elevation: 3,
-    height: 39,
-    justifyContent: "center",
-  },
-  searchButtonLabel: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  agreementCard: { 
-    marginBottom: 16, 
-    borderRadius: 12, 
-    backgroundColor: "#fff", 
-    elevation: 3 
-  },
-  sectionTitle: { 
-    fontSize: 18, 
-    fontWeight: "bold", 
-    color: "#2E7D32", 
-    marginBottom: 16 
-  },
-  headerDivider: { 
-    backgroundColor: "#E0E0E0", 
-    height: 1, 
-    marginVertical: 8 
-  },
-  detailRow: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    marginVertical: 6 
-  },
-  detailContent: { 
-    marginLeft: 8 
-  },
-  detailLabel: { 
-    fontSize: 14, 
-    color: "#555", 
-    fontWeight: "500" 
-  },
-  detailValue: { 
-    fontSize: 14, 
-    color: "#1F2937", 
-    fontWeight: "600", 
-    marginTop: 2 
-  },
-  inspectionSection: {
-    marginTop: 16,
-    padding: 12,
-    backgroundColor: "#f8f9fa",
-    borderRadius: 8,
-  },
-  inspectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  inspectionGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  inspectionButton: {
-    flex: 1,
-    minWidth: '48%',
-    borderRadius: 8,
-    borderColor: "#666",
-    marginBottom: 8,
-  },
-  completedInspection: {
-    backgroundColor: "#4CAF50",
-    borderColor: "#4CAF50",
-  },
-  inspectionButtonLabel: {
-    fontSize: 13,
-    color: "#333",
-  },
-  completedInspectionLabel: {
-    color: "white",
-    fontWeight: "700",
-  },
-  actionRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 16,
-  },
-  actionButton: {
-    flex: 1,
-    borderRadius: 8,
-    borderColor: "#666",
-  },
-  actionButtonLabel: {
-    fontSize: 12,
-  },
-  loadingText: { 
-    textAlign: "center", 
-    marginTop: 10, 
-    color: "#666" 
-  },
-  noDataText: { 
-    marginTop: 16, 
-    textAlign: "center", 
-    color: "#999", 
-    fontStyle: "italic" 
-  },
-  initialText: {
-    marginTop: 16,
-    textAlign: "center",
-    color: "red",
-    fontSize: 14,
-  },
+  container: { flex: 1, backgroundColor: "#f5f5f5" },
+  scrollContent: { padding: 16, paddingBottom: 30 },
+  sectionCard: { marginBottom: 16, borderRadius: 12, elevation: 2, backgroundColor: "white" },
+  label: { fontWeight: "600", color: "#455A64", marginBottom: 8, fontSize: 14 },
+  input: { backgroundColor: "white", height: 50, fontSize: 14, borderRadius: 8, paddingHorizontal: 10, marginBottom: 10, borderWidth: 1, borderColor: "#ddd" },
+  buttonRow: { flexDirection: "row", gap: 12, marginTop: 16 },
+  clearButton: { flex: 1, borderColor: "#ff6b6b" },
+  clearButtonLabel: { color: "#ff6b6b", fontSize: 14 },
+  searchButton: { flex: 2, borderRadius: 10, backgroundColor: "#4CAF50", elevation: 3, height: 39, justifyContent: "center" },
+  searchButtonLabel: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  agreementCard: { marginBottom: 16, borderRadius: 12, backgroundColor: "#fff", elevation: 3 },
+  sectionTitle: { fontSize: 18, fontWeight: "bold", color: "#2E7D32", marginBottom: 16 },
+  headerDivider: { backgroundColor: "#E0E0E0", height: 1, marginVertical: 8 },
+  detailRow: { flexDirection: "row", alignItems: "center", marginVertical: 6 },
+  detailContent: { marginLeft: 8 },
+  detailLabel: { fontSize: 14, color: "#555", fontWeight: "500" },
+  detailValue: { fontSize: 14, color: "#1F2937", fontWeight: "600", marginTop: 2 },
+  inspectionSection: { marginTop: 16, padding: 12, backgroundColor: "#f8f9fa", borderRadius: 8 },
+  inspectionTitle: { fontSize: 16, fontWeight: "bold", color: "#333", marginBottom: 12, textAlign: "center" },
+  inspectionGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  inspectionButton: { flex: 1, minWidth: "48%", borderRadius: 8, borderColor: "#666", marginBottom: 8 },
+  completedInspection: { backgroundColor: "#4CAF50", borderColor: "#4CAF50" },
+  inspectionButtonLabel: { fontSize: 12, textAlign: "center", color: "#666" },
+  completedInspectionLabel: { color: "#fff" },
+  actionRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 16, gap: 8 },
+  actionButton: { flex: 1, borderRadius: 8, borderColor: "#2196F3", height: 40 },
+  actionButtonLabel: { fontSize: 14, color: "#2196F3" },
+  initialText: { textAlign: "center", fontSize: 14, color: "#888", marginTop: 20 },
 });
 
 export default AgreementListScreen;

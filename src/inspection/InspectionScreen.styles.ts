@@ -22,17 +22,7 @@ export const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  imagePreviewContainer: {
-  alignItems: 'center',
-  marginTop: 8,
-},
 
-imagePreviewText: {
-  marginTop: 4,
-  fontSize: 12,
-  color: '#2E7D32',
-  fontStyle: 'italic',
-},
   placeholderStyle: { 
     color: "#666", 
     fontSize: 14 
@@ -207,28 +197,13 @@ imagePreviewText: {
     fontWeight: 'bold',
   },
   
-  imagePickerContainer: {
-    marginBottom: 16,
-  },
-  
-  imagePickerButton: {
-    marginTop: 8,
-    borderColor: '#a6a8ac',
-    height: 44,
-    justifyContent: 'center',
-  },
+ 
   errorContainer: {
     marginHorizontal: 16,
     marginBottom: 16,
   },
   
-  previewImage: {
-    width: 100,
-    height: 100,
-    marginTop: 8,
-    borderRadius: 8,
-    alignSelf: 'center',
-  },
+  
   signatureFieldContainer: {
     marginBottom: 20,
   },
@@ -354,4 +329,46 @@ imagePreviewText: {
     marginBottom: 16,
     fontStyle: 'italic',
   },
+ 
+  imagePickerContainer: {
+    marginVertical: 10,
+  },
+ 
+  imagePickerButton: {
+    marginBottom: 10,
+  },
+  imagePreviewContainer: {
+    position: "relative",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  previewImage: {
+    width: "70%",       // Full width
+    height: 200,         // Adjust height as needed
+    borderRadius: 10,
+    resizeMode: "cover", // Properly cover the space
+  },
+  geoOverlay: {
+    position: "absolute",
+    bottom: 25,
+    left: 50,
+    backgroundColor: "rgba(0, 0, 0, 0.2)",
+    
+    // backgroundColor: "red",
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 5,
+  },
+  geoText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  imagePreviewText: {
+    marginTop: 5,
+    fontSize: 14,
+    color: "#2E7D32",
+  },
+
+
 });
