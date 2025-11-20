@@ -217,22 +217,34 @@ const AgreementListScreen: React.FC = () => {
   };
 
   const handleInspection = (agreement: any, inspectionType: string) => {
-    const inspections = agreementInspections[agreement.id] || [];
-    const foundInspection = inspections.find(
-      (ins) => ins.inspectionno.toUpperCase() === inspectionType.toUpperCase()
-    );
+  console.log("agreement:", agreement);
+  console.log("inspectionType:", inspectionType);
 
-    if (foundInspection) {
-      setSelectedInspection(foundInspection);
-      setInspectionModalVisible(true);
-    } else {
-      navigation.navigate("InspectionScreen", {
-        agreementId: agreement.id,
-        inspectionType,
-        agreementData: agreement,
-      });
-    }
-  };
+  const inspections = agreementInspections[agreement.id] || [];
+  console.log("inspections for agreement:", inspections);
+
+  const foundInspection = inspections.find(
+    (ins) => ins.inspectionno.toUpperCase() === inspectionType.toUpperCase()
+  );
+  console.log("foundInspection:", foundInspection);
+
+  if (foundInspection) {
+    console.log("Opening modal with inspection:", foundInspection);
+    setSelectedInspection(foundInspection);
+    setInspectionModalVisible(true);
+  } else {
+    console.log("Navigating to InspectionScreen with:", {
+      agreementId: agreement.id,
+      inspectionType,
+      agreementData: agreement,
+    });
+    navigation.navigate("InspectionScreen", {
+      agreementId: agreement.id,
+      inspectionType,
+      agreementData: agreement,
+    });
+  }
+};
 
   const getInspectionIcon = (inspectionType: string) => {
     switch (inspectionType) {

@@ -678,7 +678,7 @@ const AgreementSecond: React.FC = () => {
             validateWitnessField(index, 'districtid', value);
 
             axios
-                .get(`https://stage-master-backend.epravaha.com/api/City/GetCityBy${value}`)
+                .get(`https://stage-master-backend.epravaha.com/api/City/GetCityBy/${value}`)
                 .then((res) => {
                     const mappedCities = res.data.map((item) => ({
                         label: item.name,

@@ -30,6 +30,7 @@ import * as Location from 'expo-location';
 import { styles } from "./InspectionScreen.styles";
 import apiClient, { retrieveToken } from "../Service/apiInterceptors";
 import SignatureView from "../Signature/SignatureScreen";
+import { Route } from "@react-navigation/native";
 
 interface FormDataType {
   InspectionNo: string;
@@ -86,7 +87,12 @@ interface AgreementIdsType {
 const InspectionScreen = () => {
   const route = useRoute();
   const navigation: any = useNavigation();
-  const { agreementId } = (route.params as { agreementId?: string }) || {};
+
+  const { agreementId, inspectionType } = route.params as {
+    agreementId: string;
+    inspectionType: string;
+  };
+
 
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
@@ -170,6 +176,9 @@ const InspectionScreen = () => {
   const [selectedSubSeason, setSelectedSubSeason] = useState(null);
   const [classSeedList, setClassSeedList] = useState([]);
   const [loadingClassSeed, setLoadingClassSeed] = useState(false);
+
+
+
 
   // Camera Options
   const cameraOptions: CameraOptions = {
@@ -302,6 +311,9 @@ const InspectionScreen = () => {
       setLoadingClassSeed(false);
     }
   };
+
+
+
 
   useEffect(() => {
     fetchClassSeed();
@@ -556,7 +568,7 @@ const InspectionScreen = () => {
 
   const validateForm = (): boolean => {
     const requiredFields = [
-      'InspectionNo', 'InspectionDate', 'HarvestingDate', 'DurationFrom', 'DurationTo',
+      'InspectionDate', 'HarvestingDate', 'DurationFrom', 'DurationTo',
       'SourceOfSeed', 'PreviousCrop', 'CropCondition', 'GeoImage'
     ];
 
@@ -614,6 +626,16 @@ const InspectionScreen = () => {
     return isValid;
   };
 
+
+  useEffect(() => {
+    if (inspectionType) {
+      setFormData(prev => ({
+        ...prev,
+        InspectionNo: inspectionType.toUpperCase(),  // auto-fill FIRST, SECOND, THIRD
+      }));
+    }
+  }, [inspectionType]);
+
   const handleSubmit = async () => {
     if (!validateForm()) {
       Alert.alert("Validation Error", "Please fill all required fields correctly");
@@ -632,11 +654,14 @@ const InspectionScreen = () => {
       const requestData = new FormData();
 
       // Agreement data
+      requestData.append("InspectionNo", formData.InspectionNo);
       requestData.append("VarietyId", agreementIds.VarietyId);
       requestData.append("CommodityId", agreementIds.CommodityId);
       requestData.append("FarmerId", agreementIds.FarmerId);
       requestData.append("FarmerDistributionId", agreementIds.FarmerDistributionId);
       requestData.append("GrowerRepresentative", agreementIds.Authorizedname);
+      requestData.append("Latitude", formData.GeoLocation.latitude.toFixed(6));
+      requestData.append("Longitude", formData.GeoLocation.longitude.toFixed(6));
 
       // Form fields
       Object.keys(formData).forEach(key => {
@@ -907,34 +932,6 @@ const InspectionScreen = () => {
             </View>
 
             <Card.Content style={styles.content}>
-              {/* ... (rest of the inspection details form remains same) ... */}
-              <Text style={styles.label}>Inspection No.</Text>
-              <Dropdown
-                style={[styles.dropdown, errors.InspectionNo && styles.inputError]}
-                placeholderStyle={styles.placeholderStyle}
-                selectedTextStyle={styles.selectedTextStyle}
-                data={[
-                  { label: "FIRST", value: "FIRST" },
-                  { label: "SECOND", value: "SECOND" },
-                  { label: "THIRD", value: "THIRD" },
-                  { label: "FOURTH", value: "FOURTH" },
-                ]}
-                maxHeight={200}
-                labelField="label"
-                valueField="value"
-                placeholder="Select Inspection Number"
-                value={formData.InspectionNo}
-                onChange={(item) => {
-                  handleChange("InspectionNo", item.value);
-                  setIsFirstInspection(item.value === "FIRST");
-                }}
-                mode="modal"
-              />
-              {errors.InspectionNo && (
-                <HelperText type="error" visible>
-                  {errors.InspectionNo}
-                </HelperText>
-              )}
 
               <View style={styles.row}>
                 <View style={styles.halfInput}>
@@ -1008,25 +1005,18 @@ const InspectionScreen = () => {
 
               <Text style={styles.label}>Class of Seed</Text>
               <Dropdown
-                style={[
-                  styles.dropdown,
-                  !isFirstInspection && { backgroundColor: "#e5e5e5" }
-                ]}
-                data={classSeedList}
-                labelField="label"
-                valueField="value"
-                placeholder={loadingClassSeed ? "Loading..." : "Select Class of Seed"}
-                value={agreementIds.SeedClass}
-                onChange={(item) => {
-                  if (isFirstInspection) {
-                    setAgreementIds(prev => ({
-                      ...prev,
-                      SeedClass: item.value
-                    }));
-                  }
-                }}
+                style={styles.dropdown}
+                data={classSeedList}              // <-- Data from API
+                labelField="label"                // <-- What to display
+                valueField="value"                // <-- What to store internally
+                placeholder={
+                  loadingClassSeed ? "Loading..." : "Select Class of Seed"
+                }
+                value={agreementIds.SeedClass}    // <-- Selected value
                 mode="modal"
-                disable={!isFirstInspection}
+                onChange={(item) => {
+                  setAgreementIds(prev => ({ ...prev, SeedClass: item.value }));
+                }}
               />
 
               <Text style={styles.label}>Crop</Text>
@@ -1260,9 +1250,9 @@ const InspectionScreen = () => {
               <TextInput
                 placeholder="Enter representative name"
                 placeholderTextColor="#666"
-                value={agreementIds.Authorizedname}
+                value={formData.GrowerRepresentative}
                 onChangeText={(text) => handleChange("GrowerRepresentative", text)}
-                style={[styles.input, styles.disabledInput]}
+                style={styles.input}
               />
               <HelperText type="error" visible={!!errors.GrowerRepresentative}>
                 {errors.GrowerRepresentative}

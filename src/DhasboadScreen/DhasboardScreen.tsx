@@ -117,7 +117,7 @@ const DashboardScreen = () => {
             </View>
             <Text style={styles.cardSubtitle}>View Inspections</Text>
             <View style={styles.cardFooter}>
-              <Text style={styles.cardInfo}>Total inspection: 5</Text>
+              <Text style={styles.cardInfo}>Total inspection 5</Text>
               <Button
                 mode="outlined"
                 compact
