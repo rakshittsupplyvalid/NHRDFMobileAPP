@@ -94,6 +94,11 @@ const InspectionScreen = () => {
   };
 
 
+   const handleUppercaseChange = (text: string, callback: (text: string) => void) => {
+        callback(text.toUpperCase());
+    };
+
+
   // Get today's date in YYYY-MM-DD format
   const getTodayDate = () => {
     const today = new Date();
@@ -795,7 +800,7 @@ const InspectionScreen = () => {
           {formData.GeoLocation && (
             <View style={styles.geoOverlay}>
               <Text style={styles.geoText}>
-                Lat: {formData.GeoLocation.latitude.toFixed(6)} | Lon: {formData.GeoLocation.longitude.toFixed(6)}
+                Lat: {formData.GeoLocation.latitude.toFixed(6)} | Long: {formData.GeoLocation.longitude.toFixed(6)}
               </Text>
             </View>
           )}
@@ -940,7 +945,7 @@ const InspectionScreen = () => {
                     <Text style={styles.dateDisplayText}>
                       {displayDate(formData.InspectionDate)}
                     </Text>
-                    <Text style={styles.todayBadge}>Today</Text>
+          
                   </View>
                   <HelperText type="error" visible={!!errors.InspectionDate}>
                     {errors.InspectionDate}
@@ -1032,7 +1037,8 @@ const InspectionScreen = () => {
                 placeholder="Enter previous crop"
                 placeholderTextColor="#666"
                 value={formData.PreviousCrop}
-                onChangeText={(text) => handleChange("PreviousCrop", text)}
+                onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("PreviousCrop", upperText))}
+          
                 style={styles.input}
               />
               {errors.PreviousCrop && (
@@ -1046,7 +1052,8 @@ const InspectionScreen = () => {
                 placeholder="Enter Source of Seed"
                 placeholderTextColor="#666"
                 value={formData.SourceOfSeed}
-                onChangeText={(text) => handleChange("SourceOfSeed", text)}
+                onChangeText={(text) => handleUppercaseChange(text, (upperText) =>  handleChange("SourceOfSeed", upperText))}
+               
                 style={[
                   styles.input,
                   errors.SourceOfSeed && { borderColor: "red" }
@@ -1066,6 +1073,7 @@ const InspectionScreen = () => {
                 placeholder={!loading ? "Select Year" : "Loading..."}
                 labelField="label"
                 valueField="value"
+
                 onChange={(item) => handleSeasonSelect(item.value)}
                 mode="modal"
               />
@@ -1124,7 +1132,9 @@ const InspectionScreen = () => {
                     placeholder="Enter area"
                     placeholderTextColor="#666"
                     value={formData.InspectedArea.toString()}
-                    onChangeText={(text) => handleChange("InspectedArea", text)}
+                     onChangeText={(text) => handleUppercaseChange(text, (upperText) =>  handleChange("InspectedArea", upperText))}
+               
+         
                     keyboardType="numeric"
                     style={styles.input}
                   />
@@ -1139,7 +1149,8 @@ const InspectionScreen = () => {
                     placeholder="Enter field count"
                     placeholderTextColor="#666"
                     value={formData.FieldCount.toString()}
-                    onChangeText={(text) => handleChange("FieldCount", text)}
+                     onChangeText={(text) => handleUppercaseChange(text, (upperText) =>  handleChange("FieldCount" , upperText))}
+                  
                     keyboardType="numeric"
                     style={styles.input}
                   />
@@ -1239,7 +1250,9 @@ const InspectionScreen = () => {
                 placeholder="Enter estimated yield"
                 placeholderTextColor="#666"
                 value={formData.EstimatedSeedYield}
-                onChangeText={(text) => handleChange("EstimatedSeedYield", text)}
+                  onChangeText={(text) => handleUppercaseChange(text, (upperText) =>  handleChange("EstimatedSeedYield" , upperText))}
+                
+              
                 style={styles.input}
               />
               <HelperText type="error" visible={!!errors.EstimatedSeedYield}>
@@ -1251,7 +1264,8 @@ const InspectionScreen = () => {
                 placeholder="Enter representative name"
                 placeholderTextColor="#666"
                 value={formData.GrowerRepresentative}
-                onChangeText={(text) => handleChange("GrowerRepresentative", text)}
+                 onChangeText={(text) => handleUppercaseChange(text, (upperText) =>  handleChange("GrowerRepresentative" , upperText))}
+              
                 style={styles.input}
               />
               <HelperText type="error" visible={!!errors.GrowerRepresentative}>
@@ -1263,7 +1277,8 @@ const InspectionScreen = () => {
                 placeholder="Enter remarks"
                 placeholderTextColor="#666"
                 value={formData.Remarks}
-                onChangeText={(text) => handleChange("Remarks", text)}
+                  onChangeText={(text) => handleUppercaseChange(text, (upperText) =>  handleChange("Remarks" , upperText))}
+
                 multiline
                 numberOfLines={3}
                 style={[styles.input, styles.textArea]}

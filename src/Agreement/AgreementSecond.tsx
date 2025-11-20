@@ -1,4 +1,6 @@
- import React, { useState, useEffect, useCallback } from "react";
+
+
+import React, { useState, useEffect, useCallback } from "react";
 import {
     StyleSheet,
     View,
@@ -34,7 +36,12 @@ import * as FileSystem from "expo-file-system";
 import axios from "axios";
 import RNFS from 'react-native-fs';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
+// Responsive scaling functions
+const scale = (size: number) => (screenWidth / 375) * size;
+const verticalScale = (size: number) => (screenHeight / 667) * size;
+const moderateScale = (size: number, factor = 0.5) => size + (scale(size) - size) * factor;
 
 interface NomineeType {
     nomineename: string;
@@ -162,6 +169,11 @@ const AgreementSecond: React.FC = () => {
     const [nomineeProfilePhotos, setNomineeProfilePhotos] = useState<string[]>([]);
     const [witnessProfilePhotos, setWitnessProfilePhotos] = useState<string[]>([]);
     const [activeSection, setActiveSection] = useState<string | null>(null);
+
+    // Custom uppercase handler for TextInput
+    const handleUppercaseChange = (text: string, callback: (text: string) => void) => {
+        callback(text.toUpperCase());
+    };
 
     // ✅ FIXED: Improved signature data handler with functional updates
     useFocusEffect(
@@ -1003,12 +1015,16 @@ const AgreementSecond: React.FC = () => {
 
             const token = await retrieveToken();
 
-            const response = await apiClient.post("/api/mobile/agreement", requestData, {
-                headers: {
-                    "Content-Type": "multipart/form-data",
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            // const response = await apiClient.post("/api/mobile/agreement", requestData, {
+            //     headers: {
+            //         "Content-Type": "multipart/form-data",
+            //         Authorization: `Bearer ${token}`,
+            //     },
+            // });
+
+
+
+            const response = await apiClient.post("/api/mobile/agreement", requestData);
 
             if (response.status === 200 || response.status === 201) {
                 setIsSubmitting(false);
@@ -1130,7 +1146,7 @@ const AgreementSecond: React.FC = () => {
             <View style={styles.sectionHeaderLeft}>
                 <MaterialIcons 
                     name={activeSection === section ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
-                    size={24} 
+                    size={scale(24)} 
                     color="#70B04F" 
                 />
                 <Text style={styles.sectionTitle}>{title}</Text>
@@ -1142,7 +1158,7 @@ const AgreementSecond: React.FC = () => {
             </View>
             <MaterialIcons 
                 name="info-outline" 
-                size={20} 
+                size={scale(20)} 
                 color="#666" 
             />
         </TouchableOpacity>
@@ -1157,7 +1173,7 @@ const AgreementSecond: React.FC = () => {
                     onPress={() => navigation.navigate("Agreementland" as never)}
                     activeOpacity={0.7}
                 >
-                    <MaterialIcons name="arrow-back" size={24} color="#fff" />
+                    <MaterialIcons name="arrow-back" size={scale(24)} color="#fff" />
                 </TouchableOpacity>
                 <Text style={styles.headerText}>Nominee & Witness Details</Text>
                 
@@ -1181,7 +1197,7 @@ const AgreementSecond: React.FC = () => {
                     {activeSection === "nominee" && (
                         <Card.Content style={styles.sectionContent}>
                             <View style={styles.requiredInfo}>
-                                <MaterialIcons name="info" size={16} color="#FF6B35" />
+                                <MaterialIcons name="info" size={scale(16)} color="#FF6B35" />
                                 <Text style={styles.requiredInfoText}>Minimum 1 Nominee Required</Text>
                             </View>
 
@@ -1197,7 +1213,8 @@ const AgreementSecond: React.FC = () => {
                                                 <RNTextInput
                                                     placeholder="Full Name"
                                                     value={nominee.nomineename}
-                                                    onChangeText={(text) => updateNominee(index, "nomineename", text)}
+                                                    autoCapitalize="characters" 
+                                                    onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateNominee(index, "nomineename", upperText))}
                                                     style={[
                                                         styles.simpleInput,
                                                         nomineeErrors[index]?.nomineename && styles.inputError
@@ -1306,7 +1323,7 @@ const AgreementSecond: React.FC = () => {
                                         <RNTextInput
                                             placeholder="Address Line"
                                             value={nominee.addrline}
-                                            onChangeText={(text) => updateNominee(index, "addrline", text)}
+                                            onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateNominee(index, "addrline", upperText))}
                                             style={[
                                                 styles.simpleInput,
                                                 nomineeErrors[index]?.addrline && styles.inputError
@@ -1343,7 +1360,7 @@ const AgreementSecond: React.FC = () => {
                                                 <RNTextInput
                                                     placeholder="Village Name"
                                                     value={nominee.villagename}
-                                                    onChangeText={(text) => updateNominee(index, "villagename", text)}
+                                                    onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateNominee(index, "villagename", upperText))}
                                                     style={styles.simpleInput}
                                                     maxLength={100}
                                                 />
@@ -1395,8 +1412,10 @@ const AgreementSecond: React.FC = () => {
                                             placeholder="Account Holder Name"
                                             value={nominee.accountholdername}
                                             onChangeText={(text) => {
-                                                updateNominee(index, "accountholdername", text);
-                                                validateNomineeField(index, "accountholdername", text);
+                                                handleUppercaseChange(text, (upperText) => {
+                                                    updateNominee(index, "accountholdername", upperText);
+                                                    validateNomineeField(index, "accountholdername", upperText);
+                                                });
                                             }}
                                             style={[
                                                 styles.simpleInput,
@@ -1467,7 +1486,7 @@ const AgreementSecond: React.FC = () => {
                                                 />
                                             ) : (
                                                 <View style={styles.photoPlaceholder}>
-                                                    <MaterialIcons name="photo-library" size={32} color="#ccc" />
+                                                    <MaterialIcons name="photo-library" size={scale(32)} color="#ccc" />
                                                     <Text style={styles.photoPlaceholderText}>No passbook photo added</Text>
                                                 </View>
                                             )}
@@ -1475,7 +1494,7 @@ const AgreementSecond: React.FC = () => {
                                                 style={styles.photoButton}
                                                 onPress={() => handleNomineeProfilePhoto(index)}
                                             >
-                                                <MaterialIcons name="photo-camera" size={20} color="#fff" />
+                                                <MaterialIcons name="photo-camera" size={scale(20)} color="#fff" />
                                                 <Text style={styles.photoButtonText}>Capture Passbook</Text>
                                             </TouchableOpacity>
                                         </View>
@@ -1493,7 +1512,7 @@ const AgreementSecond: React.FC = () => {
                     {activeSection === "witness" && (
                         <Card.Content style={styles.sectionContent}>
                             <View style={styles.requiredInfo}>
-                                <MaterialIcons name="info" size={16} color="#FF6B35" />
+                                <MaterialIcons name="info" size={scale(16)} color="#FF6B35" />
                                 <Text style={styles.requiredInfoText}>
                                     {witnesses.length === 0 ? "Minimum 1 Witness Required" : 
                                      witnesses.length === 1 ? "Add 1 more witness (Optional)" : 
@@ -1511,7 +1530,7 @@ const AgreementSecond: React.FC = () => {
                                                     style={styles.deleteButton}
                                                     onPress={() => deleteWitness(index)}
                                                 >
-                                                    <MaterialIcons name="delete" size={20} color="#ff4444" />
+                                                    <MaterialIcons name="delete" size={scale(20)} color="#ff4444" />
                                                 </TouchableOpacity>
                                             )}
                                         </View>
@@ -1523,7 +1542,7 @@ const AgreementSecond: React.FC = () => {
                                                 <RNTextInput
                                                     placeholder="Full Name"
                                                     value={witness.witnessname}
-                                                    onChangeText={(text) => updateWitness(index, "witnessname", text)}
+                                                    onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateWitness(index, "witnessname", upperText))}
                                                     style={[
                                                         styles.simpleInput,
                                                         witnessErrors[index]?.witnessname && styles.inputError
@@ -1568,7 +1587,7 @@ const AgreementSecond: React.FC = () => {
                                         <RNTextInput
                                             placeholder="Address Line"
                                             value={witness.addrline}
-                                            onChangeText={(text) => updateWitness(index, "addrline", text)}
+                                            onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateWitness(index, "addrline", upperText))}
                                             style={[
                                                 styles.simpleInput,
                                                 witnessErrors[index]?.addrline && styles.inputError
@@ -1605,7 +1624,7 @@ const AgreementSecond: React.FC = () => {
                                                 <RNTextInput
                                                     placeholder="Village Name"
                                                     value={witness.villagename}
-                                                    onChangeText={(text) => updateWitness(index, "villagename", text)}
+                                                    onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateWitness(index, "villagename", upperText))}
                                                     style={styles.simpleInput}
                                                     maxLength={100}
                                                 />
@@ -1673,7 +1692,7 @@ const AgreementSecond: React.FC = () => {
                                                 />
                                             ) : (
                                                 <View style={styles.photoPlaceholder}>
-                                                    <MaterialCommunityIcons name="signature-freehand" size={32} color="#ccc" />
+                                                    <MaterialCommunityIcons name="signature-freehand" size={scale(32)} color="#ccc" />
                                                     <Text style={styles.photoPlaceholderText}>No signature added</Text>
                                                     <Text style={styles.requiredText}>Signature is required</Text>
                                                 </View>
@@ -1682,7 +1701,7 @@ const AgreementSecond: React.FC = () => {
                                                 style={styles.photoButton}
                                                 onPress={() => navigation.navigate("Signature", { type: "witness", index })}
                                             >
-                                                <MaterialCommunityIcons name="signature-freehand" size={20} color="#fff" />
+                                                <MaterialCommunityIcons name="signature-freehand" size={scale(20)} color="#fff" />
                                                 <Text style={styles.photoButtonText}>Capture Signature</Text>
                                             </TouchableOpacity>
                                         </View>
@@ -1713,7 +1732,7 @@ const AgreementSecond: React.FC = () => {
                             <View style={styles.photoGrid}>
                                 <View style={styles.photoBlock}>
                                     <View style={styles.photoHeader}>
-                                        <MaterialIcons name="gesture" size={22} color="#007AFF" />
+                                        <MaterialIcons name="gesture" size={scale(22)} color="#007AFF" />
                                         <Text style={styles.photoLabel}>Signature</Text>
                                     </View>
 
@@ -1721,7 +1740,7 @@ const AgreementSecond: React.FC = () => {
                                         <Image source={{ uri: signaturePhoto }} style={styles.previewImage} />
                                     ) : (
                                         <View style={styles.emptyBox}>
-                                            <MaterialIcons name="border-color" size={28} color="#999" />
+                                            <MaterialIcons name="border-color" size={scale(28)} color="#999" />
                                             <Text style={styles.emptyText}>No Signature Added</Text>
                                         </View>
                                     )}
@@ -1731,7 +1750,7 @@ const AgreementSecond: React.FC = () => {
                                         onPress={() =>
                                             navigation.navigate("Signature", { type: "signature" })
                                         }
-                                        icon={() => <MaterialIcons name="edit" size={20} color="#fff" />}
+                                        icon={() => <MaterialIcons name="edit" size={scale(20)} color="#fff" />}
                                         style={styles.actionButton}
                                         contentStyle={styles.buttonContent}
                                     >
@@ -1741,7 +1760,7 @@ const AgreementSecond: React.FC = () => {
 
                                 <View style={styles.photoBlock}>
                                     <View style={styles.photoHeader}>
-                                        <MaterialIcons name="person" size={22} color="#007AFF" />
+                                        <MaterialIcons name="person" size={scale(22)} color="#007AFF" />
                                         <Text style={styles.photoLabel}>Profile</Text>
                                     </View>
 
@@ -1749,7 +1768,7 @@ const AgreementSecond: React.FC = () => {
                                         <Image source={{ uri: profilePhoto }} style={styles.previewImage} />
                                     ) : (
                                         <View style={styles.emptyBox}>
-                                            <MaterialIcons name="photo-camera" size={28} color="#999" />
+                                            <MaterialIcons name="photo-camera" size={scale(28)} color="#999" />
                                             <Text style={styles.emptyText}>No Profile Photo</Text>
                                         </View>
                                     )}
@@ -1757,7 +1776,7 @@ const AgreementSecond: React.FC = () => {
                                     <Button
                                         mode="contained"
                                         onPress={() => openCamera(setProfilePhoto)}
-                                        icon={() => <MaterialIcons name="photo-camera" size={20} color="#fff" />}
+                                        icon={() => <MaterialIcons name="photo-camera" size={scale(20)} color="#fff" />}
                                         style={[styles.actionButton, styles.profileButton]}
                                         contentStyle={styles.buttonContent}
                                     >
@@ -1783,7 +1802,7 @@ const AgreementSecond: React.FC = () => {
                             <TextInput
                                 mode="outlined"
                                 value={state.form.authorizedSignatory || ""}
-                                onChangeText={(text) => updateState({ ...state, form: { ...state.form, authorizedSignatory: text } })}
+                                onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateState({ ...state, form: { ...state.form, authorizedSignatory: upperText } }))}
                                 style={styles.input}
                                 placeholder="Enter authorized signatory name"
                                 maxLength={20}
@@ -1793,7 +1812,7 @@ const AgreementSecond: React.FC = () => {
                             <TextInput
                                 mode="outlined"
                                 value={state.form.TagNumber || ""}
-                                onChangeText={(text) => updateState({ ...state, form: { ...state.form, TagNumber: text } })}
+                                onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateState({ ...state, form: { ...state.form, TagNumber: upperText } }))}
                                 style={styles.input}
                                 placeholder="Enter Tag number"
                                 maxLength={50}
@@ -1868,36 +1887,34 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: "#70B04F",
-        paddingHorizontal:23,
-        paddingVertical: 30,
+        paddingHorizontal: scale(23),
+        paddingVertical: verticalScale(30),
         justifyContent: "space-between",
     },
     backButton: {
-    padding: 4,
-    marginTop: 8,   // niche shift
-},
-
-headerText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#fff",
-    flex: 1,
-    textAlign: "center",
-    marginTop: 8,   // niche shift
-},
-
+        padding: scale(4),
+        marginTop: verticalScale(8),
+    },
+    headerText: {
+        fontSize: moderateScale(18),
+        fontWeight: "bold",
+        color: "#fff",
+        flex: 1,
+        textAlign: "center",
+        marginTop: verticalScale(8),
+    },
     container: {
         flex: 1,
         backgroundColor: "#f5f5f5",
     },
     scrollContent: {
         flexGrow: 1,
-        padding: 12,
-        paddingBottom: 20,
+        padding: scale(12),
+        paddingBottom: verticalScale(20),
     },
     sectionCard: {
-        marginBottom: 12,
-        borderRadius: 12,
+        marginBottom: verticalScale(12),
+        borderRadius: scale(12),
         elevation: 2,
         backgroundColor: "white",
         overflow: 'hidden',
@@ -1906,7 +1923,7 @@ headerText: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: 16,
+        padding: scale(16),
         backgroundColor: '#f8f9fa',
         borderBottomWidth: 1,
         borderBottomColor: '#e9ecef',
@@ -1917,290 +1934,297 @@ headerText: {
         flex: 1,
     },
     sectionTitle: {
-        fontSize: 16,
+        fontSize: moderateScale(16),
         fontWeight: "bold",
         color: "#70B04F",
-        marginLeft: 8,
+        marginLeft: scale(8),
     },
     sectionContent: {
-        padding: 4,
+        padding: scale(4),
     },
     countBadge: {
         backgroundColor: '#70B04F',
-        borderRadius: 12,
-        paddingHorizontal: 8,
-        paddingVertical: 2,
-        marginLeft: 8,
+        borderRadius: scale(12),
+        paddingHorizontal: scale(8),
+        paddingVertical: verticalScale(2),
+        marginLeft: scale(8),
     },
     countText: {
         color: '#fff',
-        fontSize: 12,
+        fontSize: moderateScale(12),
         fontWeight: 'bold',
     },
     requiredInfo: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: '#FFF3E0',
-        padding: 12,
-        borderRadius: 8,
-        marginBottom: 12,
-        marginHorizontal: 8,
+        padding: scale(12),
+        borderRadius: scale(8),
+        marginBottom: verticalScale(12),
+        marginHorizontal: scale(8),
     },
     requiredInfoText: {
-        fontSize: 12,
+        fontSize: moderateScale(12),
         color: '#E65100',
-        marginLeft: 8,
+        marginLeft: scale(8),
         fontWeight: '500',
     },
     sectionSubTitle: {
-        fontSize: 15,
+        fontSize: moderateScale(15),
         fontWeight: "600",
-        marginBottom: 12,
+        marginBottom: verticalScale(12),
         color: "#455A64"
     },
     innerCard: {
-        marginBottom: 12,
-        borderRadius: 8,
+        marginBottom: verticalScale(12),
+        borderRadius: scale(8),
         elevation: 1,
         backgroundColor: "#fff",
-        marginHorizontal: 4,
+        marginHorizontal: scale(4),
     },
     witnessHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: 8,
+        marginBottom: verticalScale(8),
     },
     deleteButton: {
-        padding: 4,
+        padding: scale(4),
     },
     row: {
-        flexDirection: 'row',
+        flexDirection: screenWidth < 768 ? 'column' : 'row',
         justifyContent: 'space-between',
-        marginBottom: 8,
-        gap: 8,
+        marginBottom: verticalScale(8),
+        gap: scale(8),
     },
     halfInput: {
         flex: 1,
+        minWidth: screenWidth < 768 ? '100%' : '48%',
+        marginBottom: screenWidth < 768 ? verticalScale(8) : 0,
     },
     thirdInput: {
         flex: 1,
+        minWidth: screenWidth < 768 ? '100%' : '30%',
+        marginBottom: screenWidth < 768 ? verticalScale(8) : 0,
     },
     twoThirdInput: {
         flex: 2,
-        marginLeft: 8,
+        marginLeft: screenWidth < 768 ? 0 : scale(8),
+        minWidth: screenWidth < 768 ? '100%' : '65%',
+        marginBottom: screenWidth < 768 ? verticalScale(8) : 0,
     },
     // Simple TextInput styles
     simpleInput: {
-        height: 40,
+        height: verticalScale(40),
         borderWidth: 1,
         borderColor: '#D1D5DB',
-        borderRadius: 8,
-        paddingHorizontal: 12,
+        borderRadius: scale(8),
+        paddingHorizontal: scale(12),
         backgroundColor: '#FFFFFF',
-        fontSize: 14,
+        fontSize: moderateScale(14),
     },
     inputError: {
         borderColor: "#f44336",
     },
     label: {
-        fontSize: 13,
+        fontSize: moderateScale(13),
         fontWeight: "600",
         color: "#455A64",
-        marginBottom: 6,
-        marginTop: 4,
+        marginBottom: verticalScale(6),
+        marginTop: verticalScale(4),
     },
     dropdown: {
-        height: 40,
+        height: verticalScale(40),
         borderColor: '#ccc',
         borderWidth: 1,
-        borderRadius: 8,
-        paddingHorizontal: 10,
+        borderRadius: scale(8),
+        paddingHorizontal: scale(10),
         backgroundColor: '#fff',
     },
     dropdownError: {
         borderColor: '#B00020',
     },
     placeholderStyle: {
-        fontSize: 14,
+        fontSize: moderateScale(14),
         color: '#000',
     },
     selectedTextStyle: {
-        fontSize: 14,
+        fontSize: moderateScale(14),
         color: '#000',
     },
     input: {
         backgroundColor: '#fff',
-        marginBottom: 12,
-        fontSize: 14,
+        marginBottom: verticalScale(12),
+        fontSize: moderateScale(14),
     },
     photoSection: {
-        marginVertical: 12,
+        marginVertical: verticalScale(12),
         alignItems: "center",
     },
     photoLabel: {
         fontWeight: "bold",
-        marginBottom: 8,
-        fontSize: 14,
+        marginBottom: verticalScale(8),
+        fontSize: moderateScale(14),
         color: '#455A64',
     },
     photoPreview: {
         width: '100%',
-        height: 150,
-        borderRadius: 8,
-        marginVertical: 8,
+        height: verticalScale(150),
+        borderRadius: scale(8),
+        marginVertical: verticalScale(8),
         borderWidth: 1,
         borderColor: '#e0e0e0',
     },
     signaturePreview: {
         width: '100%',
-        height: 100,
-        borderRadius: 8,
-        marginVertical: 8,
+        height: verticalScale(100),
+        borderRadius: scale(8),
+        marginVertical: verticalScale(8),
         borderWidth: 1,
         borderColor: '#e0e0e0',
         backgroundColor: '#f8f9fa',
     },
     photoPlaceholder: {
         width: '100%',
-        height: 120,
+        height: verticalScale(120),
         borderWidth: 1.5,
         borderColor: "#d9d9d9",
-        borderRadius: 8,
+        borderRadius: scale(8),
         justifyContent: "center",
         alignItems: "center",
-        marginVertical: 8,
+        marginVertical: verticalScale(8),
         backgroundColor: "#fafafa",
         borderStyle: 'dashed',
     },
     photoPlaceholderText: {
-        fontSize: 12,
+        fontSize: moderateScale(12),
         color: "#999",
-        marginTop: 4,
+        marginTop: verticalScale(4),
     },
     requiredText: {
-        fontSize: 11,
+        fontSize: moderateScale(11),
         color: '#ff4444',
-        marginTop: 2,
+        marginTop: verticalScale(2),
         fontStyle: 'italic',
     },
     photoButton: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: "#007AFF",
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: 8,
-        marginTop: 8,
+        paddingVertical: verticalScale(10),
+        paddingHorizontal: scale(16),
+        borderRadius: scale(8),
+        marginTop: verticalScale(8),
     },
     photoButtonText: {
         color: '#fff',
-        fontSize: 14,
+        fontSize: moderateScale(14),
         fontWeight: '500',
-        marginLeft: 8,
+        marginLeft: scale(8),
     },
     addButton: {
-        marginVertical: 8,
+        marginVertical: verticalScale(8),
         borderColor: '#70B04F',
         borderWidth: 1,
     },
     signatureCard: {
-        borderRadius: 16,
+        borderRadius: scale(16),
         elevation: 4,
         backgroundColor: "#fdfdfd",
-        marginVertical: 12,
+        marginVertical: verticalScale(12),
         shadowColor: "#000",
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.15,
         shadowRadius: 6,
     },
     cardTitle: {
-        fontSize: 20,
+        fontSize: moderateScale(20),
         fontWeight: "700",
         color: "#1e1e1e",
-        marginBottom: 10,
+        marginBottom: verticalScale(10),
         textAlign: "center",
     },
     divider: {
-        marginBottom: 15,
+        marginBottom: verticalScale(15),
     },
     photoGrid: {
-        flexDirection: "row",
+        flexDirection: screenWidth < 768 ? 'column' : 'row',
         justifyContent: "space-between",
-        gap: 10,
+        gap: scale(10),
     },
     photoBlock: {
         flex: 1,
         backgroundColor: "#fff",
-        borderRadius: 12,
-        padding: 10,
+        borderRadius: scale(12),
+        padding: scale(10),
         borderWidth: 1,
         borderColor: "#e6e6e6",
+        marginBottom: screenWidth < 768 ? verticalScale(10) : 0,
     },
     photoHeader: {
         flexDirection: "row",
         alignItems: "center",
-        marginBottom: 8,
-        gap: 6,
+        marginBottom: verticalScale(8),
+        gap: scale(6),
     },
     previewImage: {
         width: "100%",
-        height: 140,
-        borderRadius: 10,
-        marginBottom: 8,
+        height: verticalScale(140),
+        borderRadius: scale(10),
+        marginBottom: verticalScale(8),
     },
     emptyBox: {
         width: "100%",
-        height: 140,
+        height: verticalScale(140),
         borderWidth: 1.2,
         borderColor: "#d9d9d9",
-        borderRadius: 10,
+        borderRadius: scale(10),
         justifyContent: "center",
         alignItems: "center",
-        marginBottom: 8,
+        marginBottom: verticalScale(8),
         backgroundColor: "#fafafa",
     },
     emptyText: {
-        fontSize: 12,
+        fontSize: moderateScale(12),
         color: "#999",
-        marginTop: 4,
+        marginTop: verticalScale(4),
     },
     actionButton: {
         backgroundColor: "#007AFF",
-        borderRadius: 10,
+        borderRadius: scale(10),
     },
     profileButton: {
         backgroundColor: "#34C759",
     },
     buttonContent: {
-        height: 44,
+        height: verticalScale(44),
     },
     iconButton: {
         backgroundColor: "#EAF0FF",
-        paddingVertical: 8,
-        paddingHorizontal: 10,
-        borderRadius: 10,
+        paddingVertical: verticalScale(8),
+        paddingHorizontal: scale(10),
+        borderRadius: scale(10),
         elevation: 2,
         justifyContent: "center",
         alignItems: "center",
-        marginVertical: 10,
+        marginVertical: verticalScale(10),
     },
     agreementContainer: {
-        maxHeight: 200,
+        maxHeight: verticalScale(200),
         borderWidth: 1,
         borderColor: "#E0E0E0",
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 16,
+        borderRadius: scale(8),
+        padding: scale(12),
+        marginBottom: verticalScale(16),
         backgroundColor: "#FAFAFA",
     },
     agreementText: {
-        fontSize: 12,
-        lineHeight: 18,
+        fontSize: moderateScale(12),
+        lineHeight: verticalScale(18),
         color: "#455A64",
     },
     agreementHeading: {
-        fontSize: 14,
+        fontSize: moderateScale(14),
         fontWeight: "bold",
         color: "#D32F2F",
     },
@@ -2212,31 +2236,31 @@ headerText: {
     checkboxContainer: {
         flexDirection: "row",
         alignItems: "center",
-        marginTop: 8,
+        marginTop: verticalScale(8),
     },
     checkboxLabel: {
         flex: 1,
-        marginLeft: 8,
-        fontSize: 14,
+        marginLeft: scale(8),
+        fontSize: moderateScale(14),
         color: "#455A64",
-        lineHeight: 18,
+        lineHeight: verticalScale(18),
     },
     submitButton: {
-        marginTop: 16,
-        marginBottom: 8,
-        paddingVertical: 6,
+        marginTop: verticalScale(16),
+        marginBottom: verticalScale(8),
+        paddingVertical: verticalScale(6),
         backgroundColor: "#70B04F",
-        borderRadius: 8,
+        borderRadius: scale(8),
         elevation: 4,
     },
     submitButtonDisabled: {
         backgroundColor: "#BDBDBD",
     },
     submitButtonContent: {
-        paddingVertical: 8,
+        paddingVertical: verticalScale(8),
     },
     bottomSpacer: {
-        height: 20,
+        height: verticalScale(20),
     },
 });
 

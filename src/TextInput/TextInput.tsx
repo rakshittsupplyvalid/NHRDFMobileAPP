@@ -1,55 +1,15 @@
 import React from 'react';
-import { TextInput, TextInputProps, StyleSheet, View, Text } from 'react-native';
+import { TextInput, TextInputProps } from 'react-native';
 
-interface CustomInputProps extends TextInputProps {
-  label?: string;
-  error?: string;
-  containerStyle?: object;
+interface UpperCaseInputProps extends TextInputProps {
+  value: string;
+  onChangeText: (text: string) => void;
 }
 
-const Input: React.FC<CustomInputProps> = ({
-  label,
-  error,
-  containerStyle,
-  ...props
-}) => {
-  return (
-    <View style={[styles.container, containerStyle]}>
-      {label && <Text style={styles.label}>{label}</Text>}
-      <TextInput
-        style={[styles.input, error ? styles.errorInput : null]}
-        {...props}
-      />
-      {error && <Text style={styles.errorText}>{error}</Text>}
-    </View>
-  );
+export const UpperCaseInput: React.FC<UpperCaseInputProps> = ({ value, onChangeText, ...props }) => {
+  const handleChange = (text: string) => {
+    onChangeText(text.toUpperCase());
+  };
+
+  return <TextInput value={value} onChangeText={handleChange} {...props} />;
 };
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 16,
-    padding : 40
-  },
-  label: {
-    marginBottom: 8,
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 4,
-    padding: 12,
-    fontSize: 16,
-  },
-  errorInput: {
-    borderColor: 'red',
-  },
-  errorText: {
-    color: 'red',
-    fontSize: 12,
-    marginTop: 4,
-  },
-});
-
-export default Input;

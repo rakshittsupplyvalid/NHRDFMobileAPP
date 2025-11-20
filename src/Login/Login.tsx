@@ -13,12 +13,12 @@ const Login = ({ navigation }: any) => {
 
 
 
-//const [mobileNumber, setMobileNumber] = useState('8976865879');
-  const [mobileNumber, setMobileNumber] = useState('7000000555');
-  const [password, setPassword] = useState('Password@123');
+// const [mobileNumber, setMobileNumber] = useState('9999666666');
+  // const [mobileNumber, setMobileNumber] = useState('7000000555');
+  // const [password, setPassword] = useState('Password@123');
 
-  // const [mobileNumber, setMobileNumber] = useState('');
-  // const [password, setPassword] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [password, setPassword] = useState('');
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);

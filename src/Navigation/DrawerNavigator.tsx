@@ -102,7 +102,7 @@ function CustomDrawerContent(props: any) {
 
 
         <DrawerItem
-          label="InspectionScreen"
+          label="Inspection Screen"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Inspection Screen')}
           style={{ display: 'none' }}
@@ -194,7 +194,7 @@ export default function DrawerNavigator() {
 
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
       <Drawer.Screen
-        name="InspectionScreen"
+        name="Inspection Screen"
         component={InspectionScreen}
         options={{
           drawerItemStyle: { display: 'none' }, // hides from the drawer

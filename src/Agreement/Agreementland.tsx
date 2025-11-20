@@ -503,16 +503,29 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 10,
-    backgroundColor: "#F9F9F9",
+    alignItems: "flex-start", // Aligns text to the top if value wraps
     marginVertical: 4,
   },
-  labelContainer: { flexDirection: "row", alignItems: "center" },
-  detailLabel: { fontSize: 15, color: "#555", fontWeight: "500" },
-  detailValue: { fontSize: 15, color: "#1F2937", fontWeight: "600" },
+  labelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 1, // Allows label to shrink if value is long
+  },
+  detailLabel: {
+    fontSize: 15,
+    color: "#1F2937",
+    fontWeight: "600",
+  },
+  detailValue: {
+    fontSize: 15,
+    color: "#1F2937",
+    fontWeight: "600",
+    flexShrink: 1,      // Allows value to wrap instead of overflowing
+    flexWrap: "wrap",   // Makes long values break into multiple lines
+    textAlign: "right", // Keeps value aligned to the right
+    lineHeight: 20,     // Improves readability for wrapped text
+  },
+ 
   documentButton: { marginTop: 6, paddingVertical: 4 },
   documentLink: { color: "#1B5E20", fontWeight: "600", fontSize: 15 },
   loadingText: { fontSize: 15, color: "#555", marginVertical: 8, fontStyle: "italic" },

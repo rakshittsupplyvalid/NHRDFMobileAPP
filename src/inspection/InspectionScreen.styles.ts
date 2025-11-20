@@ -1,374 +1,401 @@
 import { StyleSheet, Dimensions } from "react-native";
 
-const { height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
+
+// Width-percentage
+const wp = (percent) => (width * percent) / 100;
+
+// Height-percentage
+const hp = (percent) => (height * percent) / 100;
+
+// Responsive font
+const rf = (size) => Math.sqrt((height * height) + (width * width)) * (size / 1000);
+
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
+    padding: wp(4),
     backgroundColor: "#F4F9F4",
   },
-  
-   
+
   iconButton: {
     backgroundColor: "#EAF0FF",
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    borderRadius: 10,
+    paddingVertical: hp(1),
+    paddingHorizontal: wp(3),
+    borderRadius: wp(3),
     elevation: 2,
     justifyContent: "center",
     alignItems: "center",
-    marginVertical: 10,
+    marginVertical: hp(1.2),
     flexDirection: "row",
-    gap: 8,
+    gap: wp(2),
   },
 
   placeholderStyle: { 
     color: "#666", 
-    fontSize: 14 
+    fontSize: rf(14),
   },
   selectedTextStyle: { 
     color: "#000", 
-    fontSize: 14 
-  },
-  inputError: { 
-    borderColor: "red" 
+    fontSize: rf(14),
   },
 
+  inputError: { borderColor: "red" },
+
   card: {
-    marginBottom: 16,
-    borderRadius: 12,
+    marginBottom: hp(2),
+    borderRadius: wp(3),
     elevation: 4,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: hp(0.3) },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: wp(1),
     backgroundColor: "#fff",
   },
+
   header: {
     backgroundColor: "#E8F5E8",
-    padding: 16,
-    borderTopLeftRadius: 12,
-    borderTopRightRadius: 12,
+    padding: wp(4),
+    borderTopLeftRadius: wp(3),
+    borderTopRightRadius: wp(3),
     flexDirection: "row",
     alignItems: "center",
   },
+
   headerTitle: {
     color: "#2E7D32",
-    fontSize: 18,
+    fontSize: rf(18),
     fontWeight: "bold",
-    marginLeft: 10,
+    marginLeft: wp(2.5),
   },
-  content: {
-    padding: 16,
-  },
+
+  content: { padding: wp(4) },
+
   label: {
-    fontSize: 14,
+    fontSize: rf(14),
     fontWeight: "600",
-    marginBottom: 6,
+    marginBottom: hp(0.7),
     color: "#333",
-    marginTop: 12,
+    marginTop: hp(1.2),
   },
+
   input: {
-    height: 44,
-    paddingHorizontal: 12,
-    fontSize: 14,
+    height: hp(5.5),
+    paddingHorizontal: wp(3),
+    fontSize: rf(14),
     backgroundColor: "#fff",
-    marginBottom: 6,
+    marginBottom: hp(0.5),
     borderWidth: 1,
     borderColor: '#a6a8ac',
-    borderRadius: 8,
+    borderRadius: wp(2),
   },
+
   disabledInput: {
     backgroundColor: "#f5f5f5",
     color: "#666",
   },
+
   textArea: {
-    height: 80,
+    height: hp(12),
     textAlignVertical: 'top',
   },
 
   dateInput: {
     borderWidth: 1,
     borderColor: '#a6a8ac',
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: wp(2.5),
+    padding: wp(3),
     backgroundColor: '#fff',
   },
+
   dropdown: {
     backgroundColor: "#fff",
     borderWidth: 1,
     borderColor: "#a6a8ac",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    marginBottom: 4,
-    height: 44,
+    borderRadius: wp(2),
+    paddingHorizontal: wp(3),
+    paddingVertical: hp(1),
+    marginBottom: hp(0.5),
+    height: hp(5.5),
     justifyContent: 'center',
   },
-  dropdownError: {
-    borderColor: "#D32F2F",
-  },
+
+  dropdownError: { borderColor: "#D32F2F" },
+
   error: {
     color: "#D32F2F",
-    fontSize: 12,
-    marginTop: 2,
-    marginBottom: 8,
+    fontSize: rf(12),
+    marginTop: hp(0.3),
+    marginBottom: hp(1),
   },
+
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
-  halfInput: {
-    width: "48%",
-  },
-  radioGroup: {
-    marginVertical: 8,
-  },
+
+  halfInput: { width: "48%" },
+
+  radioGroup: { marginVertical: hp(1) },
+
   radioContainer: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 4,
+    marginTop: hp(0.5),
   },
+
   radioOption: {
     flexDirection: "row",
     alignItems: "center",
-    marginRight: 20,
+    marginRight: wp(4),
   },
+
   radioLabel: {
-    marginLeft: 4,
-    fontSize: 14,
+    marginLeft: wp(1),
+    fontSize: rf(14),
     color: "#333",
   },
+
   submitButton: {
     backgroundColor: "#2E7D32",
-    paddingVertical: 12,
-    marginHorizontal: 16,
-    marginBottom: 30,
-    borderRadius: 10,
+    paddingVertical: hp(1.6),
+    marginHorizontal: wp(4),
+    marginBottom: hp(3),
+    borderRadius: wp(2),
     elevation: 2,
   },
+
   submitButtonText: {
     color: "#fff",
-    fontSize: 16,
+    fontSize: rf(16),
     fontWeight: "bold",
+    textAlign: "center",
   },
+
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#F4F9F4",
   },
+
   loadingText: {
-    marginTop: 16,
-    fontSize: 16,
+    marginTop: hp(2),
+    fontSize: rf(16),
     color: "#2E7D32",
   },
+
   dateButton: {
-    marginTop: 8,
+    marginTop: hp(1),
     borderColor: '#a6a8ac',
-    height: 44,
+    height: hp(5.5),
     justifyContent: 'center',
   },
+
   dateDisplayContainer: {
     borderWidth: 1,
     borderColor: '#a6a8ac',
-    borderRadius: 8,
-    padding: 12,
+    borderRadius: wp(2),
+    padding: wp(3),
     backgroundColor: '#f0f8f0',
-    marginTop: 8,
+    marginTop: hp(1),
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    height: 44,
+    height: hp(5.5),
   },
+
   dateDisplayText: {
-    fontSize: 14,
+    fontSize: rf(14),
     color: '#2E7D32',
     fontWeight: '500',
   },
+
   todayBadge: {
     backgroundColor: '#2E7D32',
     color: 'white',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    fontSize: 10,
+    paddingHorizontal: wp(2),
+    paddingVertical: hp(0.3),
+    borderRadius: wp(1.5),
+    fontSize: rf(10),
     fontWeight: 'bold',
   },
-  
- 
+
   errorContainer: {
-    marginHorizontal: 16,
-    marginBottom: 16,
+    marginHorizontal: wp(4),
+    marginBottom: hp(2),
   },
-  
-  
+
   signatureFieldContainer: {
-    marginBottom: 20,
+    marginBottom: hp(3),
   },
+
   signaturePreviewContainer: {
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: hp(1.2),
   },
+
   signatureImage: {
     width: '100%',
-    height: 150,
+    height: hp(20),
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 8,
+    borderRadius: wp(2),
     backgroundColor: '#f9f9f9',
-    marginBottom: 10,
+    marginBottom: hp(1),
   },
+
   signatureActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
   },
+
   signatureButton: {
     flex: 1,
-    marginHorizontal: 5,
-    height: 44,
+    marginHorizontal: wp(1),
+    height: hp(5.5),
     justifyContent: 'center',
   },
-  clearButton: {
-    borderColor: '#FF3B30',
-  },
+
+  clearButton: { borderColor: '#FF3B30' },
+
   signatureModal: {
     backgroundColor: 'white',
-    margin: 20,
-    borderRadius: 10,
+    margin: wp(5),
+    borderRadius: wp(3),
     maxHeight: height * 0.8,
   },
+
   signatureModalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
+    padding: wp(4),
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
   },
+
   signatureModalTitle: {
-    fontSize: 18,
+    fontSize: rf(18),
     fontWeight: 'bold',
     color: '#333',
   },
-  signatureModalContent: {
-    height: 400,
-  },
-  
+
+  signatureModalContent: { height: hp(50) },
+
   offtypeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
-    padding: 12,
+    marginBottom: hp(2),
+    padding: wp(3),
     backgroundColor: '#f8f9fa',
-    borderRadius: 8,
+    borderRadius: wp(2),
     borderWidth: 1,
     borderColor: '#e9ecef',
   },
 
   countNumber: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: hp(5),
+    height: hp(5),
+    borderRadius: hp(2.5),
     backgroundColor: '#2E7D32',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: wp(3),
   },
 
   countNumberText: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: rf(16),
   },
 
   offtypeInputs: {
     flex: 1,
     flexDirection: 'row',
-    gap: 12,
+    gap: wp(3),
   },
 
-  offtypeInputContainer: {
-    flex: 1,
-  },
+  offtypeInputContainer: { flex: 1 },
 
   offtypeLabel: {
-    fontSize: 12,
+    fontSize: rf(12),
     fontWeight: '500',
-    marginBottom: 4,
+    marginBottom: hp(0.5),
     color: '#495057',
   },
 
   offtypeInput: {
     borderWidth: 1,
     borderColor: '#ced4da',
-    borderRadius: 4,
-    padding: 8,
+    borderRadius: wp(1),
+    padding: wp(2),
     backgroundColor: 'white',
-    fontSize: 14,
-    height: 40,
+    fontSize: rf(14),
+    height: hp(5),
   },
 
   removeButton: {
-    marginLeft: 8,
+    marginLeft: wp(2),
     alignSelf: 'flex-start',
   },
 
   addMoreButton: {
-    marginTop: 16,
+    marginTop: hp(2),
     borderColor: '#2E7D32',
-    height: 44,
+    height: hp(5.5),
     justifyContent: 'center',
   },
 
   sectionDescription: {
-    fontSize: 14,
+    fontSize: rf(14),
     color: '#6c757d',
-    marginBottom: 16,
+    marginBottom: hp(2),
     fontStyle: 'italic',
   },
- 
-  imagePickerContainer: {
-    marginVertical: 10,
-  },
- 
-  imagePickerButton: {
-    marginBottom: 10,
-  },
+
+  imagePickerContainer: { marginVertical: hp(1.4) },
+
+  imagePickerButton: { marginBottom: hp(1.2) },
+
   imagePreviewContainer: {
     position: "relative",
     alignItems: "center",
-    marginTop: 10,
+    marginTop: hp(1.5),
   },
+
   previewImage: {
-    width: "70%",       // Full width
-    height: 200,         // Adjust height as needed
-    borderRadius: 10,
-    resizeMode: "cover", // Properly cover the space
+    width: "70%",
+    height: hp(25),
+    borderRadius: wp(2),
+    resizeMode: "cover",
   },
+
   geoOverlay: {
     position: "absolute",
-    bottom: 25,
-    left: 50,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-    
-    // backgroundColor: "red",
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderRadius: 5,
+    bottom: hp(3),
+    left: "48%",
+    transform: [{ translateX: -wp(25) }],
+    minWidth: wp(50),
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    paddingVertical: hp(0.7),
+    paddingHorizontal: wp(3),
+    borderRadius: wp(2),
+    alignItems: "center",
+    justifyContent: "center",
   },
+
   geoText: {
     color: "#fff",
-    fontSize: 14,
+    fontSize: rf(14),
     fontWeight: "500",
   },
+
   imagePreviewText: {
-    marginTop: 5,
-    fontSize: 14,
+    marginTop: hp(0.5),
+    fontSize: rf(14),
     color: "#2E7D32",
   },
-
-
 });

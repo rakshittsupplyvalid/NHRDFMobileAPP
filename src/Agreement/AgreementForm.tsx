@@ -289,7 +289,7 @@ const AgreementFormSimple: React.FC = () => {
                 },
 
                 { label: "Center", value: record.centername },
-                { label: "Crop Coblic Commodity", value: record.commodityname },
+                { label: "Crop / Commodity", value: record.commodityname },
                 { label: "Variety", value: record.varietyname },
                 { label: "Year", value: record.season },
                 { label: "Season", value: record.subseason },

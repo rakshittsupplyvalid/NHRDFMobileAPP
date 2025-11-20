@@ -217,34 +217,34 @@ const AgreementListScreen: React.FC = () => {
   };
 
   const handleInspection = (agreement: any, inspectionType: string) => {
-  console.log("agreement:", agreement);
-  console.log("inspectionType:", inspectionType);
+    console.log("agreement:", agreement);
+    console.log("inspectionType:", inspectionType);
 
-  const inspections = agreementInspections[agreement.id] || [];
-  console.log("inspections for agreement:", inspections);
+    const inspections = agreementInspections[agreement.id] || [];
+    console.log("inspections for agreement:", inspections);
 
-  const foundInspection = inspections.find(
-    (ins) => ins.inspectionno.toUpperCase() === inspectionType.toUpperCase()
-  );
-  console.log("foundInspection:", foundInspection);
+    const foundInspection = inspections.find(
+      (ins) => ins.inspectionno.toUpperCase() === inspectionType.toUpperCase()
+    );
+    console.log("foundInspection:", foundInspection);
 
-  if (foundInspection) {
-    console.log("Opening modal with inspection:", foundInspection);
-    setSelectedInspection(foundInspection);
-    setInspectionModalVisible(true);
-  } else {
-    console.log("Navigating to InspectionScreen with:", {
-      agreementId: agreement.id,
-      inspectionType,
-      agreementData: agreement,
-    });
-    navigation.navigate("InspectionScreen", {
-      agreementId: agreement.id,
-      inspectionType,
-      agreementData: agreement,
-    });
-  }
-};
+    if (foundInspection) {
+      console.log("Opening modal with inspection:", foundInspection);
+      setSelectedInspection(foundInspection);
+      setInspectionModalVisible(true);
+    } else {
+      console.log("Navigating to InspectionScreen with:", {
+        agreementId: agreement.id,
+        inspectionType,
+        agreementData: agreement,
+      });
+      navigation.navigate("Inspection Screen", {
+        agreementId: agreement.id,
+        inspectionType,
+        agreementData: agreement,
+      });
+    }
+  };
 
   const getInspectionIcon = (inspectionType: string) => {
     switch (inspectionType) {
@@ -303,7 +303,7 @@ const AgreementListScreen: React.FC = () => {
               labelStyle={styles.searchButtonLabel}
               disabled={aadharNumber.length !== 12}
             >
-              Search Agreements
+              Search
             </Button>
           </View>
         </Card.Content>
@@ -319,7 +319,7 @@ const AgreementListScreen: React.FC = () => {
               <Text style={styles.sectionTitle}>Agreement Details</Text>
               <Divider style={styles.headerDivider} />
 
-              {[{ label: "Farmer", value: agreement.farmername }, { label: "Center", value: agreement.centername }, { label: "Commodity", value: agreement.commodityname }, { label: "Variety", value: agreement.varietyname }, { label: "Lot Number", value: agreement.lotnumber }, { label: "Year", value: agreement.year }, { label: "Season", value: agreement.season }].map((item, idx) => (
+              {[{ label: "Farmer", value: agreement.farmername }, { label: "Center", value: agreement.centername }, { label: "Crop / Commodity", value: agreement.commodityname }, { label: "Variety", value: agreement.varietyname }, { label: "Lot Number", value: agreement.lotnumber }, { label: "Year", value: agreement.year }, { label: "Season", value: agreement.season }].map((item, idx) => (
                 <View key={idx} style={styles.detailRow}>
                   <MaterialCommunityIcons name="chevron-right" size={20} color="#4CAF50" />
                   <View style={styles.detailContent}>
@@ -341,36 +341,36 @@ const AgreementListScreen: React.FC = () => {
               {/* Inspection Buttons */}
               <View style={styles.inspectionSection}>
                 <Text style={styles.inspectionTitle}>Four Stage Inspection</Text>
-                 <View style={styles.inspectionGrid}>
-  {["First", "Second", "Third", "Fourth"].map((inspectionType) => {
-    const inspections = agreementInspections[agreement.id] || [];
-    const foundInspection = inspections.find(
-      (ins) => ins.inspectionno.toUpperCase() === inspectionType.toUpperCase()
-    );
+                <View style={styles.inspectionGrid}>
+                  {["First", "Second", "Third", "Fourth"].map((inspectionType) => {
+                    const inspections = agreementInspections[agreement.id] || [];
+                    const foundInspection = inspections.find(
+                      (ins) => ins.inspectionno.toUpperCase() === inspectionType.toUpperCase()
+                    );
 
-    // If inspection exists, show "See X Inspection"; else show "Create"
-    const buttonTitle = foundInspection ? `See ${inspectionType} Inspection` : `Create ${inspectionType}`;
+                    // If inspection exists, show "See X Inspection"; else show "Create"
+                    const buttonTitle = foundInspection ? `See ${inspectionType} Inspection` : `Create ${inspectionType}`;
 
-    return (
-      <Button
-        key={inspectionType}
-        mode={foundInspection ? "contained" : "outlined"}
-        onPress={() => handleInspection(agreement, inspectionType)}
-        style={[
-          styles.inspectionButton,
-          foundInspection && styles.completedInspection
-        ]}
-        labelStyle={[
-          styles.inspectionButtonLabel,
-          foundInspection && styles.completedInspectionLabel
-        ]}
-        icon={getInspectionIcon(inspectionType)}
-      >
-        {buttonTitle}
-      </Button>
-    );
-  })}
-</View>
+                    return (
+                      <Button
+                        key={inspectionType}
+                        mode={foundInspection ? "contained" : "outlined"}
+                        onPress={() => handleInspection(agreement, inspectionType)}
+                        style={[
+                          styles.inspectionButton,
+                          foundInspection && styles.completedInspection
+                        ]}
+                        labelStyle={[
+                          styles.inspectionButtonLabel,
+                          foundInspection && styles.completedInspectionLabel
+                        ]}
+                        icon={getInspectionIcon(inspectionType)}
+                      >
+                        {buttonTitle}
+                      </Button>
+                    );
+                  })}
+                </View>
 
               </View>
 
