@@ -28,9 +28,9 @@ const Agreementland: React.FC = () => {
   const [landDetails, setLandDetails] = useState<any[]>([]);
   const [farmerDetils, setFarmerDetils] = useState<any>(null);
   const [landId, setLandId] = useState<string | null>(null);
-    const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState('');
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
-  
+
 
 
   const [loading, setLoading] = useState(false);
@@ -46,7 +46,7 @@ const Agreementland: React.FC = () => {
   }, [formData?.farmerId]);
 
 
-   // Auto-select first land if only one
+  // Auto-select first land if only one
   useEffect(() => {
     if (landDetails.length === 1) {
       setLandId(landDetails[0].id);
@@ -64,7 +64,7 @@ const Agreementland: React.FC = () => {
     setLoading(false);
   };
 
-  
+
   const fetchLandDetails = async (farmerId: string) => {
     setLoading(true);
     try {
@@ -85,38 +85,38 @@ const Agreementland: React.FC = () => {
   };
 
 
-   const handleLandSelect = (id: string) => {
+  const handleLandSelect = (id: string) => {
     setLandId(id);
   };
 
 
 
 
-useFocusEffect(
-  useCallback(() => {
-    const fetchCode = async () => {
-      const currentFormData = formData; // grab the latest value
-      const distId = currentFormData?.farmerDistributionId; // notice: typo fix
-      if (distId) {
-        setLoading(true);
-        try {
-          const response = await apiClient.get(
-            `/api/static/generate/code/number/${distId}`
-          );
-          if (response?.data) {
-            setInputValue(response.data.toString());
-            setGeneratedCode(response.data.toString());
+  useFocusEffect(
+    useCallback(() => {
+      const fetchCode = async () => {
+        const currentFormData = formData; // grab the latest value
+        const distId = currentFormData?.farmerDistributionId; // notice: typo fix
+        if (distId) {
+          setLoading(true);
+          try {
+            const response = await apiClient.get(
+              `/api/static/generate/code/number/${distId}`
+            );
+            if (response?.data) {
+              setInputValue(response.data.toString());
+              setGeneratedCode(response.data.toString());
+            }
+          } catch (err) {
+            console.log(err);
+          } finally {
+            setLoading(false);
           }
-        } catch (err) {
-          console.log(err);
-        } finally {
-          setLoading(false);
         }
-      }
-    };
-    fetchCode();
-  }, [formData]) // dependency is entire formData to always get latest
-);
+      };
+      fetchCode();
+    }, [formData]) // dependency is entire formData to always get latest
+  );
 
 
 
@@ -143,7 +143,7 @@ useFocusEffect(
 
   const handleNext = (record: any) => {
 
-     if (!landId) {
+    if (!landId) {
       alert("Please select a land before proceeding.");
       return;
     }
@@ -151,7 +151,7 @@ useFocusEffect(
 
     const formPayload = {
       farmerfarmerDistributionId: record.farmerDistributionId || formData.farmerDistributionId,  // keep existing if not passed
-      CodeNumber : inputValue,
+      CodeNumber: inputValue,
       farmerId: record.farmerId || record.farmerId,
       varietyId: record.varietyId || formData.varietyId || null,
       commodityId: record.commodityId || formData.commodityId || null,
@@ -175,194 +175,194 @@ useFocusEffect(
 
 
   return (
-      <KeyboardAvoidingView
-    style={{ flex: 1 }}
-    behavior={Platform.OS === "ios" ? "padding" : "height"}
-    keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0} // adjust if needed
-  >
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.navigate("Agreement Form" as never)}
-          activeOpacity={0.7}
-        >
-          <MaterialIcons name="arrow-back" size={24} color="#fff" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Farmer Details</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      <View style={styles.content}>
-        {/* Farmer Info Card */}
-        {/* Farmer Info Card */}
-        <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Farmer Information</Text>
-          {farmerDetils ? (
-            <>
-              <DetailRow icon="home-city-outline" label="Address" value={farmerDetils.farmeraddress} />
-              <DetailRow icon="map-marker-outline" label="State" value={farmerDetils.statename} />
-              <DetailRow icon="map-marker-radius" label="District" value={farmerDetils.districtname} />
-              <DetailRow icon="map" label="Sub-District" value={farmerDetils.subdistrictname} />
-              <DetailRow icon="map-marker-radius" label="Village" value={farmerDetils.villagename} />
-
-            </>
-          ) : (
-            <Text style={styles.loadingText}>Loading farmer details...</Text>
-          )}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 60 : 0} // adjust if needed
+    >
+      <ScrollView style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.navigate("Agreement Form" as never)}
+            activeOpacity={0.7}
+          >
+            <MaterialIcons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Farmer Details</Text>
+          <View style={{ width: 24 }} />
         </View>
 
+        <View style={styles.content}>
+          {/* Farmer Info Card */}
+          {/* Farmer Info Card */}
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Farmer Information</Text>
+            {farmerDetils ? (
+              <>
+                <DetailRow icon="home-city-outline" label="Address" value={farmerDetils.farmeraddress} />
+                <DetailRow icon="map-marker-outline" label="State" value={farmerDetils.statename} />
+                <DetailRow icon="map-marker-radius" label="District" value={farmerDetils.districtname} />
+                <DetailRow icon="map" label="Sub-District" value={farmerDetils.subdistrictname} />
+                <DetailRow icon="map-marker-radius" label="Village" value={farmerDetils.villagename} />
 
-        {/* Land Details */}
-        <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Land Details</Text>
-        {loading && <Text style={styles.loadingText}>Loading details...</Text>}
-        {!loading && landDetails.length === 0 && (
-          <Text style={styles.loadingText}>No land details found.</Text>
-        )}
+              </>
+            ) : (
+              <Text style={styles.loadingText}>Loading farmer details...</Text>
+            )}
+          </View>
 
-                {!loading &&
-          landDetails.map((land, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[
-                styles.card,
-                landId === land.id && { borderColor: "#007AFF", borderWidth: 2 }
-              ]}
-              onPress={() => handleLandSelect(land.id)}
-            >
-              <View style={styles.detailsContainer}>
-                <DetailRow icon="numeric" label="Land Number" value={land.number} />
-                <DetailRow icon="numeric-2-box-outline" label="Sub Number" value={land.subnumber} />
-                <DetailRow
-                  icon="square-outline"
-                  label="Total Area"
-                  value={`${land.totalarea ?? "-"} ${land.unit ?? ""}`}
-                />
-                <DetailRow icon="nature" label="Sowing Area" value={land.sowingarea ?? "-"} />
-                <DetailRow icon="home-city" label="Village" value={land.village} />
-                <DetailRow
-                  icon={
-                    land.approvalstatus === "PENDING"
-                      ? "clock-time-four-outline"
-                      : land.approvalstatus === "APPROVED"
-                        ? "check-circle-outline"
-                        : "close-circle-outline"
-                  }
-                  label="Approval Status"
-                  value={land.approvalstatus}
-                  valueColor={
-                    land.approvalstatus === "PENDING"
-                      ? "#FFC107"
-                      : land.approvalstatus === "APPROVED"
-                        ? "#4CAF50"
-                        : "#F44336"
-                  }
-                />
+
+          {/* Land Details */}
+          <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Land Details</Text>
+          {loading && <Text style={styles.loadingText}>Loading details...</Text>}
+          {!loading && landDetails.length === 0 && (
+            <Text style={styles.loadingText}>No land details found.</Text>
+          )}
+
+          {!loading &&
+            landDetails.map((land, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.card,
+                  landId === land.id && { borderColor: "#007AFF", borderWidth: 2 }
+                ]}
+                onPress={() => handleLandSelect(land.id)}
+              >
+                <View style={styles.detailsContainer}>
+                  <DetailRow icon="numeric" label="Land Number" value={land.number} />
+                  <DetailRow icon="numeric-2-box-outline" label="Sub Number" value={land.subnumber} />
+                  <DetailRow
+                    icon="square-outline"
+                    label="Total Area"
+                    value={`${land.totalarea ?? "-"} ${land.unit ?? ""}`}
+                  />
+                  <DetailRow icon="nature" label="Sowing Area" value={land.sowingarea ?? "-"} />
+                  <DetailRow icon="home-city" label="Village" value={land.village} />
+                  <DetailRow
+                    icon={
+                      land.approvalstatus === "PENDING"
+                        ? "clock-time-four-outline"
+                        : land.approvalstatus === "APPROVED"
+                          ? "check-circle-outline"
+                          : "close-circle-outline"
+                    }
+                    label="Approval Status"
+                    value={land.approvalstatus}
+                    valueColor={
+                      land.approvalstatus === "PENDING"
+                        ? "#FFC107"
+                        : land.approvalstatus === "APPROVED"
+                          ? "#4CAF50"
+                          : "#F44336"
+                    }
+                  />
+                </View>
+              </TouchableOpacity>
+            ))}
+
+
+
+
+
+
+
+
+          <View style={styles.card}>
+            {/* Bill Number */}
+
+
+
+            <View style={styles.inputContainer}>
+              <View style={styles.labelWithIcon}>
+                <MaterialCommunityIcons name="seed-outline" size={20} color="#2E7D32" style={{ marginRight: 6 }} />
+                <Text style={styles.inputLabel}>Class of Seeds</Text>
               </View>
-            </TouchableOpacity>
-          ))}
-
-
-
-
-
-
-
-
-        <View style={styles.card}>
-          {/* Bill Number */}
-
-
-
-          <View style={styles.inputContainer}>
-            <View style={styles.labelWithIcon}>
-              <MaterialCommunityIcons name="seed-outline" size={20} color="#2E7D32" style={{ marginRight: 6 }} />
-              <Text style={styles.inputLabel}>Class of Seeds</Text>
+              <TextInput
+                style={styles.input}
+                value={formData?.cropClassSeeds}
+                editable={false}
+                placeholder="Crop Class Seeds"
+              />
             </View>
-            <TextInput
-              style={styles.input}
-              value={formData?.cropClassSeeds}
-              editable={false}
-              placeholder="Crop Class Seeds"
-            />
-          </View>
 
 
 
-          {/* Area */}
-          <View style={styles.inputContainer}>
-            <View style={styles.labelWithIcon}>
-              <MaterialCommunityIcons name="vector-square" size={20} color="#2E7D32" style={{ marginRight: 6 }} />
-              <Text style={styles.inputLabel}>Area  in Hectare</Text>
+            {/* Area */}
+            <View style={styles.inputContainer}>
+              <View style={styles.labelWithIcon}>
+                <MaterialCommunityIcons name="vector-square" size={20} color="#2E7D32" style={{ marginRight: 6 }} />
+                <Text style={styles.inputLabel}>Area  in Hectare</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                value={formData?.area?.toString()}
+                editable={false}
+                placeholder="Area"
+              />
             </View>
-            <TextInput
-              style={styles.input}
-              value={formData?.area?.toString()}
-              editable={false}
-              placeholder="Area"
-            />
-          </View>
 
 
-          <View style={styles.inputContainer}>
-            <View style={styles.labelWithIcon}>
-              <MaterialCommunityIcons name="seed-outline" size={20} color="#2E7D32" style={{ marginRight: 6 }} />
-              <Text style={styles.inputLabel}> Distribution Type</Text>
+            <View style={styles.inputContainer}>
+              <View style={styles.labelWithIcon}>
+                <MaterialCommunityIcons name="seed-outline" size={20} color="#2E7D32" style={{ marginRight: 6 }} />
+                <Text style={styles.inputLabel}> Distribution Type</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                value={formData?.DistributionType}
+                editable={false}
+                placeholder="Distribution Type"
+              />
             </View>
-            <TextInput
-              style={styles.input}
-              value={formData?.DistributionType}
-              editable={false}
-              placeholder="Distribution Type"
-            />
-          </View>
 
 
-          <View style={styles.inputContainer}>
-            <View style={styles.labelWithIcon}>
-              <MaterialIcons name="receipt" size={20} color="#2E7D32" style={{ marginRight: 6 }} />
-              <Text style={styles.inputLabel}>Bill Number</Text>
+            <View style={styles.inputContainer}>
+              <View style={styles.labelWithIcon}>
+                <MaterialIcons name="receipt" size={20} color="#2E7D32" style={{ marginRight: 6 }} />
+                <Text style={styles.inputLabel}>Bill Number</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                value={formData?.billNumber}
+                editable={false}
+                placeholder="Bill Number"
+              />
             </View>
-            <TextInput
-              style={styles.input}
-              value={formData?.billNumber}
-              editable={false}
-              placeholder="Bill Number"
-            />
-          </View>
 
 
 
-          {/* Lot Number */}
-          <View style={styles.inputContainer}>
-            <View style={styles.labelWithIcon}>
-              <MaterialCommunityIcons name="numeric" size={20} color="#2E7D32" style={{ marginRight: 6 }} />
-              <Text style={styles.inputLabel}>Lot Number</Text>
+            {/* Lot Number */}
+            <View style={styles.inputContainer}>
+              <View style={styles.labelWithIcon}>
+                <MaterialCommunityIcons name="numeric" size={20} color="#2E7D32" style={{ marginRight: 6 }} />
+                <Text style={styles.inputLabel}>Lot Number</Text>
+              </View>
+              <TextInput
+                style={styles.input}
+                value={formData?.lotNo}
+                editable={false}
+                placeholder="Lot Number"
+              />
             </View>
-            <TextInput
-              style={styles.input}
-              value={formData?.lotNo}
-              editable={false}
-              placeholder="Lot Number"
-            />
-          </View>
 
 
 
-        <View style={styles.inputContainer}>
-  <View style={styles.labelWithIcon}>
-    <MaterialIcons name="receipt" size={20} color="#2E7D32" style={{ marginRight: 6 }} />
-    <Text style={styles.inputLabel}>Code Number</Text>
-  </View>
+            <View style={styles.inputContainer}>
+              <View style={styles.labelWithIcon}>
+                <MaterialIcons name="receipt" size={20} color="#2E7D32" style={{ marginRight: 6 }} />
+                <Text style={styles.inputLabel}>Code Number</Text>
+              </View>
 
-  <TextInput
-    style={[styles.inputCode, { flex: 1 }]}
-    placeholder="Enter number"
-    value={inputValue}         // <-- This will be updated after API response
-    onChangeText={setInputValue}
-  />
-{/* 
+              <TextInput
+                style={[styles.inputCode, { flex: 1 }]}
+                placeholder="Enter number"
+                value={inputValue}         // <-- This will be updated after API response
+                onChangeText={setInputValue}
+              />
+              {/* 
   <TouchableOpacity
     style={styles.searchIconContainer}
 
@@ -370,33 +370,33 @@ useFocusEffect(
   >
     <MaterialIcons name="search" size={24} color="#007AFF" />
   </TouchableOpacity> */}
-</View>
-
- 
+            </View>
 
 
 
 
 
-          <Button
-            mode="contained"
-            style={styles.submitButton}
-            contentStyle={styles.submitButtonContent}
-            onPress={() => handleNext(formData)} // Pass the current formData
-          >
-            Next
-          </Button>
+
+
+            <Button
+              mode="contained"
+              style={styles.submitButton}
+              contentStyle={styles.submitButtonContent}
+              onPress={() => handleNext(formData)} // Pass the current formData
+            >
+              Next
+            </Button>
+
+
+
+          </View>
+
+
 
 
 
         </View>
-
-
-
-
-
-      </View>
-    </ScrollView>
+      </ScrollView>
 
     </KeyboardAvoidingView>
   );
@@ -404,7 +404,8 @@ useFocusEffect(
 
 
 // Detail Row Component
-const DetailRow = ({
+const DetailRow = (
+  {
   icon,
   label,
   value,
@@ -414,7 +415,8 @@ const DetailRow = ({
   label: string;
   value: string | number | null;
   valueColor?: string;
-}) => (
+}
+) => (
   <View style={styles.detailRow}>
     <View style={styles.labelContainer}>
       {icon && (
@@ -464,24 +466,24 @@ const styles = StyleSheet.create({
 
   inputCode: {
     flexDirection: "row",
-  alignItems: "center",
-  marginVertical: 10,
-  borderWidth: 1,
-  borderColor: "#ccc",
-  borderRadius: 8,
-  paddingHorizontal: 10,
-  backgroundColor: "#fff",
+    alignItems: "center",
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    backgroundColor: "#fff",
 
   },
 
   searchIconContainer: {
-  padding: 8,
-  marginLeft: 8,
-  backgroundColor: "#E0F2F1",
-  borderRadius: 8,
-  justifyContent: "center",
-  alignItems: "center",
-},
+    padding: 8,
+    marginLeft: 8,
+    backgroundColor: "#E0F2F1",
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
   headerTitle: { fontSize: 22, fontWeight: "bold", color: "#fff" },
   content: { flex: 1, padding: 16 },
@@ -503,29 +505,16 @@ const styles = StyleSheet.create({
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start", // Aligns text to the top if value wraps
+    alignItems: "center",
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    backgroundColor: "#F9F9F9",
     marginVertical: 4,
   },
-  labelContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexShrink: 1, // Allows label to shrink if value is long
-  },
-  detailLabel: {
-    fontSize: 15,
-    color: "#1F2937",
-    fontWeight: "600",
-  },
-  detailValue: {
-    fontSize: 15,
-    color: "#1F2937",
-    fontWeight: "600",
-    flexShrink: 1,      // Allows value to wrap instead of overflowing
-    flexWrap: "wrap",   // Makes long values break into multiple lines
-    textAlign: "right", // Keeps value aligned to the right
-    lineHeight: 20,     // Improves readability for wrapped text
-  },
- 
+  labelContainer: { flexDirection: "row", alignItems: "center" },
+  detailLabel: { fontSize: 15, color: "#555", fontWeight: "500" },
+  detailValue: { fontSize: 15, color: "#1F2937", fontWeight: "600" },
   documentButton: { marginTop: 6, paddingVertical: 4 },
   documentLink: { color: "#1B5E20", fontWeight: "600", fontSize: 15 },
   loadingText: { fontSize: 15, color: "#555", marginVertical: 8, fontStyle: "italic" },

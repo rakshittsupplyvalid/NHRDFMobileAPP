@@ -259,14 +259,14 @@ const AgreementFormSimple: React.FC = () => {
           />
 
           <Button
-  mode="contained"
-  onPress={handleFilter}
-  style={styles.filterButton}
-  labelStyle={styles.filterButtonLabel}
- 
->
-  Search Farmer
-</Button>
+            mode="contained"
+            onPress={handleFilter}
+            style={styles.filterButton}
+            labelStyle={styles.filterButtonLabel}
+
+          >
+            Search Farmer
+          </Button>
 
 
 
@@ -316,7 +316,7 @@ const AgreementFormSimple: React.FC = () => {
           </Card>
         ))}
 
-      {!loading && aadharNumber.length  === 12 && aadharData.length === 0 && (
+      {!loading && aadharNumber.length === 12 && aadharData.length === 0 && (
         <Text style={styles.noFarmerSelected}>No records found for this Aadhar.</Text>
       )}
     </ScrollView>
@@ -326,24 +326,24 @@ const AgreementFormSimple: React.FC = () => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f5f5f5" },
   filterButton: {
-  marginTop: 16,
-  borderRadius: 10,
-  backgroundColor: "#4CAF50", // vibrant blue
-  elevation: 3,               // subtle shadow for Android
-  shadowColor: "#000",        // subtle shadow for iOS
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.2,
-  shadowRadius: 3,
-  height: 39,
-  justifyContent: "center",
-},
+    marginTop: 16,
+    borderRadius: 10,
+    backgroundColor: "#4CAF50", // vibrant blue
+    elevation: 3,               // subtle shadow for Android
+    shadowColor: "#000",        // subtle shadow for iOS
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    height: 39,
+    justifyContent: "center",
+  },
 
-filterButtonLabel: {
-  color: "#fff",
-  fontSize: 16,
-  fontWeight: "600",
-  letterSpacing: 0.5,
-},
+  filterButtonLabel: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+    letterSpacing: 0.5,
+  },
   scrollContent: { padding: 16, paddingBottom: 30 },
   sectionCard: { marginBottom: 16, borderRadius: 12, elevation: 2, backgroundColor: "white" },
   label: { fontWeight: "600", color: "#455A64", marginBottom: 8, fontSize: 14 },

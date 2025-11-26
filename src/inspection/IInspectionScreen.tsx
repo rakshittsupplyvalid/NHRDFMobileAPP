@@ -94,9 +94,9 @@ const InspectionScreen = () => {
   };
 
 
-   const handleUppercaseChange = (text: string, callback: (text: string) => void) => {
-        callback(text.toUpperCase());
-    };
+  const handleUppercaseChange = (text: string, callback: (text: string) => void) => {
+    callback(text.toUpperCase());
+  };
 
 
   // Get today's date in YYYY-MM-DD format
@@ -169,6 +169,7 @@ const InspectionScreen = () => {
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [minDurationToDate, setMinDurationToDate] = useState<Date | null>(null);
   const [isFirstInspection, setIsFirstInspection] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [dateField, setDateField] = useState<string | null>(null);
@@ -418,6 +419,7 @@ const InspectionScreen = () => {
     return `${year}-${month}-${day}`;
   };
 
+
   const handleDateConfirm = (date: Date) => {
     if (dateField) {
       const formattedDate = formatDateForAPI(date);
@@ -430,6 +432,19 @@ const InspectionScreen = () => {
         ...prev,
         [dateField]: ""
       }));
+
+      // Set minimum date for Duration To when Duration From is selected
+      if (dateField === "DurationFrom") {
+        setMinDurationToDate(date);
+
+        // If DurationTo is already selected and is before the new DurationFrom, clear it
+        if (formData.DurationTo && new Date(formData.DurationTo) < date) {
+          setFormData(prev => ({
+            ...prev,
+            DurationTo: ""
+          }));
+        }
+      }
     }
 
     setShowDatePicker(false);
@@ -945,7 +960,7 @@ const InspectionScreen = () => {
                     <Text style={styles.dateDisplayText}>
                       {displayDate(formData.InspectionDate)}
                     </Text>
-          
+
                   </View>
                   <HelperText type="error" visible={!!errors.InspectionDate}>
                     {errors.InspectionDate}
@@ -1038,7 +1053,7 @@ const InspectionScreen = () => {
                 placeholderTextColor="#666"
                 value={formData.PreviousCrop}
                 onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("PreviousCrop", upperText))}
-          
+
                 style={styles.input}
               />
               {errors.PreviousCrop && (
@@ -1052,8 +1067,8 @@ const InspectionScreen = () => {
                 placeholder="Enter Source of Seed"
                 placeholderTextColor="#666"
                 value={formData.SourceOfSeed}
-                onChangeText={(text) => handleUppercaseChange(text, (upperText) =>  handleChange("SourceOfSeed", upperText))}
-               
+                onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("SourceOfSeed", upperText))}
+
                 style={[
                   styles.input,
                   errors.SourceOfSeed && { borderColor: "red" }
@@ -1132,9 +1147,9 @@ const InspectionScreen = () => {
                     placeholder="Enter area"
                     placeholderTextColor="#666"
                     value={formData.InspectedArea.toString()}
-                     onChangeText={(text) => handleUppercaseChange(text, (upperText) =>  handleChange("InspectedArea", upperText))}
-               
-         
+                    onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("InspectedArea", upperText))}
+
+
                     keyboardType="numeric"
                     style={styles.input}
                   />
@@ -1149,8 +1164,8 @@ const InspectionScreen = () => {
                     placeholder="Enter field count"
                     placeholderTextColor="#666"
                     value={formData.FieldCount.toString()}
-                     onChangeText={(text) => handleUppercaseChange(text, (upperText) =>  handleChange("FieldCount" , upperText))}
-                  
+                    onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("FieldCount", upperText))}
+
                     keyboardType="numeric"
                     style={styles.input}
                   />
@@ -1250,9 +1265,9 @@ const InspectionScreen = () => {
                 placeholder="Enter estimated yield"
                 placeholderTextColor="#666"
                 value={formData.EstimatedSeedYield}
-                  onChangeText={(text) => handleUppercaseChange(text, (upperText) =>  handleChange("EstimatedSeedYield" , upperText))}
-                
-              
+                onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("EstimatedSeedYield", upperText))}
+
+
                 style={styles.input}
               />
               <HelperText type="error" visible={!!errors.EstimatedSeedYield}>
@@ -1264,8 +1279,8 @@ const InspectionScreen = () => {
                 placeholder="Enter representative name"
                 placeholderTextColor="#666"
                 value={formData.GrowerRepresentative}
-                 onChangeText={(text) => handleUppercaseChange(text, (upperText) =>  handleChange("GrowerRepresentative" , upperText))}
-              
+                onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("GrowerRepresentative", upperText))}
+
                 style={styles.input}
               />
               <HelperText type="error" visible={!!errors.GrowerRepresentative}>
@@ -1277,7 +1292,7 @@ const InspectionScreen = () => {
                 placeholder="Enter remarks"
                 placeholderTextColor="#666"
                 value={formData.Remarks}
-                  onChangeText={(text) => handleUppercaseChange(text, (upperText) =>  handleChange("Remarks" , upperText))}
+                onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("Remarks", upperText))}
 
                 multiline
                 numberOfLines={3}
@@ -1332,7 +1347,6 @@ const InspectionScreen = () => {
         </View>
       </ScrollView>
 
-      {/* Date Picker Modal */}
       <DateTimePickerModal
         isVisible={showDatePicker}
         mode="date"
@@ -1341,6 +1355,8 @@ const InspectionScreen = () => {
           setShowDatePicker(false);
           setDateField(null);
         }}
+        // Add minimum date for Duration To
+        minimumDate={dateField === "DurationTo" && minDurationToDate ? minDurationToDate : undefined}
       />
 
       {/* Signature Modal */}

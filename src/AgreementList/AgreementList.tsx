@@ -305,6 +305,8 @@ const AgreementListScreen: React.FC = () => {
             >
               Search
             </Button>
+
+
           </View>
         </Card.Content>
       </Card>
@@ -348,10 +350,13 @@ const AgreementListScreen: React.FC = () => {
                       (ins) => ins.inspectionno.toUpperCase() === inspectionType.toUpperCase()
                     );
 
-                    // If inspection exists, show "See X Inspection"; else show "Create"
-                    const buttonTitle = foundInspection ? `See ${inspectionType} Inspection` : `Create ${inspectionType}`;
+
+                    const buttonTitle = foundInspection ? `View ${inspectionType}` : `Create ${inspectionType}`;
+                    const iconName = getInspectionIcon(inspectionType); // e.g., clipboard-check, etc.
+
 
                     return (
+
                       <Button
                         key={inspectionType}
                         mode={foundInspection ? "contained" : "outlined"}
@@ -364,10 +369,13 @@ const AgreementListScreen: React.FC = () => {
                           styles.inspectionButtonLabel,
                           foundInspection && styles.completedInspectionLabel
                         ]}
-                        icon={getInspectionIcon(inspectionType)}
+                        icon={({ size, color }) => (
+                          <MaterialCommunityIcons name={iconName} size={size} color={foundInspection ? "#fff" : color} />
+                        )}
                       >
                         {buttonTitle}
                       </Button>
+
                     );
                   })}
                 </View>
