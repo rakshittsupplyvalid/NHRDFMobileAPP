@@ -23,17 +23,17 @@ import {
 import { Dropdown } from "react-native-element-dropdown";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
-import { launchCamera, CameraOptions } from 'react-native-image-picker';
+import { launchCamera, CameraOptions, Asset } from 'react-native-image-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import RNFS from 'react-native-fs';
 import * as Location from 'expo-location';
 import { styles } from "./InspectionScreen.styles";
 import apiClient, { retrieveToken } from "../Service/apiInterceptors";
 import SignatureView from "../Signature/SignatureScreen";
-import { Route } from "@react-navigation/native";
 
 interface FormDataType {
   InspectionNo: string;
+  ShowingDate: string;
   InspectionDate: string;
   HarvestingDate: string;
   DurationFrom: string;
@@ -60,9 +60,11 @@ interface FormDataType {
   CommodityId: string;
   FarmerId: string;
   FarmerDistributionId: string;
+  StageofGrowthContaminant: string; // NEW FIELD
+  StageofSeedAtInspection: string;  // NEW FIELD
+  IsolationDistance: string;        // NEW FIELD
 }
 
-// Updated Offtype interface to match API structure
 interface OfftypeData {
   naturetype: string;
   numberofplants: string;
@@ -82,6 +84,7 @@ interface AgreementIdsType {
   SeedClass: string;
   CommodityName: string;
   Authorizedname: string;
+  SourceSeed: string;
 }
 
 const InspectionScreen = () => {
@@ -91,12 +94,13 @@ const InspectionScreen = () => {
   const { agreementId, inspectionType } = route.params as {
     agreementId: string;
     inspectionType: string;
+
+
   };
 
 
-  const handleUppercaseChange = (text: string, callback: (text: string) => void) => {
-    callback(text.toUpperCase());
-  };
+  console.log("🚀 InspectionScreen params:", { agreementId, inspectionType });
+
 
 
   // Get today's date in YYYY-MM-DD format
@@ -111,6 +115,7 @@ const InspectionScreen = () => {
   const [formData, setFormData] = useState<FormDataType>({
     InspectionNo: "",
     InspectionDate: getTodayDate(),
+    ShowingDate: "",
     HarvestingDate: "",
     DurationFrom: "",
     DurationTo: "",
@@ -136,8 +141,10 @@ const InspectionScreen = () => {
     CommodityId: "",
     FarmerId: "",
     FarmerDistributionId: "",
+    StageofGrowthContaminant: "", // NEW FIELD initialized
+    StageofSeedAtInspection: "",  // NEW FIELD initialized
+    IsolationDistance: "",        // NEW FIELD initialized
   });
-
   const [agreementIds, setAgreementIds] = useState<AgreementIdsType>({
     VarietyId: "",
     CommodityId: "",
@@ -146,17 +153,14 @@ const InspectionScreen = () => {
     VarietyName: "",
     SeedClass: "",
     CommodityName: "",
-    Authorizedname: ""
+    Authorizedname: "",
+    SourceSeed: ""
+  
   });
 
-  // Updated Offtypes State - exactly 10 entries with API structure
-  const [offtypes, setOfftypes] = useState<OfftypeData[]>(
-    Array.from({ length: 10 }, () => ({
-      naturetype: "",
-      numberofplants: "",
-      discription: ""
-    }))
-  );
+  const [offtypes, setOfftypes] = useState<OfftypeData[]>([
+    { naturetype: "", numberofplants: "", discription: "" }
+  ]);
 
   const [errors, setErrors] = useState<FormErrorsType>({});
 
@@ -182,82 +186,174 @@ const InspectionScreen = () => {
   const [selectedSubSeason, setSelectedSubSeason] = useState(null);
   const [classSeedList, setClassSeedList] = useState([]);
   const [loadingClassSeed, setLoadingClassSeed] = useState(false);
+  const [isCameraLoading, setIsCameraLoading] = useState(false);
 
-
-
-
-  // Camera Options
+  // Camera Options - Updated with better defaults
   const cameraOptions: CameraOptions = {
     mediaType: 'photo',
     quality: 0.8,
     cameraType: 'back',
     saveToPhotos: true,
+    includeBase64: false,
+    maxWidth: 1024,
+    maxHeight: 1024,
   };
 
-  // Camera Permission and Functions
-  const requestCameraPermission = async () => {
+  // FIXED: Improved Android permissions handling
+  const requestPermissions = async (): Promise<boolean> => {
     if (Platform.OS === "android") {
       try {
-        const granted = await PermissionsAndroid.request(
+        // Request CAMERA permission (required for Android 13+)
+        const cameraGranted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.CAMERA,
           {
             title: "Camera Permission",
-            message: "App needs access to your camera to take pictures.",
+            message: "This app needs access to your camera to take photos for inspection.",
             buttonNeutral: "Ask Me Later",
             buttonNegative: "Cancel",
             buttonPositive: "OK",
           }
         );
-        return granted === PermissionsAndroid.RESULTS.GRANTED;
+
+        if (cameraGranted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert(
+            "Permission Required",
+            "Camera permission is required to take photos. Please enable it in app settings."
+          );
+          return false;
+        }
+
+        // For Android 12 and below, we may need WRITE_EXTERNAL_STORAGE
+        if (Platform.Version < 33) {
+          const storageGranted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+            {
+              title: "Storage Permission",
+              message: "This app needs access to your storage to save photos.",
+              buttonNeutral: "Ask Me Later",
+              buttonNegative: "Cancel",
+              buttonPositive: "OK",
+            }
+          );
+
+          if (storageGranted !== PermissionsAndroid.RESULTS.GRANTED) {
+            Alert.alert(
+              "Permission Required",
+              "Storage permission is required to save photos. Please enable it in app settings."
+            );
+            return false;
+          }
+        }
+
+        return true;
       } catch (err) {
-        console.warn(err);
+        console.error("Permission error:", err);
+        Alert.alert("Error", "An error occurred while requesting permissions.");
         return false;
       }
     }
+
+    // iOS permissions are handled automatically by the library
     return true;
   };
 
+  // FIXED: Improved openCamera function with better error handling
   const openCamera = async () => {
-    const hasCameraPermission = await requestCameraPermission();
-    if (!hasCameraPermission) {
-      Alert.alert("Permission Denied", "Camera permission is required.");
-      return;
-    }
+    try {
+      setIsCameraLoading(true);
 
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert("Permission Denied", "Location permission is required to geo-tag photos.");
-      return;
-    }
-
-    const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-    const { latitude, longitude } = location.coords;
-    console.log("📍 Current Location:", latitude, longitude);
-
-    launchCamera(cameraOptions, (response) => {
-      if (response.didCancel) {
-        console.log("User cancelled image picker");
-      } else if (response.errorCode) {
-        console.log("ImagePicker Error: ", response.errorMessage);
-        Alert.alert("Camera Error", response.errorMessage || "Failed to capture image");
-      } else if (response.assets && response.assets.length > 0) {
-        const uri = response.assets[0].uri;
-
-        setFormData(prev => ({
-          ...prev,
-          GeoImage: uri || null,
-          GeoLocation: { latitude, longitude },
-        }));
-
-        setErrors(prev => ({
-          ...prev,
-          GeoImage: ""
-        }));
+      const hasPermission = await requestPermissions();
+      if (!hasPermission) {
+        setIsCameraLoading(false);
+        return;
       }
-    });
+
+      // Request location permission
+      let location = null;
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted") {
+          location = await Location.getCurrentPositionAsync({
+            accuracy: Location.Accuracy.High,
+
+          });
+          console.log("📍 Location obtained:", location.coords);
+        } else {
+          console.log("Location permission denied, proceeding without location");
+        }
+      } catch (locationError) {
+        console.warn("Location error:", locationError);
+        // Continue without location if it fails
+      }
+
+      // Launch camera with error handling
+      launchCamera(cameraOptions, (response) => {
+        setIsCameraLoading(false);
+
+        if (response.didCancel) {
+          console.log("User cancelled camera");
+          return;
+        }
+
+        if (response.errorCode || response.errorMessage) {
+          console.error("Camera Error:", response.errorCode, response.errorMessage);
+          Alert.alert(
+            "Camera Error",
+            response.errorMessage || "Failed to open camera. Please try again."
+          );
+          return;
+        }
+
+        if (response.assets && response.assets.length > 0) {
+          const asset = response.assets[0];
+          const uri = asset.uri;
+
+          if (!uri) {
+            Alert.alert("Error", "Could not get image URI");
+            return;
+          }
+
+          // Update form data with image and location
+          const updateData: any = {
+            GeoImage: uri,
+          };
+
+          if (location && location.coords) {
+            updateData.GeoLocation = {
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+            };
+            updateData.Latitude = location.coords.latitude;
+            updateData.Longitude = location.coords.longitude;
+          }
+
+          setFormData((prev: FormDataType) => ({
+            ...prev,
+            ...updateData,
+          }));
+
+          // Clear any previous error
+          setErrors((prev) => ({
+            ...prev,
+            GeoImage: "",
+          }));
+
+          Alert.alert("Success", "Photo captured successfully!");
+        } else {
+          Alert.alert("Error", "No image was captured");
+        }
+      });
+    } catch (error) {
+      setIsCameraLoading(false);
+      console.error("Camera open error:", error);
+      Alert.alert(
+        "Error",
+        "Failed to open camera. Please check if camera is available and try again."
+      );
+    }
   };
 
-  // API Calls
+  // API Calls (unchanged from your original)
   const fetchAgreementDetails = async () => {
     if (!agreementId) {
       console.log("❌ No agreementId provided");
@@ -269,6 +365,10 @@ const InspectionScreen = () => {
       const response = await apiClient.get(`/api/agreement/${agreementId}`);
       const agreementData = response.data;
 
+
+      console.log(" ***************Fetched agreement data:", agreementData)  ;
+
+
       setAgreementIds(prev => ({
         VarietyId: agreementData?.varietyid || "",
         CommodityId: agreementData?.commodityid || "",
@@ -277,9 +377,8 @@ const InspectionScreen = () => {
         VarietyName: agreementData?.varietyname || "",
         CommodityName: agreementData?.commodityname || "",
         Authorizedname: agreementData?.authorizedname || "",
-        SeedClass: isFirstInspection
-          ? (prev.SeedClass || agreementData?.plantingmaterial || "")
-          : (agreementData?.plantingmaterial || "")
+        SeedClass: agreementData?.seedclass || "",
+        SourceSeed : agreementData?.sourceofseed || "",
       }));
 
       setFormData(prev => ({
@@ -317,9 +416,6 @@ const InspectionScreen = () => {
       setLoadingClassSeed(false);
     }
   };
-
-
-
 
   useEffect(() => {
     fetchClassSeed();
@@ -374,6 +470,23 @@ const InspectionScreen = () => {
     fetchSeedData();
   }, []);
 
+  const addOfftypeRow = () => {
+    if (offtypes.length >= 10) {
+      Alert.alert("Limit reached", "You can add maximum 10 offtypes.");
+      return;
+    }
+
+    setOfftypes(prev => [
+      ...prev,
+      { naturetype: "", numberofplants: "", discription: "" }
+    ]);
+
+    setOfftypeErrors(prev => [
+      ...prev,
+      { naturetype: "", numberofplants: "" }
+    ]);
+  };
+
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
@@ -418,7 +531,6 @@ const InspectionScreen = () => {
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
-
 
   const handleDateConfirm = (date: Date) => {
     if (dateField) {
@@ -466,15 +578,8 @@ const InspectionScreen = () => {
     });
   };
 
-  // FIXED: Improved handleOfftypeChange with better input handling
   const handleOfftypeChange = (index: number, field: string, value: string) => {
-    // Only allow numbers and limit to 2 digits
-    let filteredValue = value.replace(/[^0-9]/g, ''); // Remove non-numeric characters
-
-    // Limit to 2 digits maximum
-    if (filteredValue.length > 2) {
-      filteredValue = filteredValue.slice(0, 2);
-    }
+    let filteredValue = value.replace(/[^0-9]/g, "");
 
     setOfftypes(prev => {
       const updated = [...prev];
@@ -533,7 +638,7 @@ const InspectionScreen = () => {
     if (requiredFields.includes(field) && (!value || value.toString().trim() === "")) {
       error = "This field is required";
     } else {
-      if (["InspectedArea", "FieldCount"].includes(field)) {
+      if (["InspectedArea", "FieldCount", "IsolationDistance"].includes(field)) {
         if (value && (isNaN(value) || parseFloat(value) < 0)) {
           error = "Please enter a valid number";
         }
@@ -545,6 +650,7 @@ const InspectionScreen = () => {
   };
 
   const handleChange = (field: string, value: any) => {
+    console.log(`Setting ${field} to:`, value);
     setFormData((prev) => ({ ...prev, [field]: value }));
     validateField(field, value);
   };
@@ -588,8 +694,8 @@ const InspectionScreen = () => {
 
   const validateForm = (): boolean => {
     const requiredFields = [
-      'InspectionDate', 'HarvestingDate', 'DurationFrom', 'DurationTo',
-      'SourceOfSeed', 'PreviousCrop', 'CropCondition', 'GeoImage'
+      'InspectionDate', 'HarvestingDate', 'DurationFrom', 'DurationTo', 'ShowingDate',
+      'SourceOfSeed', 'PreviousCrop', 'CropCondition', 'GeoImage', 'StageofSeedAtInspection', 'StageofGrowthContaminant', 'IsolationDistance', 'EstimatedSeedYield', 'GrowerRepresentative', 'Remarks',
     ];
 
     let isValid = true;
@@ -646,12 +752,11 @@ const InspectionScreen = () => {
     return isValid;
   };
 
-
   useEffect(() => {
     if (inspectionType) {
       setFormData(prev => ({
         ...prev,
-        InspectionNo: inspectionType.toUpperCase(),  // auto-fill FIRST, SECOND, THIRD
+        InspectionNo: inspectionType.toUpperCase(),
       }));
     }
   }, [inspectionType]);
@@ -680,18 +785,23 @@ const InspectionScreen = () => {
       requestData.append("FarmerId", agreementIds.FarmerId);
       requestData.append("FarmerDistributionId", agreementIds.FarmerDistributionId);
       requestData.append("GrowerRepresentative", agreementIds.Authorizedname);
-      requestData.append("Latitude", formData.GeoLocation.latitude.toFixed(6));
-      requestData.append("Longitude", formData.GeoLocation.longitude.toFixed(6));
+      requestData.append("Latitude", formData.GeoLocation?.latitude.toFixed(6) || "0");
+      requestData.append("Longitude", formData.GeoLocation?.longitude.toFixed(6) || "0");
 
-      // Form fields
+
+      // Form fields - include all fields including new ones
       Object.keys(formData).forEach(key => {
         const value = formData[key as keyof FormDataType];
         if (value !== null && value !== undefined) {
           if (typeof value === 'boolean') {
             requestData.append(key, value.toString());
+            console.log(`Appended ${key}: ${value.toString()}`);
           } else {
             requestData.append(key, value.toString());
+            console.log(`Appended ${key}: ${value.toString()}`);
           }
+        } else {
+          console.log(`Skipping ${key}: null or undefined`);
         }
       });
 
@@ -702,7 +812,8 @@ const InspectionScreen = () => {
         discription: null
       }));
 
-      requestData.append("Offtypes", JSON.stringify(offtypesData));
+      requestData.append("NatureOfOffTypes", JSON.stringify(offtypesData));
+      console.log("🚀 Offtypes Data to Submit:", JSON.stringify(offtypesData, null, 2));
 
       // GeoImage
       if (formData.GeoImage) {
@@ -711,29 +822,34 @@ const InspectionScreen = () => {
           type: "image/jpeg",
           name: "geo_image.jpg",
         } as any);
+        console.log("📷 Appended GeoImage");
       }
 
       // Grower Signature
       if (formData.GrowerSignature) {
         const growerFile = await base64ToFile(formData.GrowerSignature, "grower_signature.png");
         requestData.append("GrowerSignature", growerFile as any);
+        console.log("✍️ Appended GrowerSignature");
       }
 
       // Officer Signature
       if (formData.OfficerSignature) {
         const officerFile = await base64ToFile(formData.OfficerSignature, "officer_signature.png");
         requestData.append("OfficerSignature", officerFile as any);
+        console.log("✍️ Appended OfficerSignature");
       }
 
       // Center Incharge Signature
       if (formData.CenterInchargeSignature) {
         const inchargeFile = await base64ToFile(formData.CenterInchargeSignature, "center_incharge_signature.png");
         requestData.append("CenterInchargeSignature", inchargeFile as any);
+        console.log("✍️ Appended CenterInchargeSignature");
       }
 
-      console.log("🚀 Submitting Inspection Data with Offtypes:", offtypesData);
+
 
       // API CALL
+      console.log("🚀 Making API call to:", `/api/inspection/${agreementId}`);
       const response = await apiClient.post(
         `/api/inspection/${agreementId}`,
         requestData,
@@ -765,6 +881,7 @@ const InspectionScreen = () => {
 
     } catch (error: any) {
       console.error("❌ Error submitting inspection:", error);
+      console.error("❌ Error response:", error?.response?.data);
       Alert.alert(
         "Submission Failed",
         error?.response?.data?.message || "Failed to submit inspection data. Please try again."
@@ -796,6 +913,7 @@ const InspectionScreen = () => {
     </View>
   );
 
+  // FIXED: Updated ImagePickerField component with loading state
   const ImagePickerField = ({ label, value, onPress, field }: any) => (
     <View style={styles.imagePickerContainer}>
       <Text style={styles.label}>{label}</Text>
@@ -803,12 +921,14 @@ const InspectionScreen = () => {
         mode="outlined"
         onPress={onPress}
         style={styles.imagePickerButton}
-        icon="camera"
+        icon={isCameraLoading ? "camera-timer" : "camera"}
         textColor="#2E7D32"
+        disabled={isCameraLoading}
       >
-        {value ? "Retake Photo" : "Take Photo"}
+        {isCameraLoading ? "Opening Camera..." : (value ? "Retake Photo" : "Take Photo")}
       </Button>
-      {value && (
+
+      {value && !isCameraLoading && (
         <View style={styles.imagePreviewContainer}>
           <Image source={{ uri: value }} style={styles.previewImage} />
 
@@ -849,7 +969,7 @@ const InspectionScreen = () => {
               icon="pencil"
               textColor="#2E7D32"
             >
-              Resign
+              Re-sign
             </Button>
             <Button
               mode="outlined"
@@ -881,7 +1001,6 @@ const InspectionScreen = () => {
     </View>
   );
 
-  // FIXED: Updated OfftypeField with maxLength and better input handling
   const OfftypeField = ({ index, offtype, onChange, errors }: any) => (
     <View style={styles.offtypeRow}>
       <View style={styles.countNumber}>
@@ -897,7 +1016,7 @@ const InspectionScreen = () => {
             value={offtype.numberofplants}
             onChangeText={(text) => onChange(index, "numberofplants", text)}
             keyboardType="numeric"
-            maxLength={2} // Maximum 2 digits allowed
+            maxLength={5}
             style={[
               styles.offtypeInput,
               errors?.numberofplants && styles.inputError
@@ -955,20 +1074,22 @@ const InspectionScreen = () => {
 
               <View style={styles.row}>
                 <View style={styles.halfInput}>
-                  <Text style={styles.label}>Inspection Date</Text>
-                  <View style={styles.dateDisplayContainer}>
-                    <Text style={styles.dateDisplayText}>
-                      {displayDate(formData.InspectionDate)}
-                    </Text>
-
-                  </View>
-                  <HelperText type="error" visible={!!errors.InspectionDate}>
-                    {errors.InspectionDate}
+                  <Text style={styles.label}>Showing Date</Text>
+                  <Button
+                    mode="outlined"
+                    onPress={() => openDatePicker("ShowingDate")}
+                    style={styles.dateButton}
+                    textColor="#2E7D32"
+                  >
+                    {displayDate(formData.ShowingDate)}
+                  </Button>
+                  <HelperText type="error" visible={!!errors.ShowingDate}>
+                    {errors.ShowingDate}
                   </HelperText>
                 </View>
 
                 <View style={styles.halfInput}>
-                  <Text style={styles.label}>Harvesting Date</Text>
+                  <Text style={styles.label}>Expected Harvesting Date</Text>
                   <Button
                     mode="outlined"
                     onPress={() => openDatePicker("HarvestingDate")}
@@ -1024,20 +1145,30 @@ const InspectionScreen = () => {
               />
 
               <Text style={styles.label}>Class of Seed</Text>
-              <Dropdown
-                style={styles.dropdown}
-                data={classSeedList}              // <-- Data from API
-                labelField="label"                // <-- What to display
-                valueField="value"                // <-- What to store internally
-                placeholder={
-                  loadingClassSeed ? "Loading..." : "Select Class of Seed"
-                }
-                value={agreementIds.SeedClass}    // <-- Selected value
-                mode="modal"
-                onChange={(item) => {
-                  setAgreementIds(prev => ({ ...prev, SeedClass: item.value }));
-                }}
-              />
+
+              {inspectionType === "First" ? (
+                // Show dropdown ONLY for First inspection
+                <Dropdown
+                  style={styles.dropdown}
+                  data={classSeedList}
+                  labelField="label"
+                  valueField="value"
+                  value={agreementIds.SeedClass}
+                  mode="modal"
+                  onChange={(item) => {
+                    setAgreementIds(prev => ({ ...prev, SeedClass: item.value }));
+                  }}
+                />
+              ) : (
+                // For Second, Third, Fourth → show TextInput with auto-filled value
+                <TextInput
+                  style={[styles.input, styles.disabledInput]}
+                  value={agreementIds.SeedClass}
+                  editable={false}  // keep readonly
+                />
+              )}
+
+
 
               <Text style={styles.label}>Crop</Text>
               <TextInput
@@ -1052,8 +1183,12 @@ const InspectionScreen = () => {
                 placeholder="Enter previous crop"
                 placeholderTextColor="#666"
                 value={formData.PreviousCrop}
-                onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("PreviousCrop", upperText))}
-
+                autoCorrect={false}
+                autoComplete="off"
+                autoCapitalize="characters"
+                onChangeText={(text) =>
+                  handleChange("PreviousCrop", text)
+                }
                 style={styles.input}
               />
               {errors.PreviousCrop && (
@@ -1066,9 +1201,13 @@ const InspectionScreen = () => {
               <TextInput
                 placeholder="Enter Source of Seed"
                 placeholderTextColor="#666"
-                value={formData.SourceOfSeed}
-                onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("SourceOfSeed", upperText))}
-
+                value={agreementIds.SourceSeed}
+                autoCorrect={false}
+                autoComplete="off"
+                autoCapitalize="characters"
+                onChangeText={(text) =>
+                  handleChange("SourceOfSeed", text)
+                }
                 style={[
                   styles.input,
                   errors.SourceOfSeed && { borderColor: "red" }
@@ -1080,6 +1219,49 @@ const InspectionScreen = () => {
                 </HelperText>
               )}
 
+              <Text style={styles.label}>Stage of Growth Contaminant</Text>
+              <TextInput
+                placeholder="Enter stage of growth contaminant"
+                placeholderTextColor="#666"
+                value={formData.StageofGrowthContaminant}
+                autoCorrect={false}
+                autoComplete="off"
+                autoCapitalize="characters"
+                onChangeText={(text) =>
+                  handleChange("StageofGrowthContaminant", text)
+                }
+                style={styles.input}
+              />
+              {errors.StageofGrowthContaminant && (
+                <HelperText type="error" visible={true}>
+                  {errors.SourceOfSeed}
+                </HelperText>
+              )}
+
+
+              <Text style={styles.label}>Stage of Seed at Inspection</Text>
+              <TextInput
+                placeholder="Enter Stage of Seed At Inspection"
+                placeholderTextColor="#666"
+                value={formData.StageofSeedAtInspection}
+                autoCorrect={false}
+                autoComplete="off"
+                autoCapitalize="characters"
+                onChangeText={(text) =>
+                  handleChange("StageofSeedAtInspection", text)
+                }
+                style={styles.input}
+              />
+
+              {errors.StageofSeedAtInspection && (
+                <HelperText type="error" visible={true}>
+                  {errors.SourceOfSeed}
+                </HelperText>
+              )}
+
+
+
+
               <Text style={styles.label}>Year</Text>
               <Dropdown
                 style={[styles.dropdown, errors.Year && { borderColor: "red" }]}
@@ -1088,15 +1270,16 @@ const InspectionScreen = () => {
                 placeholder={!loading ? "Select Year" : "Loading..."}
                 labelField="label"
                 valueField="value"
-
-                onChange={(item) => handleSeasonSelect(item.value)}
+                onChange={(item) => {
+                  handleSeasonSelect(item.value);
+                  setErrors(prev => ({ ...prev, Year: "" }));  // FIX
+                }}
                 mode="modal"
               />
 
               <HelperText type="error" visible={!!errors.Year}>
                 {errors.Year}
               </HelperText>
-
               <Text style={styles.label}>Season</Text>
               <Dropdown
                 style={[styles.dropdown, errors.Season && { borderColor: "red" }]}
@@ -1147,9 +1330,12 @@ const InspectionScreen = () => {
                     placeholder="Enter area"
                     placeholderTextColor="#666"
                     value={formData.InspectedArea.toString()}
-                    onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("InspectedArea", upperText))}
-
-
+                    autoCorrect={false}
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    onChangeText={(text) =>
+                      handleChange("InspectedArea", text)
+                    }
                     keyboardType="numeric"
                     style={styles.input}
                   />
@@ -1164,8 +1350,12 @@ const InspectionScreen = () => {
                     placeholder="Enter field count"
                     placeholderTextColor="#666"
                     value={formData.FieldCount.toString()}
-                    onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("FieldCount", upperText))}
-
+                    autoCorrect={false}
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    onChangeText={(text) =>
+                      handleChange("FieldCount", text)
+                    }
                     keyboardType="numeric"
                     style={styles.input}
                   />
@@ -1173,6 +1363,26 @@ const InspectionScreen = () => {
                     {errors.FieldCount}
                   </HelperText>
                 </View>
+              </View>
+
+              <View style={styles.halfInput}>
+                <Text style={styles.label}>Isolation Distance</Text>
+                <TextInput
+                  placeholder="Enter Isolation Distance"
+                  placeholderTextColor="#666"
+                  value={formData.IsolationDistance}
+                  autoCorrect={false}
+                  autoComplete="off"
+                  autoCapitalize="characters"
+                  onChangeText={(text) =>
+                    handleChange("IsolationDistance", text)
+                  }
+                  keyboardType="numeric"
+                  style={styles.input}
+                />
+                <HelperText type="error" visible={!!errors.IsolationDistance}>
+                  {errors.IsolationDistance}
+                </HelperText>
               </View>
 
               {/* Geo Image Field */}
@@ -1207,10 +1417,15 @@ const InspectionScreen = () => {
                 />
               ))}
 
-
+              <Button
+                mode="contained"
+                onPress={addOfftypeRow}
+                style={{ marginTop: 10, backgroundColor: "#2E7D32" }}
+              >
+                Add Offtype
+              </Button>
             </Card.Content>
           </Card>
-
 
           {/* Standards & Report Card */}
           <Card style={styles.card}>
@@ -1265,42 +1480,60 @@ const InspectionScreen = () => {
                 placeholder="Enter estimated yield"
                 placeholderTextColor="#666"
                 value={formData.EstimatedSeedYield}
-                onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("EstimatedSeedYield", upperText))}
-
-
+                onChangeText={(text) => handleChange("EstimatedSeedYield", text)}
                 style={styles.input}
               />
-              <HelperText type="error" visible={!!errors.EstimatedSeedYield}>
-                {errors.EstimatedSeedYield}
-              </HelperText>
+
+
+              {errors.EstimatedSeedYield && (
+                <HelperText type="error" visible={true}>
+                  {errors.SourceOfSeed}
+                </HelperText>
+              )}
+
 
               <Text style={styles.label}>Grower Representative</Text>
               <TextInput
                 placeholder="Enter representative name"
                 placeholderTextColor="#666"
                 value={formData.GrowerRepresentative}
-                onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("GrowerRepresentative", upperText))}
-
+                autoCorrect={false}
+                autoComplete="off"
+                autoCapitalize="characters"
+                onChangeText={(text) =>
+                  handleChange("GrowerRepresentative", text)
+                }
                 style={styles.input}
               />
-              <HelperText type="error" visible={!!errors.GrowerRepresentative}>
-                {errors.GrowerRepresentative}
-              </HelperText>
+
+
+              {errors.GrowerRepresentative && (
+                <HelperText type="error" visible={true}>
+                  {errors.SourceOfSeed}
+                </HelperText>
+              )}
+
 
               <Text style={styles.label}>Remarks</Text>
               <TextInput
                 placeholder="Enter remarks"
                 placeholderTextColor="#666"
                 value={formData.Remarks}
-                onChangeText={(text) => handleUppercaseChange(text, (upperText) => handleChange("Remarks", upperText))}
-
+                autoCorrect={false}
+                autoComplete="off"
+                autoCapitalize="characters"
+                onChangeText={(text) =>
+                  handleChange("Remarks", text)
+                }
                 multiline
                 numberOfLines={3}
                 style={[styles.input, styles.textArea]}
               />
-              <HelperText type="error" visible={!!errors.Remarks}>
-                {errors.Remarks}
-              </HelperText>
+              {errors.Remarks && (
+                <HelperText type="error" visible={true}>
+                  {errors.SourceOfSeed}
+                </HelperText>
+              )}
             </Card.Content>
           </Card>
 
@@ -1323,15 +1556,8 @@ const InspectionScreen = () => {
                 value={formData.OfficerSignature}
                 field="OfficerSignature"
               />
-
-              <SignatureField
-                label="Center Incharge Signature"
-                value={formData.CenterInchargeSignature}
-                field="CenterInchargeSignature"
-              />
             </Card.Content>
           </Card>
-
 
           <Button
             mode="contained"
@@ -1343,7 +1569,6 @@ const InspectionScreen = () => {
           >
             {submitting ? "Submitting..." : "Submit Inspection"}
           </Button>
-
         </View>
       </ScrollView>
 
@@ -1355,7 +1580,6 @@ const InspectionScreen = () => {
           setShowDatePicker(false);
           setDateField(null);
         }}
-        // Add minimum date for Duration To
         minimumDate={dateField === "DurationTo" && minDurationToDate ? minDurationToDate : undefined}
       />
 

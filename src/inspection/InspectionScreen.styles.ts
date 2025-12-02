@@ -90,6 +90,7 @@ export const styles = StyleSheet.create({
     borderColor: '#a6a8ac',
     borderRadius: wp(2),
   },
+  
 
   disabledInput: {
     backgroundColor: "#f5f5f5",

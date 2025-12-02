@@ -55,6 +55,7 @@ const InspectionList = () => {
             setLoading(true);
             const response = await apiClient.get('/api/inspection?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED');
             setInspections(response.data);
+            console.log('Fetched inspections:', response.data);
             
             Animated.timing(fadeAnim, {
                 toValue: 1,

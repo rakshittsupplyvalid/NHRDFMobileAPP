@@ -27,7 +27,8 @@ const Agreementland: React.FC = () => {
   const navigation = useNavigation();
   const [landDetails, setLandDetails] = useState<any[]>([]);
   const [farmerDetils, setFarmerDetils] = useState<any>(null);
-  const [landId, setLandId] = useState<string | null>(null);
+  const [selectedLandIds, setSelectedLandIds] = useState<string[]>([]);
+
   const [inputValue, setInputValue] = useState('');
   const [generatedCode, setGeneratedCode] = useState<string | null>(null);
 
@@ -36,7 +37,7 @@ const Agreementland: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
 
-  console.log("abcd", formData);
+  // console.log("abcd", formData);
 
   useEffect(() => {
     if (formData?.farmerId) {
@@ -49,7 +50,7 @@ const Agreementland: React.FC = () => {
   // Auto-select first land if only one
   useEffect(() => {
     if (landDetails.length === 1) {
-      setLandId(landDetails[0].id);
+      setSelectedLandIds(landDetails[0].id);
     }
   }, [landDetails]);
 
@@ -69,16 +70,23 @@ const Agreementland: React.FC = () => {
     setLoading(true);
     try {
       const data = await getFarmerLandDetail(farmerId);
+      console.log("Fetched land details:", data);
+
       if (data && data.length > 0) {
         setLandDetails(data);
-        // default selection handled by useEffect
+
+        // ❗ Multi-select में default selection नहीं होगी
+        // इसलिए पहले सभी selected IDs clear कर दें:
+        setSelectedLandIds([]);
+
       } else {
         setLandDetails([]);
-        setLandId(null);
+        setSelectedLandIds([]);  // reset multi-select
       }
+
     } catch (error) {
       console.log("Error fetching land details:", error);
-      setLandId(null);
+      setSelectedLandIds([]);  // error पर भी empty
     } finally {
       setLoading(false);
     }
@@ -86,8 +94,13 @@ const Agreementland: React.FC = () => {
 
 
   const handleLandSelect = (id: string) => {
-    setLandId(id);
+    setSelectedLandIds(prev =>
+      prev.includes(id)
+        ? prev.filter(x => x !== id)   // unselect
+        : [...prev, id]                // select
+    );
   };
+
 
 
 
@@ -142,11 +155,12 @@ const Agreementland: React.FC = () => {
 
 
   const handleNext = (record: any) => {
-
-    if (!landId) {
-      alert("Please select a land before proceeding.");
+    if (selectedLandIds.length === 0) {
+      alert("Please select at least one land.");
       return;
     }
+
+
 
 
     const formPayload = {
@@ -161,7 +175,7 @@ const Agreementland: React.FC = () => {
       lotNo: record.lotNo || formData.lotNo,
       cropClassSeeds: record.cropClassSeeds || formData.cropClassSeeds,
       DistributionType: record.DistributionType || formData.DistributionType,
-      landId: landId,
+        landIds: selectedLandIds   // <-- MULTIPLE IDS HERE
     };
 
     // ✅ Merge and persist globally before navigating
@@ -227,10 +241,15 @@ const Agreementland: React.FC = () => {
                 key={index}
                 style={[
                   styles.card,
-                  landId === land.id && { borderColor: "#007AFF", borderWidth: 2 }
+                  selectedLandIds.includes(land.id)
+                  && { borderColor: "#007AFF", borderWidth: 2 }
                 ]}
-                onPress={() => handleLandSelect(land.id)}
+                onPress={() => {
+                  handleLandSelect(land.id);
+                  console.log("Selected Land ID:", land.id);
+                }}
               >
+
                 <View style={styles.detailsContainer}>
                   <DetailRow icon="numeric" label="Land Number" value={land.number} />
                   <DetailRow icon="numeric-2-box-outline" label="Sub Number" value={land.subnumber} />
@@ -406,16 +425,16 @@ const Agreementland: React.FC = () => {
 // Detail Row Component
 const DetailRow = (
   {
-  icon,
-  label,
-  value,
-  valueColor,
-}: {
-  icon?: string;
-  label: string;
-  value: string | number | null;
-  valueColor?: string;
-}
+    icon,
+    label,
+    value,
+    valueColor,
+  }: {
+    icon?: string;
+    label: string;
+    value: string | number | null;
+    valueColor?: string;
+  }
 ) => (
   <View style={styles.detailRow}>
     <View style={styles.labelContainer}>

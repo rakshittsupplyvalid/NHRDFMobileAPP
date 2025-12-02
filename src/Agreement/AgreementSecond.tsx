@@ -883,7 +883,11 @@ const AgreementSecond: React.FC = () => {
             requestData.append("FarmerDistributionId", formData?.farmerDistributionId || "");
             requestData.append("FarmerId", formData?.farmerId || "");
             requestData.append("CenterTargetId", formData?.centerTargetId || "");
-            requestData.append("LandDetailId", formData?.landId || "");
+            // requestData.append("LandDetailId", formData?.landId || "");
+            (formData?.landIds || []).forEach((id) => {
+                requestData.append("LandDetailId", id);
+            });
+
             requestData.append("CertificateNo", formData?.Certificate || "");
             requestData.append("SurveyNo", formData?.Survey || "");
             requestData.append("VarietyId", formData?.varietyId || "");
@@ -1013,6 +1017,9 @@ const AgreementSecond: React.FC = () => {
                 console.log(`✅ Witness ${index} added:`, witness.witnessname);
             }
 
+
+
+            console.log("🔥 FormData to be submitted (FormData entries not iterable in React Native)");
             const token = await retrieveToken();
 
             // const response = await apiClient.post("/api/mobile/agreement", requestData, {
@@ -1138,16 +1145,16 @@ const AgreementSecond: React.FC = () => {
     };
 
     const renderSectionHeader = (title: string, section: string, count?: number) => (
-        <TouchableOpacity 
-            style={styles.sectionHeader} 
+        <TouchableOpacity
+            style={styles.sectionHeader}
             onPress={() => toggleSection(section)}
             activeOpacity={0.7}
         >
             <View style={styles.sectionHeaderLeft}>
-                <MaterialIcons 
-                    name={activeSection === section ? "keyboard-arrow-up" : "keyboard-arrow-down"} 
-                    size={scale(24)} 
-                    color="#70B04F" 
+                <MaterialIcons
+                    name={activeSection === section ? "keyboard-arrow-up" : "keyboard-arrow-down"}
+                    size={scale(24)}
+                    color="#70B04F"
                 />
                 <Text style={styles.sectionTitle}>{title}</Text>
                 {count !== undefined && (
@@ -1156,10 +1163,10 @@ const AgreementSecond: React.FC = () => {
                     </View>
                 )}
             </View>
-            <MaterialIcons 
-                name="info-outline" 
-                size={scale(20)} 
-                color="#666" 
+            <MaterialIcons
+                name="info-outline"
+                size={scale(20)}
+                color="#666"
             />
         </TouchableOpacity>
     );
@@ -1176,7 +1183,7 @@ const AgreementSecond: React.FC = () => {
                     <MaterialIcons name="arrow-back" size={scale(24)} color="#fff" />
                 </TouchableOpacity>
                 <Text style={styles.headerText}>Nominee & Witness Details</Text>
-                
+
             </View>
 
             <KeyboardAwareScrollView
@@ -1193,7 +1200,7 @@ const AgreementSecond: React.FC = () => {
                 {/* Nominee Section */}
                 <Card style={styles.sectionCard}>
                     {renderSectionHeader("Nominee Details", "nominee", 1)}
-                    
+
                     {activeSection === "nominee" && (
                         <Card.Content style={styles.sectionContent}>
                             <View style={styles.requiredInfo}>
@@ -1213,8 +1220,8 @@ const AgreementSecond: React.FC = () => {
                                                 <RNTextInput
                                                     placeholder="Full Name"
                                                     value={nominee.nomineename}
-                                                    autoCapitalize="characters" 
-                                                    onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateNominee(index, "nomineename", upperText))}
+                                                    autoCapitalize="characters"
+                                                    onChangeText={(text) => updateNominee(index, "nomineename", text)}
                                                     style={[
                                                         styles.simpleInput,
                                                         nomineeErrors[index]?.nomineename && styles.inputError
@@ -1308,22 +1315,23 @@ const AgreementSecond: React.FC = () => {
                                                 />
                                             </View>
 
-                                            <View style={styles.halfInput}>
-                                                <Text style={styles.label}>Year</Text>
+                                            {/* <View style={styles.halfInput}>
+                                                <Text style={styles.label}>Season</Text>
                                                 <YearPickerInput
                                                     value={nominee.year}
                                                     onChange={(year) => updateNominee(index, "year", year)}
                                                 />
-                                            </View>
+                                            </View> */}
                                         </View>
 
-                                       
+
                                         {/* Address */}
                                         <Text style={styles.label}>Address Line *</Text>
                                         <RNTextInput
                                             placeholder="Address Line"
                                             value={nominee.addrline}
-                                            onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateNominee(index, "addrline", upperText))}
+                                            autoCapitalize="characters"
+                                            onChangeText={(text) => updateNominee(index, "addrline", text)}
                                             style={[
                                                 styles.simpleInput,
                                                 nomineeErrors[index]?.addrline && styles.inputError
@@ -1360,7 +1368,8 @@ const AgreementSecond: React.FC = () => {
                                                 <RNTextInput
                                                     placeholder="Village Name"
                                                     value={nominee.villagename}
-                                                    onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateNominee(index, "villagename", upperText))}
+                                                    autoCapitalize="characters"
+                                                    onChangeText={(text) => updateNominee(index, "villagename", text)}
                                                     style={styles.simpleInput}
                                                     maxLength={100}
                                                 />
@@ -1378,11 +1387,11 @@ const AgreementSecond: React.FC = () => {
                                                 />
                                             </View>
 
-                                          
+
                                         </View>
 
 
-                                         <View style={styles.row}>
+                                        <View style={styles.row}>
                                             <View style={styles.thirdInput}>
                                                 <Text style={styles.label}>District *</Text>
                                                 <CommonPicker
@@ -1402,26 +1411,26 @@ const AgreementSecond: React.FC = () => {
                                             </View>
 
 
-                                         </View>
+                                        </View>
 
                                         {/* Bank Details */}
                                         <Text style={styles.sectionSubTitle}>Bank Account Details</Text>
-                                        
+
                                         <Text style={styles.label}>Account Holder Name *</Text>
                                         <RNTextInput
                                             placeholder="Account Holder Name"
                                             value={nominee.accountholdername}
+                                              autoCapitalize="characters"
                                             onChangeText={(text) => {
-                                                handleUppercaseChange(text, (upperText) => {
-                                                    updateNominee(index, "accountholdername", upperText);
-                                                    validateNomineeField(index, "accountholdername", upperText);
-                                                });
+                                                updateNominee(index, "accountholdername", text);
+                                                validateNomineeField(index, "accountholdername", text);
                                             }}
                                             style={[
                                                 styles.simpleInput,
                                                 nomineeErrors[index]?.accountholdername && styles.inputError,
                                             ]}
                                         />
+
                                         {nomineeErrors[index]?.accountholdername && (
                                             <HelperText type="error">
                                                 {nomineeErrors[index].accountholdername}
@@ -1459,10 +1468,11 @@ const AgreementSecond: React.FC = () => {
                                                     placeholder="IFSC Code"
                                                     value={nominee.ifsc}
                                                     maxLength={11}
+                                                        autoCapitalize="characters"
                                                     onChangeText={(text) => {
-                                                        const upper = text.toUpperCase();
-                                                        updateNominee(index, "ifsc", upper);
-                                                        validateNomineeField(index, "ifsc", upper);
+                                                       
+                                                        updateNominee(index, "ifsc", text);
+                                                        validateNomineeField(index, "ifsc", text);
                                                     }}
                                                     style={[
                                                         styles.simpleInput,
@@ -1508,15 +1518,15 @@ const AgreementSecond: React.FC = () => {
                 {/* Witness Section */}
                 <Card style={styles.sectionCard}>
                     {renderSectionHeader("Witness Details", "witness", witnesses.length)}
-                    
+
                     {activeSection === "witness" && (
                         <Card.Content style={styles.sectionContent}>
                             <View style={styles.requiredInfo}>
                                 <MaterialIcons name="info" size={scale(16)} color="#FF6B35" />
                                 <Text style={styles.requiredInfoText}>
-                                    {witnesses.length === 0 ? "Minimum 1 Witness Required" : 
-                                     witnesses.length === 1 ? "Add 1 more witness (Optional)" : 
-                                     "Maximum 2 Witnesses Reached"}
+                                    {witnesses.length === 0 ? "Minimum 1 Witness Required" :
+                                        witnesses.length === 1 ? "Add 1 more witness (Optional)" :
+                                            "Maximum 2 Witnesses Reached"}
                                 </Text>
                             </View>
 
@@ -1526,7 +1536,7 @@ const AgreementSecond: React.FC = () => {
                                         <View style={styles.witnessHeader}>
                                             <Text style={styles.sectionSubTitle}>Witness {index + 1}</Text>
                                             {witnesses.length > 1 && (
-                                                <TouchableOpacity 
+                                                <TouchableOpacity
                                                     style={styles.deleteButton}
                                                     onPress={() => deleteWitness(index)}
                                                 >
@@ -1542,7 +1552,8 @@ const AgreementSecond: React.FC = () => {
                                                 <RNTextInput
                                                     placeholder="Full Name"
                                                     value={witness.witnessname}
-                                                    onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateWitness(index, "witnessname", upperText))}
+                                                      autoCapitalize="characters"
+                                                    onChangeText={(text) => updateWitness(index, "witnessname", text)}
                                                     style={[
                                                         styles.simpleInput,
                                                         witnessErrors[index]?.witnessname && styles.inputError
@@ -1580,14 +1591,15 @@ const AgreementSecond: React.FC = () => {
                                             </View>
                                         </View>
 
-                                     
+
 
                                         {/* Address */}
                                         <Text style={styles.label}>Address *</Text>
                                         <RNTextInput
                                             placeholder="Address Line"
                                             value={witness.addrline}
-                                            onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateWitness(index, "addrline", upperText))}
+                                              autoCapitalize="characters"
+                                            onChangeText={(text) =>  updateWitness(index, "addrline", text)}
                                             style={[
                                                 styles.simpleInput,
                                                 witnessErrors[index]?.addrline && styles.inputError
@@ -1624,7 +1636,8 @@ const AgreementSecond: React.FC = () => {
                                                 <RNTextInput
                                                     placeholder="Village Name"
                                                     value={witness.villagename}
-                                                    onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateWitness(index, "villagename", upperText))}
+                                                      autoCapitalize="characters"
+                                                    onChangeText={(text) => updateWitness(index, "villagename", text)}
                                                     style={styles.simpleInput}
                                                     maxLength={100}
                                                 />
@@ -1661,8 +1674,8 @@ const AgreementSecond: React.FC = () => {
                                             </View> */}
                                         </View>
 
-                                             <View style={styles.row}>
-                                                <View style={styles.thirdInput}>
+                                        <View style={styles.row}>
+                                            <View style={styles.thirdInput}>
                                                 <Text style={styles.label}>District *</Text>
                                                 <CommonPicker
                                                     selectedValue={witness.districtid || ""}
@@ -1670,16 +1683,16 @@ const AgreementSecond: React.FC = () => {
                                                     items={witnessDistrictsList[index] || []}
                                                 />
                                             </View>
-                                             <View style={styles.thirdInput}>
+                                            <View style={styles.thirdInput}>
                                                 <Text style={styles.label}>City *</Text>
                                                 <CommonPicker
                                                     selectedValue={witness.subdistrictid || ""}
                                                     onValueChange={(value) => handleCityChange(value, "Witness", index)}
                                                     items={witnessCitiesList[index] || []}
                                                 />
-                                            </View> 
+                                            </View>
 
-                                             </View>
+                                        </View>
 
                                         {/* Signature Section */}
                                         <View style={styles.photoSection}>
@@ -1710,9 +1723,9 @@ const AgreementSecond: React.FC = () => {
                             ))}
 
                             {witnesses.length < 2 && (
-                                <Button 
-                                    mode="outlined" 
-                                    onPress={addWitness} 
+                                <Button
+                                    mode="outlined"
+                                    onPress={addWitness}
                                     style={styles.addButton}
                                     icon="plus"
                                 >
@@ -1726,7 +1739,7 @@ const AgreementSecond: React.FC = () => {
                 {/* Signature & Profile Section */}
                 <Card style={styles.sectionCard}>
                     {renderSectionHeader("Signature & Profile Verification", "signature")}
-                    
+
                     {activeSection === "signature" && (
                         <Card.Content style={styles.sectionContent}>
                             <View style={styles.photoGrid}>
@@ -1791,7 +1804,7 @@ const AgreementSecond: React.FC = () => {
                 {/* Additional Details Section */}
                 <Card style={styles.sectionCard}>
                     {renderSectionHeader("Additional Details", "additional")}
-                    
+
                     {activeSection === "additional" && (
                         <Card.Content style={styles.sectionContent}>
                             {/* Commodity Dropdown */}
@@ -1802,7 +1815,8 @@ const AgreementSecond: React.FC = () => {
                             <TextInput
                                 mode="outlined"
                                 value={state.form.authorizedSignatory || ""}
-                                onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateState({ ...state, form: { ...state.form, authorizedSignatory: upperText } }))}
+                                 autoCapitalize="characters"
+                                onChangeText={(text) =>  updateState({ ...state, form: { ...state.form, authorizedSignatory: text} })}
                                 style={styles.input}
                                 placeholder="Enter authorized signatory name"
                                 maxLength={20}
@@ -1812,7 +1826,8 @@ const AgreementSecond: React.FC = () => {
                             <TextInput
                                 mode="outlined"
                                 value={state.form.TagNumber || ""}
-                                onChangeText={(text) => handleUppercaseChange(text, (upperText) => updateState({ ...state, form: { ...state.form, TagNumber: upperText } }))}
+                                 autoCapitalize="characters"
+                                onChangeText={(text) => updateState({ ...state, form: { ...state.form, TagNumber: text } })}
                                 style={styles.input}
                                 placeholder="Enter Tag number"
                                 maxLength={50}
@@ -1824,7 +1839,7 @@ const AgreementSecond: React.FC = () => {
                 {/* Agreement Terms Section */}
                 <Card style={styles.sectionCard}>
                     {renderSectionHeader("Agreement Terms & Conditions", "agreement")}
-                    
+
                     {activeSection === "agreement" && (
                         <Card.Content style={styles.sectionContent}>
                             <ScrollView style={styles.agreementContainer} nestedScrollEnabled={true}>

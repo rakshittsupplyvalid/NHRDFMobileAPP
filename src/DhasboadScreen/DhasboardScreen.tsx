@@ -17,19 +17,41 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 const DashboardScreen = () => {
   const navigation = useNavigation<any>();
   const [countData, setCountData] = useState(null);
+    const [InspectionData, setInspectionData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchAgreementCount();
   }, []);
 
+
+    useEffect(() => {
+    fetInspectionCount();
+  }, []);
+
   const fetchAgreementCount = async () => {
     try {
       const response = await apiClient.get(
-        '/api/dashboard/agreement/total/count?ApprovalStatus=PENDING'
+        '/api/dashboard/agreement/total/count?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED'
       );
       console.log('API Response:', response.data);
       setCountData(response.data);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      Alert.alert('Error', 'Failed to load data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+   const fetInspectionCount = async () => {
+    try {
+      const response = await apiClient.get(
+        '/api/dashboard/inspection/total/count?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED'
+      );
+      console.log('API Response:', response.data);
+      setInspectionData(response.data);
     } catch (error) {
       console.error('Error fetching data:', error);
       Alert.alert('Error', 'Failed to load data');
@@ -63,12 +85,9 @@ const DashboardScreen = () => {
         <View style={styles.header}>
           <View>
             <Text style={styles.headerTitle}>Dashboard</Text>
-            {/* <Text style={styles.subTitle}>Good Afternoon</Text> */}
+           
           </View>
-          {/* <Image
-            source={{ uri: 'https://randomuser.me/api/portraits/women/44.jpg' }}
-            style={styles.profilePic}
-          /> */}
+         
         </View>
 
         <Divider style={styles.divider} />
@@ -117,15 +136,19 @@ const DashboardScreen = () => {
             </View>
             <Text style={styles.cardSubtitle}>View Inspections</Text>
             <View style={styles.cardFooter}>
-              <Text style={styles.cardInfo}>Total inspection 5</Text>
+              <Text style={styles.cardInfo}>Total inspection {InspectionData}</Text>
               <Button
                 mode="outlined"
                 compact
                 style={styles.actionBtn}
                 textColor="#fff"
-                              onPress={() => navigation.navigate('Inspection List')}
+onPress={() => navigation.navigate('Inspection List')}
               >
-                View
+                 V 
+                 i  
+                 e  
+                 w
+        
               </Button>
             </View>
           </Card.Content>
