@@ -14,6 +14,7 @@ import { DrawerParamList } from "../Type/type";
 import { BackHandler } from 'react-native';
 import { useFocusEffect } from "@react-navigation/native";
 import GlobalImageViewer from "../common/lib/GlobalMediaViewer";
+
 type Witness = {
   name: string;
   mobileno: string;

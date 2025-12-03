@@ -17,7 +17,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 const DashboardScreen = () => {
   const navigation = useNavigation<any>();
   const [countData, setCountData] = useState(null);
-    const [InspectionData, setInspectionData] = useState(null);
+  const [InspectionData, setInspectionData] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,7 +25,7 @@ const DashboardScreen = () => {
   }, []);
 
 
-    useEffect(() => {
+  useEffect(() => {
     fetInspectionCount();
   }, []);
 
@@ -45,7 +45,7 @@ const DashboardScreen = () => {
   };
 
 
-   const fetInspectionCount = async () => {
+  const fetInspectionCount = async () => {
     try {
       const response = await apiClient.get(
         '/api/dashboard/inspection/total/count?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED'
@@ -85,9 +85,9 @@ const DashboardScreen = () => {
         <View style={styles.header}>
           <View>
             <Text style={styles.headerTitle}>Dashboard</Text>
-           
+
           </View>
-         
+
         </View>
 
         <Divider style={styles.divider} />
@@ -115,7 +115,7 @@ const DashboardScreen = () => {
                 textColor="#fff"
                 onPress={() => navigation.navigate('Agreement List')}
               >
-                 View
+                View
               </Button>
             </View>
           </Card.Content>
@@ -142,13 +142,9 @@ const DashboardScreen = () => {
                 compact
                 style={styles.actionBtn}
                 textColor="#fff"
-onPress={() => navigation.navigate('Inspection List')}
+                onPress={() => navigation.navigate('Inspection List')}
               >
-                 V 
-                 i  
-                 e  
-                 w
-        
+                View
               </Button>
             </View>
           </Card.Content>
@@ -233,13 +229,13 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     marginLeft: 10,
-  
+
   },
   cardSubtitle: {
     color: '#fff',
     fontSize: 14,
     marginBottom: 16,
-    marginTop : 15
+    marginTop: 15
   },
   cardFooter: {
     flexDirection: 'row',
@@ -249,15 +245,15 @@ const styles = StyleSheet.create({
   cardInfo: {
     color: '#fff',
     fontSize: 14,
-    marginBottom : 25  
+    marginBottom: 25
   },
   actionBtn: {
     borderColor: '#fff',
     borderRadius: 20,
     paddingHorizontal: 10,
-  
 
-   
+
+
   },
   sectionTitle: {
     fontSize: 18,
