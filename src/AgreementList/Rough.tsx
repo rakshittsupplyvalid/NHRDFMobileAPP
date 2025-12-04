@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { View, StyleSheet, TextInput, ScrollView, ActivityIndicator, BackHandler, Modal } from "react-native";
 import { Card, Text, Divider, Button, Snackbar } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -33,7 +33,7 @@ const AgreementListScreen: React.FC = () => {
 
   // Inspections state
   const [agreementInspections, setAgreementInspections] = useState<{ [key: string]: any[] }>({});
-  const [inspectionsLoading, setInspectionsLoading] = useState<{ [key: string]: boolean }>({});
+  const [inspectionsCount, setInspectionsCount] = useState<{ [key: string]: number }>({});
 
   // Modal state
   const [inspectionModalVisible, setInspectionModalVisible] = useState(false);
@@ -42,9 +42,6 @@ const AgreementListScreen: React.FC = () => {
   // Snackbar state
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-
-  // Refs for debouncing
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Handle Android Back Button
   useFocusEffect(
@@ -140,57 +137,11 @@ const AgreementListScreen: React.FC = () => {
     fetchSeasonData();
   }, []);
 
-  // Fetch inspections for a specific agreement
-  const fetchInspectionsForAgreement = async (agreementId: string) => {
-    // Mark this agreement as loading inspections
-    setInspectionsLoading(prev => ({ ...prev, [agreementId]: true }));
-    
-    try {
-      const params = new URLSearchParams();
-      params.append("AgreementCode", agreementId);
-      params.append("ApprovalStatus", "PENDING");
-      params.append("ApprovalStatus", "APPROVED");
-      params.append("ApprovalStatus", "REJECTED");
-
-      const url = `/api/inspection?${params.toString()}`;
-    
-      const res = await apiClient.get(url);
-      const inspections = res.data || [];
-     
-
-      // Store inspections for this agreement
-      setAgreementInspections(prev => ({ 
-        ...prev, 
-        [agreementId]: inspections 
-      }));
-      
-    } catch (error) {
-      console.error("Error fetching inspections:", error);
-      setSnackbarMessage("Error loading inspections");
-      setSnackbarVisible(true);
-      // Set empty array if error
-      setAgreementInspections(prev => ({ 
-        ...prev, 
-        [agreementId]: [] 
-      }));
-    } finally {
-      // Mark loading as complete
-      setInspectionsLoading(prev => ({ ...prev, [agreementId]: false }));
-    }
-  };
-
   const handleSearch = async () => {
-    // Clear any existing timeout
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
     // Reset previous states
     setSearchInitiated(true);
     setAgreements([]);
     setError("");
-    setAgreementInspections({}); // Clear previous inspections
-    setInspectionsLoading({}); // Clear loading states
     
     // Aadhaar validation - ONLY on search click
     if (!aadharNumber) {
@@ -209,42 +160,28 @@ const AgreementListScreen: React.FC = () => {
 
     try {
       setLoading(true);
+      const params = new URLSearchParams();
+      params.append("AadharNo", aadharNumber);
+      params.append("ApprovalStatus", "PENDING");
+      params.append("ApprovalStatus", "APPROVED");
+      params.append("ApprovalStatus", "REJECTED");
+      if (selectedCommodity) params.append("CommodityId", selectedCommodity);
+      if (selectedVariety) params.append("VarietyId", selectedVariety);
+      if (selectedSeason) params.append("SeasonId", selectedSeason);
+      if (selectedSubSeason) params.append("SubSeasonId", selectedSubSeason);
+
+      const url = `/api/agreement/list?${params.toString()}`;
+      const res = await apiClient.get(url);
       
-      // Optimize API call - use debouncing
-      searchTimeoutRef.current = setTimeout(async () => {
-        const params = new URLSearchParams();
-        params.append("AadharNo", aadharNumber);
-        params.append("ApprovalStatus", "PENDING");
-        params.append("ApprovalStatus", "APPROVED");
-        params.append("ApprovalStatus", "REJECTED");
-        if (selectedCommodity) params.append("CommodityId", selectedCommodity);
-        if (selectedVariety) params.append("VarietyId", selectedVariety);
-        if (selectedSeason) params.append("SeasonId", selectedSeason);
-        if (selectedSubSeason) params.append("SubSeasonId", selectedSubSeason);
-
-        const url = `/api/agreement/list?${params.toString()}`;
-        const res = await apiClient.get(url);
-        
-        if (res.data && res.data.length > 0) {
-          const agreementsData = res.data;
-          setAgreements(agreementsData);
-          setError(""); // Clear error if search successful
-          
-          // Automatically fetch inspections for each agreement
-          agreementsData.forEach((agreement: any) => {
-            if (agreement.id) {
-              fetchInspectionsForAgreement(agreement.id);
-            }
-          });
-        } else {
-          // Show message when no farmer agreements found
-          setError("No agreements found for this Aadhaar number");
-          setSnackbarMessage("No agreements found for this Aadhaar number");
-          setSnackbarVisible(true);
-        }
-        setLoading(false);
-      }, 300); // 300ms debounce delay
-
+      if (res.data && res.data.length > 0) {
+        setAgreements(res.data);
+        setError(""); // Clear error if search successful
+      } else {
+        // Show message when no farmer agreements found
+        setError("No agreements found for this Aadhaar number");
+        setSnackbarMessage("No agreements found for this Aadhaar number");
+        setSnackbarVisible(true);
+      }
     } catch (error: any) {
       console.error("Search error:", error);
       
@@ -259,6 +196,32 @@ const AgreementListScreen: React.FC = () => {
       setSnackbarMessage("Error searching agreements. Please try again.");
       setSnackbarVisible(true);
       setAgreements([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFetchInspections = async (agreementId: string) => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams();
+      params.append("AgreementCode", agreementId);
+      params.append("ApprovalStatus", "PENDING");
+      params.append("ApprovalStatus", "APPROVED");
+      params.append("ApprovalStatus", "REJECTED");
+
+      const url = `/api/inspection?${params.toString()}`;
+      const res = await apiClient.get(url);
+      const inspections = res.data || [];
+      console.log("Fetched inspections for agreement", agreementId, inspections);
+
+      setAgreementInspections((prev) => ({ ...prev, [agreementId]: inspections }));
+      setInspectionsCount((prev) => ({ ...prev, [agreementId]: inspections.length }));
+    } catch (error) {
+      console.error("Error fetching inspections:", error);
+      setSnackbarMessage("Error loading inspections");
+      setSnackbarVisible(true);
+    } finally {
       setLoading(false);
     }
   };
@@ -286,7 +249,7 @@ const AgreementListScreen: React.FC = () => {
     setSelectedSeason("");
     setSelectedSubSeason("");
     setAgreementInspections({});
-    setInspectionsLoading({});
+    setInspectionsCount({});
     setSearchInitiated(false);
     setError(""); // Clear error on clear all
   };
@@ -302,7 +265,7 @@ const AgreementListScreen: React.FC = () => {
   const handleInspection = (agreement: any, inspectionType: string) => {
     const inspections = agreementInspections[agreement.id] || [];
     const foundInspection = inspections.find(
-      (ins) => ins.inspectionno?.toUpperCase() === inspectionType.toUpperCase()
+      (ins) => ins.inspectionno.toUpperCase() === inspectionType.toUpperCase()
     );
 
     if (foundInspection) {
@@ -331,14 +294,6 @@ const AgreementListScreen: React.FC = () => {
       default:
         return "clipboard-check";
     }
-  };
-
-  // Check if inspection exists for an agreement
-  const getInspectionStatus = (agreementId: string, inspectionType: string) => {
-    const inspections = agreementInspections[agreementId] || [];
-    return inspections.find(
-      (ins) => ins.inspectionno?.toUpperCase() === inspectionType.toUpperCase()
-    );
   };
 
   return (
@@ -414,16 +369,7 @@ const AgreementListScreen: React.FC = () => {
                 <Text style={styles.sectionTitle}>Agreement Details</Text>
                 <Divider style={styles.headerDivider} />
 
-                {[
-                  { label: "Farmer", value: agreement.farmername }, 
-                  { label: "Center", value: agreement.centername }, 
-                  { label: "Crop / Commodity", value: agreement.commodityname }, 
-                  { label: "Variety", value: agreement.varietyname }, 
-                  { label: "Class of Seed", value: agreement.seedclass }, 
-                  { label: "Lot Number", value: agreement.lotnumber }, 
-                  { label: "Year", value: agreement.year }, 
-                  { label: "Season", value: agreement.season }
-                ].map((item, idx) => (
+                {[{ label: "Farmer", value: agreement.farmername }, { label: "Center", value: agreement.centername }, { label: "Crop / Commodity", value: agreement.commodityname }, { label: "Variety", value: agreement.varietyname }, { label: "Class of Seed", value: agreement.seedclass }, { label: "Lot Number", value: agreement.lotnumber }, { label: "Year", value: agreement.year }, { label: "Season", value: agreement.season }].map((item, idx) => (
                   <View key={idx} style={styles.detailRow}>
                     <MaterialCommunityIcons name="chevron-right" size={20} color="#4CAF50" />
                     <View style={styles.detailContent}>
@@ -442,72 +388,59 @@ const AgreementListScreen: React.FC = () => {
                   Sealing/Tagging of Unprocessed Seed
                 </Button>
 
-                {/* Four Stage Inspection Section - Automatically shows */}
+                <Button
+                  mode="contained"
+                  onPress={() => handleFetchInspections(agreement.id)}
+                  style={{ marginTop: 12, backgroundColor: "#2196F3" }}
+                  labelStyle={{ color: "#fff" }}
+                  disabled={loading}
+                >
+                  {`View Inspections (${inspectionsCount[agreement.id] ?? 0})`}
+                </Button>
+
+                {/* Inspection Buttons */}
                 <View style={styles.inspectionSection}>
-                  <View style={styles.inspectionHeader}>
-                    <Text style={styles.inspectionTitle}>Four Stage Inspection</Text>
-                    {inspectionsLoading[agreement.id] && (
-                      <ActivityIndicator size="small" color="#2196F3" style={styles.inspectionLoader} />
-                    )}
-                  </View>
-                  
+                  <Text style={styles.inspectionTitle}>Four Stage Inspection</Text>
                   <View style={styles.inspectionGrid}>
                     {["First", "Second", "Third", "Fourth"].map((inspectionType) => {
-                      const inspection = getInspectionStatus(agreement.id, inspectionType);
-                      const exists = !!inspection;
-                      
-                      const buttonTitle = exists ? `View ${inspectionType}` : `Create ${inspectionType}`;
+                      const inspections = agreementInspections[agreement.id] || [];
+                      const foundInspection = inspections.find(
+                        (ins) => ins.inspectionno.toUpperCase() === inspectionType.toUpperCase()
+                      );
+
+                      const buttonTitle = foundInspection ? `View ${inspectionType}` : `Create ${inspectionType}`;
                       const iconName = getInspectionIcon(inspectionType);
 
                       return (
                         <Button
                           key={inspectionType}
-                          mode={exists ? "contained" : "outlined"}
+                          mode={foundInspection ? "contained" : "outlined"}
                           onPress={() => handleInspection(agreement, inspectionType)}
                           style={[
                             styles.inspectionButton,
-                            exists && styles.completedInspection
+                            foundInspection && styles.completedInspection
                           ]}
                           labelStyle={[
                             styles.inspectionButtonLabel,
-                            exists && styles.completedInspectionLabel
+                            foundInspection && styles.completedInspectionLabel
                           ]}
                           icon={({ size, color }) => (
-                            <MaterialCommunityIcons 
-                              name={iconName} 
-                              size={size} 
-                              color={exists ? "#fff" : color} 
-                            />
+                            <MaterialCommunityIcons name={iconName} size={size} color={foundInspection ? "#fff" : color} />
                           )}
-                          disabled={inspectionsLoading[agreement.id]}
                         >
                           {buttonTitle}
                         </Button>
                       );
                     })}
                   </View>
-                  
-                 
                 </View>
 
                 {/* Action Buttons */}
                 <View style={styles.actionRow}>
-                  <Button 
-                    mode="outlined" 
-                    onPress={() => handleNominee(agreement)} 
-                    style={styles.actionButton} 
-                    labelStyle={styles.actionButtonLabel} 
-                    icon="account-group"
-                  >
+                  <Button mode="outlined" onPress={() => handleNominee(agreement)} style={styles.actionButton} labelStyle={styles.actionButtonLabel} icon="account-group">
                     View Nominee
                   </Button>
-                  <Button 
-                    mode="outlined" 
-                    onPress={() => handleWitness(agreement)} 
-                    style={styles.actionButton} 
-                    labelStyle={styles.actionButtonLabel} 
-                    icon="account-tie"
-                  >
+                  <Button mode="outlined" onPress={() => handleWitness(agreement)} style={styles.actionButton} labelStyle={styles.actionButtonLabel} icon="account-tie">
                     View Witness
                   </Button>
                 </View>
@@ -537,29 +470,38 @@ const AgreementListScreen: React.FC = () => {
           visible={inspectionModalVisible}
           onRequestClose={() => setInspectionModalVisible(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
+          <View style={{
+            flex: 1,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}>
+            <View style={{
+              width: '90%',
+              backgroundColor: '#fff',
+              borderRadius: 12,
+              padding: 16,
+            }}>
               {selectedInspection && (
                 <>
-                  <Text style={styles.modalTitle}>
+                  <Text style={{ fontSize: 18, fontWeight: 'bold', marginBottom: 12 }}>
                     {selectedInspection.inspectionno} Inspection
                   </Text>
 
-                  <View style={styles.modalDetails}>
-                    <Text><Text style={styles.modalLabel}>Farmer:</Text> {selectedInspection.farmername}</Text>
-                    <Text><Text style={styles.modalLabel}>Center:</Text> {selectedInspection.centername}</Text>
-                    <Text><Text style={styles.modalLabel}>Crop:</Text> {selectedInspection.crop}</Text>
-                    <Text><Text style={styles.modalLabel}>Variety:</Text> {selectedInspection.variety}</Text>
-                    <Text><Text style={styles.modalLabel}>Crop Condition:</Text> {selectedInspection.cropcondition}</Text>
-                    <Text><Text style={styles.modalLabel}>Relation:</Text> {selectedInspection.relation}</Text>
-                    <Text><Text style={styles.modalLabel}>Relative Name:</Text> {selectedInspection.relativename}</Text>
-                    <Text><Text style={styles.modalLabel}>Inspection Date:</Text> {selectedInspection.inspectiondate}</Text>
-                  </View>
+                  <Text><Text style={{ fontWeight: '600' }}>Farmer:</Text> {selectedInspection.farmername}</Text>
+                  <Text><Text style={{ fontWeight: '600' }}>Center:</Text> {selectedInspection.centername}</Text>
+                  <Text><Text style={{ fontWeight: '600' }}>Crop:</Text> {selectedInspection.crop}</Text>
+                  <Text><Text style={{ fontWeight: '600' }}>Variety:</Text> {selectedInspection.variety}</Text>
+
+                  <Text><Text style={{ fontWeight: '600' }}>Crop Condition:</Text> {selectedInspection.cropcondition}</Text>
+                  <Text><Text style={{ fontWeight: '600' }}>Relation:</Text> {selectedInspection.relation}</Text>
+                  <Text><Text style={{ fontWeight: '600' }}>Relative Name:</Text> {selectedInspection.relativename}</Text>
+                  <Text><Text style={{ fontWeight: '600' }}>Inspection Date:</Text> {selectedInspection.inspectiondate}</Text>
 
                   <Button
                     mode="contained"
                     onPress={() => setInspectionModalVisible(false)}
-                    style={styles.modalCloseButton}
+                    style={{ marginTop: 16 }}
                   >
                     Close
                   </Button>
@@ -588,7 +530,7 @@ const AgreementListScreen: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f5f5f5" },
+  container: { flex: 1, backgroundColor: "#f5f5f5"  , marginBottom: 50},
   scrollContent: { padding: 16, paddingBottom: 30 },
   sectionCard: { marginBottom: 16, borderRadius: 12, elevation: 2, backgroundColor: "white" },
   label: { fontWeight: "600", color: "#455A64", marginBottom: 8, fontSize: 14 },
@@ -630,86 +572,17 @@ const styles = StyleSheet.create({
   detailContent: { marginLeft: 8 },
   detailLabel: { fontSize: 14, color: "#555", fontWeight: "500" },
   detailValue: { fontSize: 14, color: "#1F2937", fontWeight: "600", marginTop: 2 },
-  inspectionSection: { 
-    marginTop: 16, 
-    padding: 12, 
-    backgroundColor: "#f8f9fa", 
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e0e0e0"
-  },
-  inspectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  inspectionTitle: { 
-    fontSize: 16, 
-    fontWeight: "bold", 
-    color: "#333", 
-    textAlign: "center",
-    flex: 1 
-  },
-  inspectionLoader: {
-    marginLeft: 8,
-  },
-  inspectionGrid: { 
-    flexDirection: "row", 
-    flexWrap: "wrap", 
-    gap: 8,
-    justifyContent: "space-between"
-  },
-  inspectionButton: { 
-    flex: 1, 
-    minWidth: "48%", 
-    borderRadius: 8, 
-    borderColor: "#666", 
-    marginBottom: 8,
-    height: 45
-  },
-  completedInspection: { 
-    backgroundColor: "#4CAF50", 
-    borderColor: "#4CAF50" 
-  },
-  inspectionButtonLabel: { 
-    fontSize: 12, 
-    textAlign: "center", 
-    color: "#666" 
-  },
-  completedInspectionLabel: { 
-    color: "#fff",
-    fontWeight: "bold"
-  },
-  inspectionCountText: {
-    fontSize: 12,
-    color: "#666",
-    textAlign: "center",
-    marginTop: 8,
-    fontStyle: "italic"
-  },
-  actionRow: { 
-    flexDirection: "row", 
-    justifyContent: "space-between", 
-    marginTop: 16, 
-    gap: 8 
-  },
-  actionButton: { 
-    flex: 1, 
-    borderRadius: 8, 
-    borderColor: "#2196F3", 
-    height: 40 
-  },
-  actionButtonLabel: { 
-    fontSize: 14, 
-    color: "#2196F3" 
-  },
-  initialText: { 
-    textAlign: "center", 
-    fontSize: 14, 
-    color: "#888", 
-    marginTop: 20 
-  },
+  inspectionSection: { marginTop: 16, padding: 12, backgroundColor: "#f8f9fa", borderRadius: 8 },
+  inspectionTitle: { fontSize: 16, fontWeight: "bold", color: "#333", marginBottom: 12, textAlign: "center" },
+  inspectionGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  inspectionButton: { flex: 1, minWidth: "48%", borderRadius: 8, borderColor: "#666", marginBottom: 8 },
+  completedInspection: { backgroundColor: "#4CAF50", borderColor: "#4CAF50" },
+  inspectionButtonLabel: { fontSize: 12, textAlign: "center", color: "#666" },
+  completedInspectionLabel: { color: "#fff" },
+  actionRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 16, gap: 8 },
+  actionButton: { flex: 1, borderRadius: 8, borderColor: "#2196F3", height: 40 },
+  actionButtonLabel: { fontSize: 14, color: "#2196F3" },
+  initialText: { textAlign: "center", fontSize: 14, color: "#888", marginTop: 20 },
   loaderContainer: {
     alignItems: "center",
     justifyContent: "center",
@@ -742,37 +615,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 14,
     color: "#666",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalContent: {
-    width: '90%',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    maxHeight: '80%',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#2E7D32',
-    textAlign: 'center'
-  },
-  modalDetails: {
-    marginBottom: 20,
-  },
-  modalLabel: {
-    fontWeight: '600',
-    color: '#455A64'
-  },
-  modalCloseButton: {
-    marginTop: 16,
-    backgroundColor: '#4CAF50'
   },
   snackbar: {
     backgroundColor: "#323232",

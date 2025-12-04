@@ -16,6 +16,7 @@ import Agreementland from '../Agreement/Agreementland';
 
 import InspectionScreen from '../inspection/IInspectionScreen';
 import InspectionList from '../inspection/InspectionList';
+import SealingTagging from '../SealingTagging/SealingTagging';
 
 
 const Drawer = createDrawerNavigator();
@@ -83,9 +84,9 @@ function CustomDrawerContent(props: any) {
 
 
         <DrawerItem
-          label="Agreement List"
+          label="Farmer Agreement"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
-          onPress={() => props.navigation.navigate('Agreement List')}
+          onPress={() => props.navigation.navigate('Farmer Agreement')}
           labelStyle={styles.drawerLabel}
         />
 
@@ -97,6 +98,16 @@ function CustomDrawerContent(props: any) {
           onPress={() => props.navigation.navigate('Inspection List')}
           labelStyle={styles.drawerLabel}
         />
+
+
+          <DrawerItem
+          label="Sealing Tagging"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('Sealing Tagging')}
+          labelStyle={styles.drawerLabel}
+          style={{ display: 'none' }}
+        />
+
 
 
 
@@ -189,8 +200,11 @@ export default function DrawerNavigator() {
 
 
       <Drawer.Screen name="Agreement Form" component={AgreementForm} />
-      <Drawer.Screen name="Agreement List" component={AgreementListScreen} />
+      <Drawer.Screen name="Farmer Agreement" component={AgreementListScreen} />
       <Drawer.Screen name="Inspection List" component={InspectionList} />
+        <Drawer.Screen name="Sealing Tagging" component={SealingTagging}   options={{
+          drawerItemStyle: { display: 'none' }, // hides from the drawer
+        }} />
 
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
       <Drawer.Screen

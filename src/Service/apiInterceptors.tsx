@@ -33,7 +33,7 @@ export const removeToken = async () => {
   }
 };
 
-// ----------------------- Axios Instance -----------------------
+// ----------------------- AxiInstance -----------------------
 const apiClient = axios.create({
   baseURL: 'https://dev-nhrdf-backend.supplyvalid.com',
   headers: {

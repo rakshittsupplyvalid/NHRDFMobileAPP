@@ -47,7 +47,7 @@ const NomineeScreen = () => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.navigate("Agreement List" as never);
+        navigation.navigate("Farmer Agreement" as never);
         return true; // prevent default behavior
       };
 
@@ -152,7 +152,7 @@ const NomineeScreen = () => {
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity
-          onPress={() => navigation.navigate("Agreement List" as never)}
+          onPress={() => navigation.navigate("Farmer Agreement" as never)}
           style={styles.backButton}>
           <MaterialCommunityIcons name="arrow-left" size={28} color="#fff" />
         </TouchableOpacity>

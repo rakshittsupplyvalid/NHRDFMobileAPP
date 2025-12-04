@@ -30,62 +30,10 @@ import * as Location from 'expo-location';
 import { styles } from "./InspectionScreen.styles";
 import apiClient, { retrieveToken } from "../Service/apiInterceptors";
 import SignatureView from "../Signature/SignatureScreen";
+import { FormDataType, OfftypeData, FormErrorsType, AgreementIdsType } from "../inspection/formTypes";
 
-interface FormDataType {
-  InspectionNo: string;
-  ShowingDate: string;
-  InspectionDate: string;
-  HarvestingDate: string;
-  DurationFrom: string;
-  DurationTo: string;
-  SourceOfSeed: string;
-  InspectedArea: number;
-  PreviousCrop: string;
-  FieldCount: number;
-  CropCondition: string;
-  StandardOfSeed: boolean;
-  Reason: string;
-  IsThisFinalReport: boolean;
-  EstimatedSeedYield: string;
-  GrowerRepresentative: string;
-  Remarks: string;
-  Latitude: number;
-  Longitude: number;
-  GeoImage: string | null;
-  GeoLocation?: { latitude: number; longitude: number } | null;
-  GrowerSignature: string | null;
-  OfficerSignature: string | null;
-  CenterInchargeSignature: string | null;
-  VarietyId: string;
-  CommodityId: string;
-  FarmerId: string;
-  FarmerDistributionId: string;
-  StageofGrowthContaminant: string; // NEW FIELD
-  StageofSeedAtInspection: string;  // NEW FIELD
-  IsolationDistance: string;        // NEW FIELD
-}
 
-interface OfftypeData {
-  naturetype: string;
-  numberofplants: string;
-  discription: string;
-}
 
-interface FormErrorsType {
-  [key: string]: string;
-}
-
-interface AgreementIdsType {
-  VarietyId: string;
-  CommodityId: string;
-  FarmerId: string;
-  FarmerDistributionId: string;
-  VarietyName: string;
-  SeedClass: string;
-  CommodityName: string;
-  Authorizedname: string;
-  SourceSeed: string;
-}
 
 const InspectionScreen = () => {
   const route = useRoute();
@@ -99,7 +47,7 @@ const InspectionScreen = () => {
   };
 
 
-  console.log("🚀 InspectionScreen params:", { agreementId, inspectionType });
+  // console.log("🚀 InspectionScreen params:", { agreementId, inspectionType });
 
 
 
@@ -144,6 +92,7 @@ const InspectionScreen = () => {
     StageofGrowthContaminant: "", // NEW FIELD initialized
     StageofSeedAtInspection: "",  // NEW FIELD initialized
     IsolationDistance: "",        // NEW FIELD initialized
+    DamagedArea: 0,               // NEW FIELD initialized
   });
   const [agreementIds, setAgreementIds] = useState<AgreementIdsType>({
     VarietyId: "",
@@ -154,8 +103,12 @@ const InspectionScreen = () => {
     SeedClass: "",
     CommodityName: "",
     Authorizedname: "",
-    SourceSeed: ""
-  
+    SourceSeed: "",
+    Year: "",
+    Season: "",
+    Cropcode: "",
+    Centercode: "",
+
   });
 
   const [offtypes, setOfftypes] = useState<OfftypeData[]>([
@@ -366,7 +319,7 @@ const InspectionScreen = () => {
       const agreementData = response.data;
 
 
-      console.log(" ***************Fetched agreement data:", agreementData)  ;
+      console.log(" ***************Fetched agreement data:", agreementData);
 
 
       setAgreementIds(prev => ({
@@ -378,7 +331,11 @@ const InspectionScreen = () => {
         CommodityName: agreementData?.commodityname || "",
         Authorizedname: agreementData?.authorizedname || "",
         SeedClass: agreementData?.seedclass || "",
-        SourceSeed : agreementData?.sourceofseed || "",
+        SourceSeed: agreementData?.sourceofseed || "",
+        Year: agreementData?.year || "",
+        Season: agreementData?.season || "",
+        Cropcode: agreementData?.cropcode || "",
+        Centercode: agreementData?.centercode || "",
       }));
 
       setFormData(prev => ({
@@ -490,7 +447,7 @@ const InspectionScreen = () => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.navigate("Agreement List");
+        navigation.navigate("Farmer Agreement");
         return true;
       };
 
@@ -577,6 +534,26 @@ const InspectionScreen = () => {
       day: '2-digit',
     });
   };
+
+
+
+  const formatCurrentDateTime = (date) => {
+    const d = new Date(date);
+
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0"); // Month is 0-indexed
+    const year = d.getFullYear();
+
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
+
+    return `${day}/${month}/${year} ${hours}:${minutes}`;
+  };
+
+  // Example
+  console.log(formatCurrentDateTime(new Date())); // e.g., "03/12/2025 14:30"
+
+
 
   const handleOfftypeChange = (index: number, field: string, value: string) => {
     let filteredValue = value.replace(/[^0-9]/g, "");
@@ -1072,22 +1049,70 @@ const InspectionScreen = () => {
 
             <Card.Content style={styles.content}>
 
-              <View style={styles.row}>
-                <View style={styles.halfInput}>
-                  <Text style={styles.label}>Showing Date</Text>
-                  <Button
-                    mode="outlined"
-                    onPress={() => openDatePicker("ShowingDate")}
-                    style={styles.dateButton}
-                    textColor="#2E7D32"
-                  >
-                    {displayDate(formData.ShowingDate)}
-                  </Button>
-                  <HelperText type="error" visible={!!errors.ShowingDate}>
-                    {errors.ShowingDate}
-                  </HelperText>
-                </View>
 
+
+
+              <Text style={styles.label}>Inspection Number</Text>
+
+              <TextInput
+                placeholder="Inspection Number"
+                value={`${agreementIds.Year}/${agreementIds.Season}/${agreementIds.Cropcode}/${agreementIds.Centercode}`}
+                style={[styles.input, styles.disabledInput]}
+                editable={false}
+              />
+
+
+
+
+              <Text style={styles.label}>No. of Inspection</Text>
+
+              <TextInput
+                placeholder="No. of Inspection"
+                value={inspectionType}
+                style={[styles.input, styles.disabledInput]}
+                editable={false}
+              />
+
+
+
+
+              <Text style={styles.label}>Date Sowing/Planting</Text>
+              <Button
+                mode="outlined"
+                onPress={() => openDatePicker("ShowingDate")}
+                style={styles.dateButton}
+                textColor="#2E7D32"
+              >
+                {displayDate(formData.ShowingDate)}
+              </Button>
+              <HelperText type="error" visible={!!errors.ShowingDate}>
+                {errors.ShowingDate}
+              </HelperText>
+
+
+
+
+              <Text style={styles.label}>Date of Inspection</Text>
+
+              <Button
+                mode="outlined"
+                disabled={true}
+                style={styles.dateButton}
+                textColor="#2E7D32"
+              >
+                {formatCurrentDateTime(new Date())}
+              </Button>
+
+
+              <HelperText type="error" visible={!!errors.InspectionDate}>
+                {errors.InspectionDate}
+              </HelperText>
+
+
+
+
+
+              {/* 
                 <View style={styles.halfInput}>
                   <Text style={styles.label}>Expected Harvesting Date</Text>
                   <Button
@@ -1101,10 +1126,10 @@ const InspectionScreen = () => {
                   <HelperText type="error" visible={!!errors.HarvestingDate}>
                     {errors.HarvestingDate}
                   </HelperText>
-                </View>
-              </View>
+                </View> */}
 
-              <View style={styles.row}>
+
+              {/* <View style={styles.row}>
                 <View style={styles.halfInput}>
                   <Text style={styles.label}>Duration From</Text>
                   <Button
@@ -1134,7 +1159,7 @@ const InspectionScreen = () => {
                     {errors.DurationTo}
                   </HelperText>
                 </View>
-              </View>
+              </View> */}
 
               <Text style={styles.label}>Variety Name</Text>
               <TextInput
@@ -1176,6 +1201,20 @@ const InspectionScreen = () => {
                 value={agreementIds.CommodityName}
                 style={[styles.input, styles.disabledInput]}
                 editable={false}
+              />
+
+              <Text style={styles.label}>Stage of Crop</Text>
+              <TextInput
+                placeholder="Enter Stage crop"
+
+                style={styles.input}
+                value={formData.PreviousCrop}
+                autoComplete="off"
+                autoCapitalize="characters"
+                onChangeText={(text) =>
+                  handleChange("stageofCrop", text)
+                }
+
               />
 
               <Text style={styles.label}>Previous Crop</Text>
@@ -1304,10 +1343,10 @@ const InspectionScreen = () => {
                 placeholderStyle={styles.placeholderStyle}
                 selectedTextStyle={styles.selectedTextStyle}
                 data={[
-                  { label: "Excellent", value: "Excellent" },
                   { label: "Good", value: "Good" },
-                  { label: "Fair", value: "Fair" },
+                  { label: "Medium", value: "Medium" },
                   { label: "Poor", value: "Poor" },
+                  { label: "Failed", value: "Failed" },
                 ]}
                 maxHeight={200}
                 labelField="label"
@@ -1325,7 +1364,7 @@ const InspectionScreen = () => {
 
               <View style={styles.row}>
                 <View style={styles.halfInput}>
-                  <Text style={styles.label}>Inspected Area</Text>
+                  <Text style={styles.label}>Inspected Area (ha)</Text>
                   <TextInput
                     placeholder="Enter area"
                     placeholderTextColor="#666"
@@ -1345,7 +1384,49 @@ const InspectionScreen = () => {
                 </View>
 
                 <View style={styles.halfInput}>
-                  <Text style={styles.label}>Field Count</Text>
+                  <Text style={styles.label}>Damaged Area (ha)</Text>
+                  <TextInput
+                    placeholder="Enter Damaged Area"
+                    placeholderTextColor="#666"
+                    value={formData.DamagedArea.toString()}
+                    autoCorrect={false}
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    onChangeText={(text) =>
+                      handleChange("DamagedArea", text)
+                    }
+                    keyboardType="numeric"
+                    style={styles.input}
+                  />
+                  <HelperText type="error" visible={!!errors.DamagedArea}>
+                    {errors.FieldCount}
+                  </HelperText>
+                </View>
+              </View>
+
+              <View style={styles.row}>
+                <View style={styles.halfInput}>
+                  <Text style={styles.label}>Isolation Distance (meter)</Text>
+                  <TextInput
+                    placeholder="Enter Isolation Distance"
+                    placeholderTextColor="#666"
+                    value={formData.IsolationDistance}
+                    autoCorrect={false}
+                    autoComplete="off"
+                    autoCapitalize="characters"
+                    onChangeText={(text) =>
+                      handleChange("IsolationDistance", text)
+                    }
+                    keyboardType="numeric"
+                    style={styles.input}
+                  />
+                  <HelperText type="error" visible={!!errors.IsolationDistance}>
+                    {errors.IsolationDistance}
+                  </HelperText>
+                </View>
+
+                <View style={styles.halfInput}>
+                  <Text style={styles.label}>Field Count No.</Text>
                   <TextInput
                     placeholder="Enter field count"
                     placeholderTextColor="#666"
@@ -1363,26 +1444,6 @@ const InspectionScreen = () => {
                     {errors.FieldCount}
                   </HelperText>
                 </View>
-              </View>
-
-              <View style={styles.halfInput}>
-                <Text style={styles.label}>Isolation Distance</Text>
-                <TextInput
-                  placeholder="Enter Isolation Distance"
-                  placeholderTextColor="#666"
-                  value={formData.IsolationDistance}
-                  autoCorrect={false}
-                  autoComplete="off"
-                  autoCapitalize="characters"
-                  onChangeText={(text) =>
-                    handleChange("IsolationDistance", text)
-                  }
-                  keyboardType="numeric"
-                  style={styles.input}
-                />
-                <HelperText type="error" visible={!!errors.IsolationDistance}>
-                  {errors.IsolationDistance}
-                </HelperText>
               </View>
 
               {/* Geo Image Field */}
@@ -1475,7 +1536,7 @@ const InspectionScreen = () => {
                 field="IsThisFinalReport"
               />
 
-              <Text style={styles.label}>Estimated Seed Yield</Text>
+              <Text style={styles.label}>Estimated Yield (kg)</Text>
               <TextInput
                 placeholder="Enter estimated yield"
                 placeholderTextColor="#666"
@@ -1492,9 +1553,9 @@ const InspectionScreen = () => {
               )}
 
 
-              <Text style={styles.label}>Grower Representative</Text>
+              <Text style={styles.label}>Name of inspection officer</Text>
               <TextInput
-                placeholder="Enter representative name"
+                placeholder="Name of inspection officer"
                 placeholderTextColor="#666"
                 value={formData.GrowerRepresentative}
                 autoCorrect={false}
@@ -1514,7 +1575,7 @@ const InspectionScreen = () => {
               )}
 
 
-              <Text style={styles.label}>Remarks</Text>
+              <Text style={styles.label}>Remarks / Advise issue</Text>
               <TextInput
                 placeholder="Enter remarks"
                 placeholderTextColor="#666"

@@ -102,6 +102,9 @@ export const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
 
+
+  
+
   dateInput: {
     borderWidth: 1,
     borderColor: '#a6a8ac',
