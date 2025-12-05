@@ -184,6 +184,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
+    marginBottom: 90,
   },
   header: {
     flexDirection: 'row',
