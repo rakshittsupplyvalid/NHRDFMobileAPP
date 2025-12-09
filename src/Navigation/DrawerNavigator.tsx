@@ -2,8 +2,6 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Alert, Dimensions, Platform } from 'react-native';
 import { createDrawerNavigator, DrawerContentScrollView, DrawerItem } from '@react-navigation/drawer';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation, useRoute } from '@react-navigation/native';
-
 import AgreementForm from '../Agreement/AgreementForm';
 import AgreementSecond from '../Agreement/AgreementSecond';
 import DashboardScreen from '../DhasboadScreen/DhasboardScreen'
@@ -11,9 +9,7 @@ import AgreementListScreen from '../AgreementList/AgreementList';
 import NomineeScreen from '../AgreementList/NomineeList';
 import WitnessScreen from '../AgreementList/WitnessList';
 import Signature from '../Signature/Signature';
-
 import Agreementland from '../Agreement/Agreementland';
-
 import InspectionScreen from '../inspection/IInspectionScreen';
 import InspectionList from '../inspection/InspectionList';
 import SealingTagging from '../SealingTagging/SealingTagging';
@@ -202,7 +198,8 @@ export default function DrawerNavigator() {
       <Drawer.Screen name="Agreement Form" component={AgreementForm} />
       <Drawer.Screen name="Farmer Agreement" component={AgreementListScreen} />
       <Drawer.Screen name="Inspection List" component={InspectionList} />
-        <Drawer.Screen name="Sealing Tagging" component={SealingTagging}   options={{
+        <Drawer.Screen name="Sealing Tagging" component={SealingTagging}   
+        options={{
           drawerItemStyle: { display: 'none' }, // hides from the drawer
         }} />
 
@@ -215,7 +212,9 @@ export default function DrawerNavigator() {
         }}
       />
 
-      <Drawer.Screen name="Agreement" component={AgreementSecond} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
+      <Drawer.Screen name="Agreement" component={AgreementSecond} 
+      options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }}
+       />
       <Drawer.Screen name="Agreementland" component={Agreementland} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
       <Drawer.Screen name="NomineeScreen" component={NomineeScreen} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
 

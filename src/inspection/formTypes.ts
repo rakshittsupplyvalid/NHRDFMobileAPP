@@ -34,6 +34,7 @@ export interface FormDataType {
 }
 
 export interface OfftypeData {
+   
   naturetype: string;
   numberofplants: string;
   discription: string;

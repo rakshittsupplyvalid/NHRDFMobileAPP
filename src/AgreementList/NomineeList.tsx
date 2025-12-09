@@ -43,7 +43,6 @@ const NomineeScreen = () => {
 
 
 
-
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {

@@ -10,7 +10,7 @@ const Signature: React.FC = () => {
   const route = useRoute();
   const { type, index } = route.params as { type: string; index?: number };
 
-  // 🔹 Reset signature whenever the screen comes into focus
+  
   useFocusEffect(
     useCallback(() => {
       setSignature(null);
@@ -26,8 +26,6 @@ const Signature: React.FC = () => {
     });
   };
 
-
-    // Handle Android Back Button
     useFocusEffect(
       useCallback(() => {
         const onBackPress = () => {

@@ -4,7 +4,7 @@
     "slug": "MyBareApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/sprout.png",
+    "icon": "./assets/nhrdf_logo.jpg",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {

@@ -103,6 +103,33 @@ export const styles = StyleSheet.create({
   },
 
 
+  offtypeInputDisplay: {
+  borderWidth: 1,
+  borderColor: '#DDD',
+  borderRadius: 8,
+  paddingHorizontal: 12,
+  paddingVertical: 12,
+  backgroundColor: '#F9F9F9',
+  minHeight: 48,
+  justifyContent: 'center',
+},
+offtypeValueText: {
+  fontSize: 16,
+  color: '#333',
+},
+offtypePlaceholderText: {
+  fontSize: 16,
+  color: '#999',
+  fontStyle: 'italic',
+},
+currentInputHint: {
+  fontSize: 14,
+  color: '#2E7D32',
+  textAlign: 'center',
+  marginTop: 10,
+  fontStyle: 'italic',
+},
+
   
 
   dateInput: {

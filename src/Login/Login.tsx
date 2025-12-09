@@ -130,6 +130,8 @@ const Login = ({ navigation }: any) => {
               onChangeText={setMobileNumber}
               left={<TextInput.Icon icon="phone" />}
               style={[styles.input, { backgroundColor: 'white' }]}
+              
+                 activeOutlineColor="#6ba94bff"       
             />
 
             <TextInput
@@ -147,6 +149,8 @@ const Login = ({ navigation }: any) => {
                 />
               }
               style={[styles.input, { backgroundColor: 'white' }]}
+              
+                 activeOutlineColor="#6ba94bff"  
             />
 
 
