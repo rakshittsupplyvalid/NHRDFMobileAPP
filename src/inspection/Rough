@@ -23,7 +23,7 @@ import {
 import { Dropdown } from "react-native-element-dropdown";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
-import { launchCamera, CameraOptions } from 'react-native-image-picker';
+import { launchCamera, CameraOptions, Asset } from 'react-native-image-picker';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import RNFS from 'react-native-fs';
 import * as Location from 'expo-location';
@@ -32,6 +32,9 @@ import apiClient, { retrieveToken } from "../Service/apiInterceptors";
 import SignatureView from "../Signature/SignatureScreen";
 import { FormDataType, OfftypeData, FormErrorsType, AgreementIdsType } from "../inspection/formTypes";
 
+
+
+
 const InspectionScreen = () => {
   const route = useRoute();
   const navigation: any = useNavigation();
@@ -39,6 +42,8 @@ const InspectionScreen = () => {
   const { agreementId, inspectionType } = route.params as {
     agreementId: string;
     inspectionType: string;
+
+
   };
 
   const getTodayDate = () => {
@@ -59,7 +64,6 @@ const InspectionScreen = () => {
     SourceOfSeed: "",
     InspectedArea: 0,
     PreviousCrop: "",
-    StageofCrop: "",
     FieldCount: 0,
     CropCondition: "",
     StandardOfSeed: true,
@@ -79,12 +83,11 @@ const InspectionScreen = () => {
     CommodityId: "",
     FarmerId: "",
     FarmerDistributionId: "",
-    StageofGrowthContaminant: "",
-    StageofSeedAtInspection: "",
-    IsolationDistance: "",
-    DamagedArea: 0,
+    StageofGrowthContaminant: "", // NEW FIELD initialized
+    StageofSeedAtInspection: "",  // NEW FIELD initialized
+    IsolationDistance: "",        // NEW FIELD initialized
+    DamagedArea: 0,               // NEW FIELD initialized
   });
-
   const [agreementIds, setAgreementIds] = useState<AgreementIdsType>({
     VarietyId: "",
     CommodityId: "",
@@ -99,6 +102,7 @@ const InspectionScreen = () => {
     Season: "",
     Cropcode: "",
     Centercode: "",
+
   });
 
   const [offtypes, setOfftypes] = useState<OfftypeData[]>([
@@ -131,6 +135,7 @@ const InspectionScreen = () => {
   const [loadingClassSeed, setLoadingClassSeed] = useState(false);
   const [isCameraLoading, setIsCameraLoading] = useState(false);
 
+  // Camera Options - Updated with better defaults
   const cameraOptions: CameraOptions = {
     mediaType: 'photo',
     quality: 0.8,
@@ -141,9 +146,11 @@ const InspectionScreen = () => {
     maxHeight: 1024,
   };
 
+  // FIXED: Improved Android permissions handling
   const requestPermissions = async (): Promise<boolean> => {
     if (Platform.OS === "android") {
       try {
+        // Request CAMERA permission (required for Android 13+)
         const cameraGranted = await PermissionsAndroid.request(
           PermissionsAndroid.PERMISSIONS.CAMERA,
           {
@@ -163,6 +170,7 @@ const InspectionScreen = () => {
           return false;
         }
 
+        // For Android 12 and below, we may need WRITE_EXTERNAL_STORAGE
         if (Platform.Version < 33) {
           const storageGranted = await PermissionsAndroid.request(
             PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
@@ -191,9 +199,12 @@ const InspectionScreen = () => {
         return false;
       }
     }
+
+    // iOS permissions are handled automatically by the library
     return true;
   };
 
+  // FIXED: Improved openCamera function with better error handling
   const openCamera = async () => {
     try {
       setIsCameraLoading(true);
@@ -204,26 +215,35 @@ const InspectionScreen = () => {
         return;
       }
 
+      // Request location permission
       let location = null;
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status === "granted") {
           location = await Location.getCurrentPositionAsync({
             accuracy: Location.Accuracy.High,
+
           });
+          console.log("📍 Location obtained:", location.coords);
+        } else {
+          console.log("Location permission denied, proceeding without location");
         }
       } catch (locationError) {
         console.warn("Location error:", locationError);
+        // Continue without location if it fails
       }
 
+      // Launch camera with error handling
       launchCamera(cameraOptions, (response) => {
         setIsCameraLoading(false);
 
         if (response.didCancel) {
+          console.log("User cancelled camera");
           return;
         }
 
         if (response.errorCode || response.errorMessage) {
+          console.error("Camera Error:", response.errorCode, response.errorMessage);
           Alert.alert(
             "Camera Error",
             response.errorMessage || "Failed to open camera. Please try again."
@@ -240,6 +260,7 @@ const InspectionScreen = () => {
             return;
           }
 
+          // Update form data with image and location
           const updateData: any = {
             GeoImage: uri,
           };
@@ -258,6 +279,7 @@ const InspectionScreen = () => {
             ...updateData,
           }));
 
+          // Clear any previous error
           setErrors((prev) => ({
             ...prev,
             GeoImage: "",
@@ -278,6 +300,7 @@ const InspectionScreen = () => {
     }
   };
 
+  // API Calls (unchanged from your original)
   const fetchAgreementDetails = async () => {
     if (!agreementId) {
       console.log("❌ No agreementId provided");
@@ -288,6 +311,10 @@ const InspectionScreen = () => {
       setLoading(true);
       const response = await apiClient.get(`/api/agreement/${agreementId}`);
       const agreementData = response.data;
+
+
+      console.log(" ***************Fetched agreement data:", agreementData);
+
 
       setAgreementIds(prev => ({
         VarietyId: agreementData?.varietyid || "",
@@ -311,7 +338,6 @@ const InspectionScreen = () => {
         CommodityId: agreementData?.commodityid || "",
         FarmerId: agreementData?.farmerid || "",
         FarmerDistributionId: agreementData?.farmerdistributionid || "",
-        SourceOfSeed: agreementData?.sourceofseed || "",
       }));
 
     } catch (error) {
@@ -383,6 +409,7 @@ const InspectionScreen = () => {
     }
   };
 
+  // Effects
   useEffect(() => {
     if (agreementId) {
       fetchAgreementDetails();
@@ -423,6 +450,7 @@ const InspectionScreen = () => {
     }, [navigation])
   );
 
+  // Signature Functions
   const openSignatureModal = (field: string) => {
     setCurrentSignatureField(field);
     setSignatureModalVisible(true);
@@ -446,6 +474,7 @@ const InspectionScreen = () => {
     }));
   };
 
+  // Date Functions
   const formatDateForAPI = (date: Date | null): string => {
     if (!date) return "";
     const year = date.getFullYear();
@@ -467,9 +496,11 @@ const InspectionScreen = () => {
         [dateField]: ""
       }));
 
+      // Set minimum date for Duration To when Duration From is selected
       if (dateField === "DurationFrom") {
         setMinDurationToDate(date);
 
+        // If DurationTo is already selected and is before the new DurationFrom, clear it
         if (formData.DurationTo && new Date(formData.DurationTo) < date) {
           setFormData(prev => ({
             ...prev,
@@ -498,15 +529,25 @@ const InspectionScreen = () => {
     });
   };
 
-  const formatCurrentDateTime = (date: Date) => {
+
+
+  const formatCurrentDateTime = (date) => {
     const d = new Date(date);
+
     const day = String(d.getDate()).padStart(2, "0");
-    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const month = String(d.getMonth() + 1).padStart(2, "0"); // Month is 0-indexed
     const year = d.getFullYear();
+
     const hours = String(d.getHours()).padStart(2, "0");
     const minutes = String(d.getMinutes()).padStart(2, "0");
+
     return `${day}/${month}/${year} ${hours}:${minutes}`;
   };
+
+  // Example
+  console.log(formatCurrentDateTime(new Date())); // e.g., "03/12/2025 14:30"
+
+
 
   const handleOfftypeChange = (index: number, field: string, value: string) => {
     let filteredValue = value.replace(/[^0-9]/g, "");
@@ -544,16 +585,18 @@ const InspectionScreen = () => {
     setOfftypeErrors(updatedErrors);
   };
 
+  // Validation
   const validateField = (field: string, value: any) => {
     let error = "";
 
     const requiredFields = [
-      'StageofCrop',
-      'PreviousCrop',
+      'InspectionNo',
+      'InspectionDate',
+      'HarvestingDate',
+      'DurationFrom',
+      'DurationTo',
       'SourceOfSeed',
-      'StageofSeedAtInspection',
-      'StageofGrowthContaminant',
-      'IsolationDistance',
+      'PreviousCrop',
       'CropCondition',
       'InspectedArea',
       'FieldCount',
@@ -563,17 +606,13 @@ const InspectionScreen = () => {
       'GeoImage',
     ];
 
-    if (requiredFields.includes(field)) {
-      if (!value || value.toString().trim() === "") {
-        error = "This field is required";
-      } else if (value.toString().trim().length < 2) {
-        error = "Please enter a valid value";
-      }
-    }
-
-    if (["InspectedArea", "FieldCount", "IsolationDistance", "DamagedArea"].includes(field)) {
-      if (value && (isNaN(Number(value)) || Number(value) < 0)) {
-        error = "Please enter a valid number";
+    if (requiredFields.includes(field) && (!value || value.toString().trim() === "")) {
+      error = "This field is required";
+    } else {
+      if (["InspectedArea", "FieldCount", "IsolationDistance"].includes(field)) {
+        if (value && (isNaN(value) || parseFloat(value) < 0)) {
+          error = "Please enter a valid number";
+        }
       }
     }
 
@@ -582,15 +621,19 @@ const InspectionScreen = () => {
   };
 
   const handleChange = (field: string, value: any) => {
+    console.log(`Setting ${field} to:`, value);
     setFormData((prev) => ({ ...prev, [field]: value }));
     validateField(field, value);
   };
 
   const handleSeasonSelect = async (value: string) => {
     setSelectedSeason(value);
+    console.log("Selected Season ID:", value);
 
     try {
       const response = await apiClient.get(`/api/subseason/${value}`);
+      console.log("SubSeason Data:", response.data);
+
       const formattedData = response.data.map((item: any) => ({
         label: item.name,
         value: item.id,
@@ -602,6 +645,7 @@ const InspectionScreen = () => {
     }
   };
 
+  // Form Submission
   const base64ToFile = async (base64String: string, fileName: string) => {
     try {
       const base64Data = base64String.replace(/^data:image\/\w+;base64,/, '');
@@ -621,16 +665,8 @@ const InspectionScreen = () => {
 
   const validateForm = (): boolean => {
     const requiredFields = [
-      'StageofCrop',
-      'PreviousCrop',
-      'SourceOfSeed',
-      'StageofSeedAtInspection',
-      'StageofGrowthContaminant',
-      'IsolationDistance',
-      'CropCondition',
-      'EstimatedSeedYield',
-      'GrowerRepresentative',
-      'Remarks',
+      'InspectionDate', 'HarvestingDate', 'DurationFrom', 'DurationTo', 'ShowingDate',
+      'SourceOfSeed', 'PreviousCrop', 'CropCondition', 'GeoImage', 'StageofSeedAtInspection', 'StageofGrowthContaminant', 'IsolationDistance', 'EstimatedSeedYield', 'GrowerRepresentative', 'Remarks',
     ];
 
     let isValid = true;
@@ -640,9 +676,6 @@ const InspectionScreen = () => {
       const value = formData[field as keyof FormDataType];
       if (!value || value.toString().trim() === "") {
         newErrors[field] = "This field is required";
-        isValid = false;
-      } else if (value.toString().trim().length < 2) {
-        newErrors[field] = "Please enter a valid value";
         isValid = false;
       }
     });
@@ -657,31 +690,17 @@ const InspectionScreen = () => {
       isValid = false;
     }
 
-    if (!formData.InspectedArea || formData.InspectedArea <= 0) {
+    if (formData.InspectedArea <= 0) {
       newErrors.InspectedArea = "Please enter a valid area";
       isValid = false;
     }
 
-    if (!formData.FieldCount || formData.FieldCount <= 0) {
+    if (formData.FieldCount <= 0) {
       newErrors.FieldCount = "Please enter a valid field count";
       isValid = false;
     }
 
-    if (!formData.DamagedArea || formData.DamagedArea < 0) {
-      newErrors.DamagedArea = "Please enter a valid damaged area";
-      isValid = false;
-    }
-
-    if (!formData.IsolationDistance || formData.IsolationDistance.trim() === "") {
-      newErrors.IsolationDistance = "Please enter isolation distance";
-      isValid = false;
-    }
-
-    if (!formData.GeoImage) {
-      newErrors.GeoImage = "Geo tagged image is required";
-      isValid = false;
-    }
-
+    // Validate offtypes - all 10 entries must have numberofplants filled
     const hasEmptyOfftypes = offtypes.some(offtype =>
       !offtype.numberofplants || offtype.numberofplants.toString().trim() === ""
     );
@@ -701,9 +720,6 @@ const InspectionScreen = () => {
     }
 
     setErrors(newErrors);
-    if (!isValid) {
-      Alert.alert("Validation Error", "Please fill all required fields correctly");
-    }
     return isValid;
   };
 
@@ -716,143 +732,137 @@ const InspectionScreen = () => {
     }
   }, [inspectionType]);
 
-const handleSubmit = async () => {
-  if (!validateForm()) {
-    return;
-  }
-
-  if (!agreementId) {
-    Alert.alert("Error", "Agreement ID is missing");
-    return;
-  }
-
-  try {
-    setSubmitting(true);
-
-    const token = await retrieveToken();
-    const requestData = new FormData();
-
-    // Add static dates for DurationFrom and DurationTo
-    const today = new Date();
-    const formattedDate = today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-    
-    // Add mandatory fields first
-    requestData.append("InspectionNo", formData.InspectionNo);
-    requestData.append("VarietyId", agreementIds.VarietyId);
-    requestData.append("CommodityId", agreementIds.CommodityId);
-    requestData.append("FarmerId", agreementIds.FarmerId);
-    requestData.append("FarmerDistributionId", agreementIds.FarmerDistributionId);
-    requestData.append("GrowerRepresentative", agreementIds.Authorizedname);
-    requestData.append("Latitude", formData.GeoLocation?.latitude.toFixed(6) || "0");
-    requestData.append("Longitude", formData.GeoLocation?.longitude.toFixed(6) || "0");
-    
-    // Add static dates for DurationFrom and DurationTo
-    requestData.append("DurationFrom", formattedDate); // Static: today's date
-    requestData.append("DurationTo", formattedDate);   // Static: today's date
-    
-    // Add InspectionDate if not already set
-    if (!formData.InspectionDate) {
-      requestData.append("InspectionDate", formattedDate);
+  const handleSubmit = async () => {
+    if (!validateForm()) {
+      Alert.alert("Validation Error", "Please fill all required fields correctly");
+      return;
     }
 
-    // Add other form fields
-    Object.keys(formData).forEach(key => {
-      // Skip DurationFrom and DurationTo since we already added them above
-      if (key === "DurationFrom" || key === "DurationTo") {
-        return;
-      }
-      
-      const value = formData[key as keyof FormDataType];
-      if (value !== null && value !== undefined) {
-        if (typeof value === 'boolean') {
-          requestData.append(key, value.toString());
-        } else if (value.toString().trim() !== "") { // Only append non-empty values
-          requestData.append(key, value.toString());
+    if (!agreementId) {
+      Alert.alert("Error", "Agreement ID is missing");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+
+      const token = await retrieveToken();
+      const requestData = new FormData();
+
+      // Agreement data
+      requestData.append("InspectionNo", formData.InspectionNo);
+      requestData.append("VarietyId", agreementIds.VarietyId);
+      requestData.append("CommodityId", agreementIds.CommodityId);
+      requestData.append("FarmerId", agreementIds.FarmerId);
+      requestData.append("FarmerDistributionId", agreementIds.FarmerDistributionId);
+      requestData.append("GrowerRepresentative", agreementIds.Authorizedname);
+      requestData.append("Latitude", formData.GeoLocation?.latitude.toFixed(6) || "0");
+      requestData.append("Longitude", formData.GeoLocation?.longitude.toFixed(6) || "0");
+
+
+      // Form fields - include all fields including new ones
+      Object.keys(formData).forEach(key => {
+        const value = formData[key as keyof FormDataType];
+        if (value !== null && value !== undefined) {
+          if (typeof value === 'boolean') {
+            requestData.append(key, value.toString());
+            console.log(`Appended ${key}: ${value.toString()}`);
+          } else {
+            requestData.append(key, value.toString());
+            console.log(`Appended ${key}: ${value.toString()}`);
+          }
         } else {
-          // For empty required fields, add a default if needed
-          const requiredFields = ['ShowingDate', 'HarvestingDate'];
-          if (requiredFields.includes(key)) {
-            requestData.append(key, formattedDate); // Add today's date as default
-          }
+          console.log(`Skipping ${key}: null or undefined`);
         }
+      });
+
+      // Offtypes - convert string values to numbers for API
+      const offtypesData = offtypes.map(o => ({
+        naturetype: null,
+        numberofplants: Number(o.numberofplants) || 0,
+        discription: null
+      }));
+
+      requestData.append("NatureOfOffTypes", JSON.stringify(offtypesData));
+      console.log("🚀 Offtypes Data to Submit:", JSON.stringify(offtypesData, null, 2));
+
+      // GeoImage
+      if (formData.GeoImage) {
+        requestData.append("GeoImage", {
+          uri: formData.GeoImage,
+          type: "image/jpeg",
+          name: "geo_image.jpg",
+        } as any);
+        console.log("📷 Appended GeoImage");
       }
-    });
 
-    const offtypesData = offtypes.map(o => ({
-      naturetype: null,
-      numberofplants: Number(o.numberofplants) || 0,
-      discription: null
-    }));
-
-    requestData.append("NatureOfOffTypes", JSON.stringify(offtypesData));
-
-    if (formData.GeoImage) {
-      requestData.append("GeoImage", {
-        uri: formData.GeoImage,
-        type: "image/jpeg",
-        name: "geo_image.jpg",
-      } as any);
-    }
-
-    if (formData.GrowerSignature) {
-      const growerFile = await base64ToFile(formData.GrowerSignature, "grower_signature.png");
-      requestData.append("GrowerSignature", growerFile as any);
-    }
-
-    if (formData.OfficerSignature) {
-      const officerFile = await base64ToFile(formData.OfficerSignature, "officer_signature.png");
-      requestData.append("OfficerSignature", officerFile as any);
-    }
-
-    if (formData.CenterInchargeSignature) {
-      const inchargeFile = await base64ToFile(formData.CenterInchargeSignature, "center_incharge_signature.png");
-      requestData.append("CenterInchargeSignature", inchargeFile as any);
-    }
-
-    // Log what we're sending
-    console.log("📤 Submitting form data...");
-    console.log("DurationFrom:", formattedDate);
-    console.log("DurationTo:", formattedDate);
-
-    const response = await apiClient.post(
-      `/api/inspection/${agreementId}`,
-      requestData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
+      // Grower Signature
+      if (formData.GrowerSignature) {
+        const growerFile = await base64ToFile(formData.GrowerSignature, "grower_signature.png");
+        requestData.append("GrowerSignature", growerFile as any);
+        console.log("✍️ Appended GrowerSignature");
       }
-    );
 
-    Alert.alert(
-      "Success",
-      "Inspection created successfully!",
-      [
+      // Officer Signature
+      if (formData.OfficerSignature) {
+        const officerFile = await base64ToFile(formData.OfficerSignature, "officer_signature.png");
+        requestData.append("OfficerSignature", officerFile as any);
+        console.log("✍️ Appended OfficerSignature");
+      }
+
+      // Center Incharge Signature
+      if (formData.CenterInchargeSignature) {
+        const inchargeFile = await base64ToFile(formData.CenterInchargeSignature, "center_incharge_signature.png");
+        requestData.append("CenterInchargeSignature", inchargeFile as any);
+        console.log("✍️ Appended CenterInchargeSignature");
+      }
+
+
+
+      // API CALL
+      console.log("🚀 Making API call to:", `/api/inspection/${agreementId}`);
+      const response = await apiClient.post(
+        `/api/inspection/${agreementId}`,
+        requestData,
         {
-          text: "OK",
-          onPress: () => {
-            navigation.reset({
-              index: 0,
-              routes: [{ name: "Dashboard" }],
-            });
-          }
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`,
+          },
         }
-      ]
-    );
+      );
 
-  } catch (error: any) {
-    console.error("❌ Error submitting inspection:", error);
-    console.error("❌ Error response:", error?.response?.data);
-    Alert.alert(
-      "Submission Failed",
-      error?.response?.data?.message || "Failed to submit inspection data. Please try again."
-    );
-  } finally {
-    setSubmitting(false);
-  }
-};
+      console.log("✅ API Response:", response.data);
 
+      Alert.alert(
+        "Success",
+        "Inspection created successfully!",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              navigation.reset({
+                index: 0,
+                routes: [{ name: "Dashboard" }],
+              });
+            }
+          }
+        ]
+      );
+
+    } catch (error: any) {
+      console.error("❌ Error submitting inspection:", error);
+      console.error("❌ Error response:", error?.response?.data);
+      Alert.alert(
+        "Submission Failed",
+        error?.response?.data?.message || "Failed to submit inspection data. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Reusable Components
   const RadioGroup = ({ value, onValueChange, options, label, field }: any) => (
     <View style={styles.radioGroup}>
       <Text style={styles.label}>{label}</Text>
@@ -874,6 +884,7 @@ const handleSubmit = async () => {
     </View>
   );
 
+  // FIXED: Updated ImagePickerField component with loading state
   const ImagePickerField = ({ label, value, onPress, field }: any) => (
     <View style={styles.imagePickerContainer}>
       <Text style={styles.label}>{label}</Text>
@@ -1032,19 +1043,32 @@ const handleSubmit = async () => {
 
             <Card.Content style={styles.content}>
 
+
+
+
               <Text style={styles.label}>Inspection Number</Text>
+
               <TextInput
+                placeholder="Inspection Number"
                 value={`${agreementIds.Year}/${agreementIds.Season}/${agreementIds.Cropcode}/${agreementIds.Centercode}`}
                 style={[styles.input, styles.disabledInput]}
                 editable={false}
               />
 
+
+
+
               <Text style={styles.label}>No. of Inspection</Text>
+
               <TextInput
+                placeholder="No. of Inspection"
                 value={inspectionType}
                 style={[styles.input, styles.disabledInput]}
                 editable={false}
               />
+
+
+
 
               <Text style={styles.label}>Date Sowing/Planting</Text>
               <Button
@@ -1059,7 +1083,11 @@ const handleSubmit = async () => {
                 {errors.ShowingDate}
               </HelperText>
 
+
+
+
               <Text style={styles.label}>Date of Inspection</Text>
+
               <Button
                 mode="outlined"
                 disabled={true}
@@ -1068,19 +1096,77 @@ const handleSubmit = async () => {
               >
                 {formatCurrentDateTime(new Date())}
               </Button>
+
+
               <HelperText type="error" visible={!!errors.InspectionDate}>
                 {errors.InspectionDate}
               </HelperText>
 
+
+
+
+
+              {/* 
+                <View style={styles.halfInput}>
+                  <Text style={styles.label}>Expected Harvesting Date</Text>
+                  <Button
+                    mode="outlined"
+                    onPress={() => openDatePicker("HarvestingDate")}
+                    style={styles.dateButton}
+                    textColor="#2E7D32"
+                  >
+                    {displayDate(formData.HarvestingDate)}
+                  </Button>
+                  <HelperText type="error" visible={!!errors.HarvestingDate}>
+                    {errors.HarvestingDate}
+                  </HelperText>
+                </View> */}
+
+
+              {/* <View style={styles.row}>
+                <View style={styles.halfInput}>
+                  <Text style={styles.label}>Duration From</Text>
+                  <Button
+                    mode="outlined"
+                    onPress={() => openDatePicker("DurationFrom")}
+                    style={styles.dateButton}
+                    textColor="#2E7D32"
+                  >
+                    {displayDate(formData.DurationFrom)}
+                  </Button>
+                  <HelperText type="error" visible={!!errors.DurationFrom}>
+                    {errors.DurationFrom}
+                  </HelperText>
+                </View>
+
+                <View style={styles.halfInput}>
+                  <Text style={styles.label}>Duration To</Text>
+                  <Button
+                    mode="outlined"
+                    onPress={() => openDatePicker("DurationTo")}
+                    style={styles.dateButton}
+                    textColor="#2E7D32"
+                  >
+                    {displayDate(formData.DurationTo)}
+                  </Button>
+                  <HelperText type="error" visible={!!errors.DurationTo}>
+                    {errors.DurationTo}
+                  </HelperText>
+                </View>
+              </View> */}
+
               <Text style={styles.label}>Variety Name</Text>
               <TextInput
+                placeholder="Enter Variety Name"
                 value={agreementIds.VarietyName}
                 editable={false}
                 style={[styles.input, styles.disabledInput]}
               />
 
               <Text style={styles.label}>Class of Seed</Text>
+
               {inspectionType === "First" ? (
+                // Show dropdown ONLY for First inspection
                 <Dropdown
                   style={styles.dropdown}
                   data={classSeedList}
@@ -1093,40 +1179,39 @@ const handleSubmit = async () => {
                   }}
                 />
               ) : (
+                // For Second, Third, Fourth → show TextInput with auto-filled value
                 <TextInput
                   style={[styles.input, styles.disabledInput]}
                   value={agreementIds.SeedClass}
-                  editable={false}
+                  editable={false}  // keep readonly
                 />
               )}
 
+
+
               <Text style={styles.label}>Crop</Text>
               <TextInput
+                placeholder="Enter crop"
                 value={agreementIds.CommodityName}
                 style={[styles.input, styles.disabledInput]}
                 editable={false}
               />
 
-              {/* FIXED: Stage of Crop Field */}
-              <Text style={styles.label}>Stage of Crop *</Text>
+              <Text style={styles.label}>Stage of Crop</Text>
               <TextInput
-                placeholder="Enter stage of crop"
-                placeholderTextColor="#666"
-                value={formData.StageofCrop}
-                autoCorrect={false}
+                placeholder="Enter Stage crop"
+
+                style={styles.input}
+                value={formData.PreviousCrop}
                 autoComplete="off"
                 autoCapitalize="characters"
-                onChangeText={(text) => handleChange("StageofCrop", text)}
-                style={[styles.input, errors.StageofCrop && { borderColor: "red" }]}
-              />
-              {errors.StageofCrop && (
-                <HelperText type="error" visible={true}>
-                  {errors.StageofCrop}
-                </HelperText>
-              )}
+                onChangeText={(text) =>
+                  handleChange("stageofCrop", text)
+                }
 
-              {/* FIXED: Previous Crop Field */}
-              <Text style={styles.label}>Previous Crop *</Text>
+              />
+
+              <Text style={styles.label}>Previous Crop</Text>
               <TextInput
                 placeholder="Enter previous crop"
                 placeholderTextColor="#666"
@@ -1134,26 +1219,32 @@ const handleSubmit = async () => {
                 autoCorrect={false}
                 autoComplete="off"
                 autoCapitalize="characters"
-                onChangeText={(text) => handleChange("PreviousCrop", text)}
-                style={[styles.input, errors.PreviousCrop && { borderColor: "red" }]}
+                onChangeText={(text) =>
+                  handleChange("PreviousCrop", text)
+                }
+                style={styles.input}
               />
               {errors.PreviousCrop && (
-                <HelperText type="error" visible={true}>
+                <HelperText type="error" visible>
                   {errors.PreviousCrop}
                 </HelperText>
               )}
 
-              {/* FIXED: Source of Seed Field */}
-              <Text style={styles.label}>Source of Seed *</Text>
+              <Text style={styles.label}>Source of Seed</Text>
               <TextInput
-                placeholder="Enter source of seed"
+                placeholder="Enter Source of Seed"
                 placeholderTextColor="#666"
-                value={formData.SourceOfSeed}
+                value={agreementIds.SourceSeed}
                 autoCorrect={false}
                 autoComplete="off"
                 autoCapitalize="characters"
-                onChangeText={(text) => handleChange("SourceOfSeed", text)}
-                style={[styles.input, errors.SourceOfSeed && { borderColor: "red" }]}
+                onChangeText={(text) =>
+                  handleChange("SourceOfSeed", text)
+                }
+                style={[
+                  styles.input,
+                  errors.SourceOfSeed && { borderColor: "red" }
+                ]}
               />
               {errors.SourceOfSeed && (
                 <HelperText type="error" visible={true}>
@@ -1161,7 +1252,7 @@ const handleSubmit = async () => {
                 </HelperText>
               )}
 
-              <Text style={styles.label}>Stage of Growth Contaminant *</Text>
+              <Text style={styles.label}>Stage of Growth Contaminant</Text>
               <TextInput
                 placeholder="Enter stage of growth contaminant"
                 placeholderTextColor="#666"
@@ -1169,31 +1260,40 @@ const handleSubmit = async () => {
                 autoCorrect={false}
                 autoComplete="off"
                 autoCapitalize="characters"
-                onChangeText={(text) => handleChange("StageofGrowthContaminant", text)}
-                style={[styles.input, errors.StageofGrowthContaminant && { borderColor: "red" }]}
+                onChangeText={(text) =>
+                  handleChange("StageofGrowthContaminant", text)
+                }
+                style={styles.input}
               />
               {errors.StageofGrowthContaminant && (
                 <HelperText type="error" visible={true}>
-                  {errors.StageofGrowthContaminant}
+                  {errors.SourceOfSeed}
                 </HelperText>
               )}
 
-              <Text style={styles.label}>Stage of Seed at Inspection *</Text>
+
+              <Text style={styles.label}>Stage of Seed at Inspection</Text>
               <TextInput
-                placeholder="Enter stage of seed at inspection"
+                placeholder="Enter Stage of Seed At Inspection"
                 placeholderTextColor="#666"
                 value={formData.StageofSeedAtInspection}
                 autoCorrect={false}
                 autoComplete="off"
                 autoCapitalize="characters"
-                onChangeText={(text) => handleChange("StageofSeedAtInspection", text)}
-                style={[styles.input, errors.StageofSeedAtInspection && { borderColor: "red" }]}
+                onChangeText={(text) =>
+                  handleChange("StageofSeedAtInspection", text)
+                }
+                style={styles.input}
               />
+
               {errors.StageofSeedAtInspection && (
                 <HelperText type="error" visible={true}>
-                  {errors.StageofSeedAtInspection}
+                  {errors.SourceOfSeed}
                 </HelperText>
               )}
+
+
+
 
               <Text style={styles.label}>Year</Text>
               <Dropdown
@@ -1205,14 +1305,14 @@ const handleSubmit = async () => {
                 valueField="value"
                 onChange={(item) => {
                   handleSeasonSelect(item.value);
-                  setErrors(prev => ({ ...prev, Year: "" }));
+                  setErrors(prev => ({ ...prev, Year: "" }));  // FIX
                 }}
                 mode="modal"
               />
+
               <HelperText type="error" visible={!!errors.Year}>
                 {errors.Year}
               </HelperText>
-
               <Text style={styles.label}>Season</Text>
               <Dropdown
                 style={[styles.dropdown, errors.Season && { borderColor: "red" }]}
@@ -1226,11 +1326,12 @@ const handleSubmit = async () => {
                   setErrors(prev => ({ ...prev, Season: "" }));
                 }}
               />
+
               <HelperText type="error" visible={!!errors.Season}>
                 {errors.Season}
               </HelperText>
 
-              <Text style={styles.label}>Crop Condition *</Text>
+              <Text style={styles.label}>Crop Condition</Text>
               <Dropdown
                 style={[styles.dropdown, errors.CropCondition && styles.inputError]}
                 placeholderStyle={styles.placeholderStyle}
@@ -1257,7 +1358,7 @@ const handleSubmit = async () => {
 
               <View style={styles.row}>
                 <View style={styles.halfInput}>
-                  <Text style={styles.label}>Inspected Area (ha) *</Text>
+                  <Text style={styles.label}>Inspected Area (ha)</Text>
                   <TextInput
                     placeholder="Enter area"
                     placeholderTextColor="#666"
@@ -1265,9 +1366,11 @@ const handleSubmit = async () => {
                     autoCorrect={false}
                     autoComplete="off"
                     autoCapitalize="characters"
-                    onChangeText={(text) => handleChange("InspectedArea", text)}
+                    onChangeText={(text) =>
+                      handleChange("InspectedArea", text)
+                    }
                     keyboardType="numeric"
-                    style={[styles.input, errors.InspectedArea && { borderColor: "red" }]}
+                    style={styles.input}
                   />
                   <HelperText type="error" visible={!!errors.InspectedArea}>
                     {errors.InspectedArea}
@@ -1275,7 +1378,7 @@ const handleSubmit = async () => {
                 </View>
 
                 <View style={styles.halfInput}>
-                  <Text style={styles.label}>Damaged Area (ha) *</Text>
+                  <Text style={styles.label}>Damaged Area (ha)</Text>
                   <TextInput
                     placeholder="Enter Damaged Area"
                     placeholderTextColor="#666"
@@ -1283,19 +1386,21 @@ const handleSubmit = async () => {
                     autoCorrect={false}
                     autoComplete="off"
                     autoCapitalize="characters"
-                    onChangeText={(text) => handleChange("DamagedArea", text)}
+                    onChangeText={(text) =>
+                      handleChange("DamagedArea", text)
+                    }
                     keyboardType="numeric"
-                    style={[styles.input, errors.DamagedArea && { borderColor: "red" }]}
+                    style={styles.input}
                   />
                   <HelperText type="error" visible={!!errors.DamagedArea}>
-                    {errors.DamagedArea}
+                    {errors.FieldCount}
                   </HelperText>
                 </View>
               </View>
 
               <View style={styles.row}>
                 <View style={styles.halfInput}>
-                  <Text style={styles.label}>Isolation Distance (meter) *</Text>
+                  <Text style={styles.label}>Isolation Distance (meter)</Text>
                   <TextInput
                     placeholder="Enter Isolation Distance"
                     placeholderTextColor="#666"
@@ -1303,9 +1408,11 @@ const handleSubmit = async () => {
                     autoCorrect={false}
                     autoComplete="off"
                     autoCapitalize="characters"
-                    onChangeText={(text) => handleChange("IsolationDistance", text)}
+                    onChangeText={(text) =>
+                      handleChange("IsolationDistance", text)
+                    }
                     keyboardType="numeric"
-                    style={[styles.input, errors.IsolationDistance && { borderColor: "red" }]}
+                    style={styles.input}
                   />
                   <HelperText type="error" visible={!!errors.IsolationDistance}>
                     {errors.IsolationDistance}
@@ -1313,7 +1420,7 @@ const handleSubmit = async () => {
                 </View>
 
                 <View style={styles.halfInput}>
-                  <Text style={styles.label}>Field Count No. *</Text>
+                  <Text style={styles.label}>Field Count No.</Text>
                   <TextInput
                     placeholder="Enter field count"
                     placeholderTextColor="#666"
@@ -1321,9 +1428,11 @@ const handleSubmit = async () => {
                     autoCorrect={false}
                     autoComplete="off"
                     autoCapitalize="characters"
-                    onChangeText={(text) => handleChange("FieldCount", text)}
+                    onChangeText={(text) =>
+                      handleChange("FieldCount", text)
+                    }
                     keyboardType="numeric"
-                    style={[styles.input, errors.FieldCount && { borderColor: "red" }]}
+                    style={styles.input}
                   />
                   <HelperText type="error" visible={!!errors.FieldCount}>
                     {errors.FieldCount}
@@ -1331,6 +1440,7 @@ const handleSubmit = async () => {
                 </View>
               </View>
 
+              {/* Geo Image Field */}
               <ImagePickerField
                 label="Geo Tagged Image *"
                 value={formData.GeoImage}
@@ -1420,21 +1530,24 @@ const handleSubmit = async () => {
                 field="IsThisFinalReport"
               />
 
-              <Text style={styles.label}>Estimated Yield (kg) *</Text>
+              <Text style={styles.label}>Estimated Yield (kg)</Text>
               <TextInput
                 placeholder="Enter estimated yield"
                 placeholderTextColor="#666"
                 value={formData.EstimatedSeedYield}
                 onChangeText={(text) => handleChange("EstimatedSeedYield", text)}
-                style={[styles.input, errors.EstimatedSeedYield && { borderColor: "red" }]}
+                style={styles.input}
               />
+
+
               {errors.EstimatedSeedYield && (
                 <HelperText type="error" visible={true}>
-                  {errors.EstimatedSeedYield}
+                  {errors.SourceOfSeed}
                 </HelperText>
               )}
 
-              <Text style={styles.label}>Name of inspection officer *</Text>
+
+              <Text style={styles.label}>Name of inspection officer</Text>
               <TextInput
                 placeholder="Name of inspection officer"
                 placeholderTextColor="#666"
@@ -1442,16 +1555,21 @@ const handleSubmit = async () => {
                 autoCorrect={false}
                 autoComplete="off"
                 autoCapitalize="characters"
-                onChangeText={(text) => handleChange("GrowerRepresentative", text)}
-                style={[styles.input, errors.GrowerRepresentative && { borderColor: "red" }]}
+                onChangeText={(text) =>
+                  handleChange("GrowerRepresentative", text)
+                }
+                style={styles.input}
               />
+
+
               {errors.GrowerRepresentative && (
                 <HelperText type="error" visible={true}>
-                  {errors.GrowerRepresentative}
+                  {errors.SourceOfSeed}
                 </HelperText>
               )}
 
-              <Text style={styles.label}>Remarks / Advise issue *</Text>
+
+              <Text style={styles.label}>Remarks / Advise issue</Text>
               <TextInput
                 placeholder="Enter remarks"
                 placeholderTextColor="#666"
@@ -1459,14 +1577,16 @@ const handleSubmit = async () => {
                 autoCorrect={false}
                 autoComplete="off"
                 autoCapitalize="characters"
-                onChangeText={(text) => handleChange("Remarks", text)}
+                onChangeText={(text) =>
+                  handleChange("Remarks", text)
+                }
                 multiline
                 numberOfLines={3}
-                style={[styles.input, styles.textArea, errors.Remarks && { borderColor: "red" }]}
+                style={[styles.input, styles.textArea]}
               />
               {errors.Remarks && (
                 <HelperText type="error" visible={true}>
-                  {errors.Remarks}
+                  {errors.SourceOfSeed}
                 </HelperText>
               )}
             </Card.Content>
@@ -1518,6 +1638,7 @@ const handleSubmit = async () => {
         minimumDate={dateField === "DurationTo" && minDurationToDate ? minDurationToDate : undefined}
       />
 
+      {/* Signature Modal */}
       <Portal>
         <PaperModal
           visible={signatureModalVisible}

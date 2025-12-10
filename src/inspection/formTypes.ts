@@ -6,6 +6,8 @@ export interface FormDataType {
   DurationFrom: string;
   DurationTo: string;
   SourceOfSeed: string;
+  StageofCrop : string;
+  
   InspectedArea: number;
   DamagedArea: number;
   PreviousCrop: string;
@@ -49,13 +51,13 @@ export interface AgreementIdsType {
   CommodityId: string;
   FarmerId: string;
   FarmerDistributionId: string;
-  VarietyName: string;
-  SeedClass: string;
-  CommodityName: string;
-  Authorizedname: string;
-  SourceSeed: string;
-  Year: string;
-  Season: string;
+   VarietyName: string;
+   SeedClass: string;
+   CommodityName: string;
+   Authorizedname: string;
+   SourceSeed: string;
+   Year: string;
+   Season: string;
    Cropcode : string;
    Centercode : string;
 }

@@ -12,7 +12,7 @@ import Signature from '../Signature/Signature';
 import Agreementland from '../Agreement/Agreementland';
 import InspectionScreen from '../inspection/IInspectionScreen';
 import InspectionList from '../inspection/InspectionList';
-import SealingTagging from '../SealingTagging/SealingTagging';
+// import SealingTagging from '../SealingTagging/SealingTagging';
 
 
 const Drawer = createDrawerNavigator();
@@ -40,7 +40,7 @@ function CustomDrawerContent(props: any) {
       {/* Sidebar Header */}
       <View style={styles.headerContainer}>
         <Image
-          source={require('../../assets/nhrdf_logo.jpg')} // replace with dynamic profile
+          source={require('../../assets/nhrdf_logo.jpg')}
           style={styles.profileImage}
         />
 
@@ -96,13 +96,13 @@ function CustomDrawerContent(props: any) {
         />
 
 
-          <DrawerItem
+        {/* <DrawerItem
           label="Sealing Tagging"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Sealing Tagging')}
           labelStyle={styles.drawerLabel}
           style={{ display: 'none' }}
-        />
+        /> */}
 
 
 
@@ -129,6 +129,7 @@ function CustomDrawerContent(props: any) {
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document-outline" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Agreementland')}
           style={{ display: 'none' }}
+
         />
 
 
@@ -198,10 +199,10 @@ export default function DrawerNavigator() {
       <Drawer.Screen name="Agreement Form" component={AgreementForm} />
       <Drawer.Screen name="Farmer Agreement" component={AgreementListScreen} />
       <Drawer.Screen name="Inspection List" component={InspectionList} />
-        <Drawer.Screen name="Sealing Tagging" component={SealingTagging}   
+      {/* <Drawer.Screen name="Sealing Tagging" component={SealingTagging}
         options={{
           drawerItemStyle: { display: 'none' }, // hides from the drawer
-        }} />
+        }} /> */}
 
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
       <Drawer.Screen
@@ -212,9 +213,9 @@ export default function DrawerNavigator() {
         }}
       />
 
-      <Drawer.Screen name="Agreement" component={AgreementSecond} 
-      options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }}
-       />
+      <Drawer.Screen name="Agreement" component={AgreementSecond}
+        options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }}
+      />
       <Drawer.Screen name="Agreementland" component={Agreementland} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
       <Drawer.Screen name="NomineeScreen" component={NomineeScreen} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
 

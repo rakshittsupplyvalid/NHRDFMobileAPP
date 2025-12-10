@@ -220,7 +220,8 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     borderColor: "#fff",
-    borderRadius: 20,
+    borderRadius: 10,
+    width: 80,
   },
   sectionTitle: {
     fontSize: 18,

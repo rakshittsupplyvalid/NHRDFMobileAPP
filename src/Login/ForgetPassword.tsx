@@ -201,6 +201,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.15,
     shadowRadius: 4,
   },
+
   buttonContent: { height: 44 },
   buttonLabel: { color: "#fff", fontSize: 16, fontWeight: "600" },
 });
