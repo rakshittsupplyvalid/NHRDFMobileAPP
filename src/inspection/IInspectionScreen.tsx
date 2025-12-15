@@ -36,10 +36,20 @@ const InspectionScreen = () => {
   const route = useRoute();
   const navigation: any = useNavigation();
 
-  const { agreementId, inspectionType } = route.params as {
+  const { agreementId, inspectionNo  } = route.params as {
     agreementId: string;
-    inspectionType: string;
+    inspectionNo : string;
   };
+
+
+  
+    console.log("InspectionNo:", inspectionNo);
+
+
+
+
+
+  
 
   const getTodayDate = () => {
     const today = new Date();
@@ -707,14 +717,14 @@ const InspectionScreen = () => {
     return isValid;
   };
 
-  useEffect(() => {
-    if (inspectionType) {
-      setFormData(prev => ({
-        ...prev,
-        InspectionNo: inspectionType.toUpperCase(),
-      }));
-    }
-  }, [inspectionType]);
+  // useEffect(() => {
+  //   if (InspectionNo) {
+  //     setFormData(prev => ({
+  //       ...prev,
+  //       InspectionNo: InspectionNo.toUpperCase(),
+  //     }));
+  //   }
+  // }, [InspectionNo]);
 
 const handleSubmit = async () => {
   if (!validateForm()) {
@@ -1041,7 +1051,7 @@ const handleSubmit = async () => {
 
               <Text style={styles.label}>No. of Inspection</Text>
               <TextInput
-                value={inspectionType}
+                value={inspectionNo}
                 style={[styles.input, styles.disabledInput]}
                 editable={false}
               />
@@ -1080,7 +1090,7 @@ const handleSubmit = async () => {
               />
 
               <Text style={styles.label}>Class of Seed</Text>
-              {inspectionType === "First" ? (
+              {inspectionNo === "First" ? (
                 <Dropdown
                   style={styles.dropdown}
                   data={classSeedList}
@@ -1144,7 +1154,7 @@ const handleSubmit = async () => {
               )}
 
               {/* FIXED: Source of Seed Field */}
-              <Text style={styles.label}>Source of Seed *</Text>
+              {/* <Text style={styles.label}>Source of Seed *</Text>
               <TextInput
                 placeholder="Enter source of seed"
                 placeholderTextColor="#666"
@@ -1159,9 +1169,9 @@ const handleSubmit = async () => {
                 <HelperText type="error" visible={true}>
                   {errors.SourceOfSeed}
                 </HelperText>
-              )}
+              )} */}
 
-              <Text style={styles.label}>Stage of Growth Contaminant *</Text>
+              {/* <Text style={styles.label}>Stage of Growth Contaminant *</Text>
               <TextInput
                 placeholder="Enter stage of growth contaminant"
                 placeholderTextColor="#666"
@@ -1176,7 +1186,7 @@ const handleSubmit = async () => {
                 <HelperText type="error" visible={true}>
                   {errors.StageofGrowthContaminant}
                 </HelperText>
-              )}
+              )} */}
 
               <Text style={styles.label}>Stage of Seed at Inspection *</Text>
               <TextInput
@@ -1195,7 +1205,7 @@ const handleSubmit = async () => {
                 </HelperText>
               )}
 
-              <Text style={styles.label}>Year</Text>
+              {/* <Text style={styles.label}>Year</Text>
               <Dropdown
                 style={[styles.dropdown, errors.Year && { borderColor: "red" }]}
                 data={seasonData}
@@ -1211,9 +1221,9 @@ const handleSubmit = async () => {
               />
               <HelperText type="error" visible={!!errors.Year}>
                 {errors.Year}
-              </HelperText>
+              </HelperText> */}
 
-              <Text style={styles.label}>Season</Text>
+              {/* <Text style={styles.label}>Season</Text>
               <Dropdown
                 style={[styles.dropdown, errors.Season && { borderColor: "red" }]}
                 data={subSeasonList}
@@ -1228,7 +1238,7 @@ const handleSubmit = async () => {
               />
               <HelperText type="error" visible={!!errors.Season}>
                 {errors.Season}
-              </HelperText>
+              </HelperText> */}
 
               <Text style={styles.label}>Crop Condition *</Text>
               <Dropdown
@@ -1409,30 +1419,39 @@ const handleSubmit = async () => {
                 </>
               )}
 
+             
               <RadioGroup
-                label="Is This Final Report?"
-                value={formData.IsThisFinalReport ? "true" : "false"}
-                onValueChange={(value) => handleChange("IsThisFinalReport", value === "true")}
-                options={[
-                  { label: "Yes", value: "true" },
-                  { label: "No", value: "false" },
-                ]}
-                field="IsThisFinalReport"
-              />
-
-              <Text style={styles.label}>Estimated Yield (kg) *</Text>
-              <TextInput
-                placeholder="Enter estimated yield"
-                placeholderTextColor="#666"
-                value={formData.EstimatedSeedYield}
-                onChangeText={(text) => handleChange("EstimatedSeedYield", text)}
-                style={[styles.input, errors.EstimatedSeedYield && { borderColor: "red" }]}
-              />
-              {errors.EstimatedSeedYield && (
-                <HelperText type="error" visible={true}>
-                  {errors.EstimatedSeedYield}
-                </HelperText>
-              )}
+                             label="Is This Final Report?"
+                             value={formData.IsThisFinalReport ? "true" : "false"}
+                             onValueChange={(value) => handleChange("IsThisFinalReport", value === "true")}
+                             options={[
+                               { label: "Yes", value: "true" },
+                               { label: "No", value: "false" },
+                             ]}
+                             field="IsThisFinalReport"
+                           />
+             
+                           <Text style={styles.label}>Estimated Seed Yield (kg) *</Text>
+                           <TextInput
+                             placeholder="Enter estimated yield"
+                             placeholderTextColor="#666"
+                             value={formData.EstimatedSeedYield}
+                             onChangeText={(text) => handleChange("EstimatedSeedYield", text)}
+                             editable={formData.IsThisFinalReport}
+                             style={[
+                               styles.input,
+                               !formData.IsThisFinalReport && { backgroundColor: "#eee" },
+                               errors.EstimatedSeedYield && { borderColor: "red" },
+                             ]}
+                             keyboardType="numeric"
+                           />
+             
+                           {errors.EstimatedSeedYield && (
+                             <HelperText type="error" visible={true}>
+                               {errors.EstimatedSeedYield}
+                             </HelperText>
+                           )}
+             
 
               <Text style={styles.label}>Name of inspection officer *</Text>
               <TextInput

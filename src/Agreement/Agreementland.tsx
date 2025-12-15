@@ -16,6 +16,7 @@ import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useFormData } from "../Constants/FormContext";
 import { getFarmerLandDetail, farmerDetails } from "../Service/fetchCommodity";
 import apiClient from "../Service/apiInterceptors";
+import { Dropdown } from 'react-native-element-dropdown';
 
 
 
@@ -27,11 +28,11 @@ const Agreementland: React.FC = () => {
   const [landDetails, setLandDetails] = useState<any[]>([]);
   const [farmerInfo, setFarmerInfo] = useState<any>(null);
   const [selectedLandIds, setSelectedLandIds] = useState<string[]>([]);
-
+  const [value, setValue] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
 
-  
+
 
   useFocusEffect(
     useCallback(() => {
@@ -43,6 +44,8 @@ const Agreementland: React.FC = () => {
           const res = await apiClient.get(
             `/api/static/generate/code/number/${formData.farmerDistributionId}`
           );
+
+          console.log("Generated code response:", res?.data);
           if (res?.data) setInputValue(res.data.toString());
         } catch (e) {
           console.log("Generate code error:", e);
@@ -74,6 +77,14 @@ const Agreementland: React.FC = () => {
     fetchLandInfo(formData.farmerId);
 
   }, [formData?.farmerId]);
+
+
+  const languageData = [
+    { label: 'Hindi (हिन्दी)', value: 'hindi' },
+    { label: 'English', value: 'english' },
+    { label: 'Urdu (اردو)', value: 'urdu' },
+    { label: 'Marathi (मराठी)', value: 'marathi' },
+  ];
 
 
   const fetchFarmerInfo = async (farmerId: string) => {
@@ -115,13 +126,14 @@ const Agreementland: React.FC = () => {
     );
   };
 
- 
+
   const handleNext = () => {
 
     setFormData({
       ...formData,
       CodeNumber: inputValue,
-      landIds: selectedLandIds
+      landIds: selectedLandIds,
+      agreementLanguage: value,
     });
 
     navigation.navigate("Agreement" as never);
@@ -135,7 +147,7 @@ const Agreementland: React.FC = () => {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={60}
     >
-      <ScrollView style={styles.container}>
+      <View style={styles.container}>
 
         {/* HEADER */}
         <View style={styles.header}>
@@ -235,7 +247,27 @@ const Agreementland: React.FC = () => {
             </TouchableOpacity>
           ))}
 
-      
+
+
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Language Used to Explain Contract Agreement</Text>
+
+
+
+            <Dropdown
+              style={styles.dropdown}
+              placeholderStyle={styles.placeholderStyle}
+              selectedTextStyle={styles.selectedTextStyle}
+              data={languageData}
+              labelField="label"
+              valueField="value"
+              placeholder="Select Language"
+              value={value}
+              onChange={(item) => setValue(item.value)}
+            />
+
+
+          </View>
 
           <View style={styles.card}>
             <InputField label="Class of Seeds" value={formData.cropClassSeeds} icon="seed-outline" />
@@ -264,7 +296,7 @@ const Agreementland: React.FC = () => {
           </View>
 
         </View>
-      </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -310,7 +342,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: "rgba(255,255,255,0.2)"
   },
-  headerTitle: { fontSize: 20, color: "#fff", fontWeight: "bold" },
+  headerTitle: { fontSize: 20, color: "#fff", fontWeight: "bold"  },
 
   content: { padding: 14 },
 
@@ -377,7 +409,22 @@ const styles = StyleSheet.create({
     backgroundColor: "#4CAF50",
     paddingVertical: 6,
     borderRadius: 8
-  }
+  },
+  dropdown: {
+    height: 40,
+    borderColor: '#999',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginTop: 18,
+  },
+  placeholderStyle: {
+    fontSize: 14,
+    color: '#999',
+  },
+  selectedTextStyle: {
+    fontSize: 14,
+  },
 });
 
 export default Agreementland;

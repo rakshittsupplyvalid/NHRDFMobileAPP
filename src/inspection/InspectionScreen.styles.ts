@@ -429,4 +429,54 @@ currentInputHint: {
     fontSize: rf(14),
     color: "#2E7D32",
   },
+
+
+    rowContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  
+  rowNumber: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#2E7D32',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  
+  rowNumberText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  
+  countOfftypeRow: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  
+  buttonWrap: {
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  
+  warning: {
+    color: "red",
+    marginTop: 5,
+    fontSize: 14,
+    textAlign: "center",
+  },
+  
+  addButton: {
+    borderColor: "#2E7D32",
+  },
+  
+
+  // Make sure these styles exist
+ 
+  
 });

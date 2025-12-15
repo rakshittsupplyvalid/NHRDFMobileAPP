@@ -49,6 +49,7 @@ interface NomineeType {
     age: string;
     dob: string;
     mobileno: string;
+    aadharno : string;
     email: string;
     addrline: string;
     villageid: string;
@@ -122,6 +123,7 @@ const AgreementSecond: React.FC = () => {
             accountholdername: "",
             raccountnumber: "",
             ifsc: "",
+            aadharno: "",
         },
     ]);
 
@@ -160,6 +162,7 @@ const AgreementSecond: React.FC = () => {
     const [nomineeDistrictsList, setNomineeDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
     const [nomineeCitiesList, setNomineeCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
     const [signaturePhoto, setSignaturePhoto] = useState<string | null>(null);
+     const [officerSignaturePhoto, setOfficerSignaturePhoto] = useState<string | null>(null);
     const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
     const [witnessDistrictsList, setWitnessDistrictsList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
     const [witnessCitiesList, setWitnessCitiesList] = useState<{ [key: number]: { label: string; value: string }[] }>({});
@@ -168,6 +171,8 @@ const AgreementSecond: React.FC = () => {
     const [nomineeSignatureUri, setNomineeSignatureUri] = useState<string[]>([]);
     const [nomineeProfilePhotos, setNomineeProfilePhotos] = useState<string[]>([]);
     const [witnessProfilePhotos, setWitnessProfilePhotos] = useState<string[]>([]);
+   
+
     const [activeSection, setActiveSection] = useState<string | null>(null);
 
     // Custom uppercase handler for TextInput
@@ -410,6 +415,7 @@ const AgreementSecond: React.FC = () => {
             const hasRequiredFields =
                 nominee.nomineename &&
                 nominee.mobileno &&
+                nominee.aadharno &&
                 nominee.relation &&
                 nominee.addrline &&
                 nominee.accountholdername &&
@@ -842,6 +848,9 @@ const AgreementSecond: React.FC = () => {
                 else if (params.type === "signature") {
                     setSignaturePhoto(params.signatureUri);
                 }
+                else if (params.type === "officerSignature") {
+                    setOfficerSignaturePhoto(params.signatureUri);  
+            }
             }
         }, [route.params])
     );
@@ -863,6 +872,30 @@ const AgreementSecond: React.FC = () => {
             throw error;
         }
     };
+
+
+   useEffect(() => {
+  const fetchProfile = async () => {
+    try {
+      const response = await apiClient.get("/api/mobile/profile");
+      const data = response.data; // <-- extract the actual data
+
+      // Autofill the authorized signatory name
+      updateState({
+        ...state,
+        form: {
+          ...state.form,
+          authorizedSignatory: data.name || ""
+        }
+      });
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
+
+  fetchProfile();
+}, []);
+
 
     const handleSubmit = async () => {
         setIsSubmitting(true);
@@ -899,13 +932,17 @@ const AgreementSecond: React.FC = () => {
             requestData.append("AuthorizedName", state.form.authorizedSignatory || "");
             requestData.append("BillNumber", formData?.billNumber || "");
             requestData.append("TagNumber", state.form.TagNumber || "");
+            requestData.append("RepresentativeName", state.form.RepresentativeName || "");
+              requestData.append("FarmerRelation", state.form.GrowerRealtion || "");
+              requestData.append("Language", formData?.agreementLanguage  || "");
+            
             requestData.append("LotNumber", formData?.lotNo || "");
 
-            // Convert Base64 signature to file
+            // Convert Base64 signature to fil
             if (signaturePhoto) {
                 const convertedSignature = await base64ToFile(signaturePhoto, "signature.png");
                 if (convertedSignature) {
-                    requestData.append("Signature", {
+                    requestData.append("GrowerSignature", {
                         uri: convertedSignature.uri,
                         type: convertedSignature.type,
                         name: convertedSignature.name,
@@ -913,8 +950,23 @@ const AgreementSecond: React.FC = () => {
                 }
             }
 
+
+              if (officerSignaturePhoto) {
+                const convertedSignature = await base64ToFile(officerSignaturePhoto, "signature.png");
+                if (convertedSignature) {
+                    requestData.append("OfficerSignature", {
+                        uri: convertedSignature.uri,
+                        type: convertedSignature.type,
+                        name: convertedSignature.name,
+                    } as any);
+                }
+            }
+
+
+
+
             if (profilePhoto) {
-                requestData.append("ProfFile", {
+                requestData.append("GrowerProof", {
                     uri: profilePhoto,
                     type: "image/jpeg",
                     name: "profile.jpg",
@@ -932,6 +984,7 @@ const AgreementSecond: React.FC = () => {
                 requestData.append(`NomiNee[${index}].nomineename`, nominee.nomineename || '');
                 requestData.append(`NomiNee[${index}].gender`, nominee.gender || 'NONE');
                 requestData.append(`NomiNee[${index}].mobileno`, nominee.mobileno || '');
+                    requestData.append(`NomiNee[${index}].aadharno`, nominee.aadharno || '');
                 requestData.append(`NomiNee[${index}].email`, nominee.email || '');
                 requestData.append(`NomiNee[${index}].age`, String(nominee.age));
                 requestData.append(`NomiNee[${index}].year`, String(nominee.year || 0));
@@ -952,23 +1005,23 @@ const AgreementSecond: React.FC = () => {
                 requestData.append(`NomiNee[${index}].accountnumber`, nominee.raccountnumber || '');
                 requestData.append(`NomiNee[${index}].ifsc`, nominee.ifsc || '');
 
-                // Profile document - Convert to file if exists
-                if (nominee.profdocument) {
-                    const profileFile = await base64ToFile(
-                        nominee.profdocument,
-                        `nominee_${index}_profile.png`
-                    );
-                    requestData.append(`NomiNee[${index}].passbookdoc`, profileFile as any);
-                }
+                // // Profile document - Convert to file if exists
+                // if (nominee.profdocument) {
+                //     const profileFile = await base64ToFile(
+                //         nominee.profdocument,
+                //         `nominee_${index}_profile.png`
+                //     );
+                //     requestData.append(`NomiNee[${index}].passbookdoc`, profileFile as any);
+                // }
 
-                // Signature - Convert base64 to file
-                if (nominee.signature) {
-                    const signatureFile = await base64ToFile(
-                        nominee.signature,
-                        `nominee_${index}_signature.png`
-                    );
-                    requestData.append(`NomiNee[${index}].signature`, signatureFile as any);
-                }
+                // // Signature - Convert base64 to file
+                // if (nominee.signature) {
+                //     const signatureFile = await base64ToFile(
+                //         nominee.signature,
+                //         `nominee_${index}_signature.png`
+                //     );
+                //     requestData.append(`NomiNee[${index}].signature`, signatureFile as any);
+                // }
 
                 console.log(`✅ Nominee ${index} added:`, nominee.nomineename);
             }
@@ -1011,8 +1064,10 @@ const AgreementSecond: React.FC = () => {
                         witness.signature,
                         `witness_${index}_signature.png`
                     );
-                    requestData.append(`Witness[${index}].signature`, signatureFile as any);
+                    requestData.append(`Witness[${index}].witnesssignature`, signatureFile as any);
                 }
+
+                
 
                 console.log(`✅ Witness ${index} added:`, witness.witnessname);
             }
@@ -1257,6 +1312,33 @@ const AgreementSecond: React.FC = () => {
                                                     </HelperText>
                                                 ) : null}
                                             </View>
+
+
+                                              <View style={styles.halfInput}>
+                                                <Text style={styles.label}>Aadhar Number *</Text>
+                                                <RNTextInput
+                                                    placeholder="Aadhar Number"
+                                                    keyboardType="phone-pad"
+                                                    value={nominee.aadharno}
+                                                    onChangeText={(text) => {
+                                                        const numericText = text.replace(/[^0-9]/g, "");
+                                                        updateNominee(index, "aadharno", numericText);
+                                                    }}
+                                                    style={[
+                                                        styles.simpleInput,
+                                                        nomineeErrors[index]?.mobileno && styles.inputError
+                                                    ]}
+                                                    maxLength={12}
+                                                />
+                                                {nomineeErrors[index]?.AadharNumber ? (
+                                                    <HelperText type="error" visible={!!nomineeErrors[index]?.AadharNumber}>
+                                                        {nomineeErrors[index]?.AadharNumber}
+                                                    </HelperText>
+                                                ) : null}
+                                            </View>
+
+
+                                            
                                         </View>
 
                                         {/* Gender and Relation */}
@@ -1420,7 +1502,7 @@ const AgreementSecond: React.FC = () => {
                                         <RNTextInput
                                             placeholder="Account Holder Name"
                                             value={nominee.accountholdername}
-                                              autoCapitalize="characters"
+                                            autoCapitalize="characters"
                                             onChangeText={(text) => {
                                                 updateNominee(index, "accountholdername", text);
                                                 validateNomineeField(index, "accountholdername", text);
@@ -1468,9 +1550,9 @@ const AgreementSecond: React.FC = () => {
                                                     placeholder="IFSC Code"
                                                     value={nominee.ifsc}
                                                     maxLength={11}
-                                                        autoCapitalize="characters"
+                                                    autoCapitalize="characters"
                                                     onChangeText={(text) => {
-                                                       
+
                                                         updateNominee(index, "ifsc", text);
                                                         validateNomineeField(index, "ifsc", text);
                                                     }}
@@ -1552,7 +1634,7 @@ const AgreementSecond: React.FC = () => {
                                                 <RNTextInput
                                                     placeholder="Full Name"
                                                     value={witness.witnessname}
-                                                      autoCapitalize="characters"
+                                                    autoCapitalize="characters"
                                                     onChangeText={(text) => updateWitness(index, "witnessname", text)}
                                                     style={[
                                                         styles.simpleInput,
@@ -1598,8 +1680,8 @@ const AgreementSecond: React.FC = () => {
                                         <RNTextInput
                                             placeholder="Address Line"
                                             value={witness.addrline}
-                                              autoCapitalize="characters"
-                                            onChangeText={(text) =>  updateWitness(index, "addrline", text)}
+                                            autoCapitalize="characters"
+                                            onChangeText={(text) => updateWitness(index, "addrline", text)}
                                             style={[
                                                 styles.simpleInput,
                                                 witnessErrors[index]?.addrline && styles.inputError
@@ -1636,7 +1718,7 @@ const AgreementSecond: React.FC = () => {
                                                 <RNTextInput
                                                     placeholder="Village Name"
                                                     value={witness.villagename}
-                                                      autoCapitalize="characters"
+                                                    autoCapitalize="characters"
                                                     onChangeText={(text) => updateWitness(index, "villagename", text)}
                                                     style={styles.simpleInput}
                                                     maxLength={100}
@@ -1743,10 +1825,12 @@ const AgreementSecond: React.FC = () => {
                     {activeSection === "signature" && (
                         <Card.Content style={styles.sectionContent}>
                             <View style={styles.photoGrid}>
+
+                                {/* Grower Signature */}
                                 <View style={styles.photoBlock}>
                                     <View style={styles.photoHeader}>
                                         <MaterialIcons name="gesture" size={scale(22)} color="#007AFF" />
-                                        <Text style={styles.photoLabel}>Signature</Text>
+                                        <Text style={styles.photoLabel}>Grower Signature / Representative</Text>
                                     </View>
 
                                     {signaturePhoto ? (
@@ -1760,9 +1844,7 @@ const AgreementSecond: React.FC = () => {
 
                                     <Button
                                         mode="contained"
-                                        onPress={() =>
-                                            navigation.navigate("Signature", { type: "signature" })
-                                        }
+                                        onPress={() => navigation.navigate("Signature", { type: "signature" })}
                                         icon={() => <MaterialIcons name="edit" size={scale(20)} color="#fff" />}
                                         style={styles.actionButton}
                                         contentStyle={styles.buttonContent}
@@ -1771,10 +1853,39 @@ const AgreementSecond: React.FC = () => {
                                     </Button>
                                 </View>
 
+
+                                 <View style={styles.photoBlock}>
+                                    <View style={styles.photoHeader}>
+                                        <MaterialIcons name="verified-user" size={scale(22)} color="#007AFF" />
+                                        <Text style={styles.photoLabel}>Officer Signature</Text>
+                                    </View>
+
+                                    {officerSignaturePhoto ? (
+                                        <Image source={{ uri: officerSignaturePhoto }} style={styles.previewImage} />
+                                    ) : (
+                                        <View style={styles.emptyBox}>
+                                            <MaterialIcons name="border-color" size={scale(28)} color="#999" />
+                                            <Text style={styles.emptyText}>No Officer Signature</Text>
+                                        </View>
+                                    )}
+
+                                    <Button
+                                        mode="contained"
+                                        onPress={() => navigation.navigate("Signature", { type: "officerSignature" })}
+                                        icon={() => <MaterialIcons name="edit" size={scale(20)} color="#fff" />}
+                                        style={styles.actionButton}
+                                        contentStyle={styles.buttonContent}
+                                    >
+                                        Capture Officer Signature
+                                    </Button>
+                                </View>
+
+
+                                {/* Profile Photo */}
                                 <View style={styles.photoBlock}>
                                     <View style={styles.photoHeader}>
                                         <MaterialIcons name="person" size={scale(22)} color="#007AFF" />
-                                        <Text style={styles.photoLabel}>Profile</Text>
+                                        <Text style={styles.photoLabel}>Photo</Text>
                                     </View>
 
                                     {profilePhoto ? (
@@ -1796,10 +1907,14 @@ const AgreementSecond: React.FC = () => {
                                         Capture Profile
                                     </Button>
                                 </View>
+
+                                {/* Officer Signature (NEW) */}
+                               
                             </View>
                         </Card.Content>
                     )}
                 </Card>
+
 
                 {/* Additional Details Section */}
                 <Card style={styles.sectionCard}>
@@ -1811,22 +1926,53 @@ const AgreementSecond: React.FC = () => {
                             {renderCommodityDropdown()}
 
                             {/* Authorized Signatory */}
+
+
+                             <Text style={styles.label}>Grower Representative  Name</Text>
+                            <TextInput
+                                mode="outlined"
+                                value={state.form.RepresentativeName || ""}
+                                autoCapitalize="characters"
+                                onChangeText={(text) => updateState({ ...state, form: { ...state.form, RepresentativeName: text } })}
+                                style={styles.input}
+                                placeholder="Enter Representative Name"
+                                maxLength={20}
+                            />
+
+
+
+                             <Text style={styles.label}>Relation to Grower</Text>
+                            <TextInput
+                                mode="outlined"
+                                value={state.form.GrowerRealtion || ""}
+                                autoCapitalize="characters"
+                                onChangeText={(text) => updateState({ ...state, form: { ...state.form, GrowerRealtion: text } })}
+                                style={styles.input}
+                                placeholder="Enter Grower Realtion name"
+                                maxLength={20}
+                            />
+
+
+
+
+
                             <Text style={styles.label}>Authorized Signatory Name</Text>
                             <TextInput
                                 mode="outlined"
                                 value={state.form.authorizedSignatory || ""}
-                                 autoCapitalize="characters"
-                                onChangeText={(text) =>  updateState({ ...state, form: { ...state.form, authorizedSignatory: text} })}
+                                autoCapitalize="characters"
+                                onChangeText={(text) => updateState({ ...state, form: { ...state.form, authorizedSignatory: text } })}
                                 style={styles.input}
                                 placeholder="Enter authorized signatory name"
                                 maxLength={20}
+                                disabled={true}
                             />
 
                             <Text style={styles.label}>Tag Number</Text>
                             <TextInput
                                 mode="outlined"
                                 value={state.form.TagNumber || ""}
-                                 autoCapitalize="characters"
+                                autoCapitalize="characters"
                                 onChangeText={(text) => updateState({ ...state, form: { ...state.form, TagNumber: text } })}
                                 style={styles.input}
                                 placeholder="Enter Tag number"

@@ -10,6 +10,7 @@ import { useFormData } from "../Constants/FormContext";
 
 const AgreementListScreen: React.FC = () => {
   const navigation = useNavigation<any>();
+    const { formData, setFormData } = useFormData();
 
   const [agreements, setAgreements] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -299,46 +300,19 @@ const AgreementListScreen: React.FC = () => {
     navigation.navigate("WitnessScreen", { agreementId: item.id });
   };
 
-  const handleInspection = (agreement: any, inspectionType: string) => {
-    const inspections = agreementInspections[agreement.id] || [];
-    const foundInspection = inspections.find(
-      (ins) => ins.inspectionno?.toUpperCase() === inspectionType.toUpperCase()
-    );
+  // Single Found Inspection button handler
+  const handleFoundInspection = (agreement: any) => {
 
-    if (foundInspection) {
-      console.log("Opening modal with inspection:", foundInspection);
-      setSelectedInspection(foundInspection);
-      setInspectionModalVisible(true);
-    } else {
-      navigation.navigate("Inspection Screen", {
-        agreementId: agreement.id,
-        inspectionType,
-        agreementData: agreement,
-      });
-    }
-  };
 
-  const getInspectionIcon = (inspectionType: string) => {
-    switch (inspectionType) {
-      case "First":
-        return "clipboard-check";
-      case "Second":
-        return "clipboard-text";
-      case "Third":
-        return "clipboard-list";
-      case "Fourth":
-        return "clipboard-account";
-      default:
-        return "clipboard-check";
-    }
-  };
 
-  // Check if inspection exists for an agreement
-  const getInspectionStatus = (agreementId: string, inspectionType: string) => {
-    const inspections = agreementInspections[agreementId] || [];
-    return inspections.find(
-      (ins) => ins.inspectionno?.toUpperCase() === inspectionType.toUpperCase()
-    );
+    setFormData({
+
+      ...formData,
+      agreementId: agreement.id,
+    });
+    navigation.navigate("AgreementLandSelector", {
+      agreementId: agreement.id
+    });
   };
 
   return (
@@ -442,52 +416,31 @@ const AgreementListScreen: React.FC = () => {
                   Sealing/Tagging of Unprocessed Seed
                 </Button>
 
-                {/* Four Stage Inspection Section - Automatically shows */}
+                {/* Found Inspection Button - Single Button */}
                 <View style={styles.inspectionSection}>
                   <View style={styles.inspectionHeader}>
-                    <Text style={styles.inspectionTitle}>Four Stage Inspection</Text>
+                    <Text style={styles.inspectionTitle}>Field Inspection</Text>
                     {inspectionsLoading[agreement.id] && (
                       <ActivityIndicator size="small" color="#2196F3" style={styles.inspectionLoader} />
                     )}
                   </View>
                   
-                  <View style={styles.inspectionGrid}>
-                    {["First", "Second", "Third", "Fourth"].map((inspectionType) => {
-                      const inspection = getInspectionStatus(agreement.id, inspectionType);
-                      const exists = !!inspection;
-                      
-                      const buttonTitle = exists ? `View ${inspectionType}` : `Create ${inspectionType}`;
-                      const iconName = getInspectionIcon(inspectionType);
-
-                      return (
-                        <Button
-                          key={inspectionType}
-                          mode={exists ? "contained" : "outlined"}
-                          onPress={() => handleInspection(agreement, inspectionType)}
-                          style={[
-                            styles.inspectionButton,
-                            exists && styles.completedInspection
-                          ]}
-                          labelStyle={[
-                            styles.inspectionButtonLabel,
-                            exists && styles.completedInspectionLabel
-                          ]}
-                          icon={({ size, color }) => (
-                            <MaterialCommunityIcons 
-                              name={iconName} 
-                              size={size} 
-                              color={exists ? "#fff" : color} 
-                            />
-                          )}
-                          disabled={inspectionsLoading[agreement.id]}
-                        >
-                          {buttonTitle}
-                        </Button>
-                      );
-                    })}
-                  </View>
+                  <Button
+                    mode="contained"
+                    onPress={() => handleFoundInspection(agreement)}
+                    style={styles.foundInspectionButton}
+                    labelStyle={styles.foundInspectionButtonLabel}
+                    icon="magnify"
+                    disabled={inspectionsLoading[agreement.id]}
+                  >
+                    Select Land for Inspection
+                  </Button>
                   
-                 
+                  {/* {agreementInspections[agreement.id] && agreementInspections[agreement.id].length > 0 && (
+                    <Text style={styles.inspectionCountText}>
+                      {agreementInspections[agreement.id].length} inspection(s) already created
+                    </Text>
+                  )} */}
                 </View>
 
                 {/* Action Buttons */}
@@ -654,32 +607,16 @@ const styles = StyleSheet.create({
   inspectionLoader: {
     marginLeft: 8,
   },
-  inspectionGrid: { 
-    flexDirection: "row", 
-    flexWrap: "wrap", 
-    gap: 8,
-    justifyContent: "space-between"
-  },
-  inspectionButton: { 
-    flex: 1, 
-    minWidth: "48%", 
+  foundInspectionButton: { 
+    backgroundColor: "#2196F3", 
     borderRadius: 8, 
-    borderColor: "#666", 
-    marginBottom: 8,
-    height: 45
+    height: 45,
+    justifyContent: "center"
   },
-  completedInspection: { 
-    backgroundColor: "#4CAF50", 
-    borderColor: "#4CAF50" 
-  },
-  inspectionButtonLabel: { 
-    fontSize: 12, 
-    textAlign: "center", 
-    color: "#666" 
-  },
-  completedInspectionLabel: { 
-    color: "#fff",
-    fontWeight: "bold"
+  foundInspectionButtonLabel: { 
+    fontSize: 14, 
+    fontWeight: "bold",
+    color: "#fff" 
   },
   inspectionCountText: {
     fontSize: 12,
