@@ -51,6 +51,9 @@ const AgreementLandSelector = () => {
   const [selectedCount, setSelectedCount] = useState(0);
 
 
+  // console.log("🔥 Agreement ID from route params:", formData?.agreementId);
+
+
 
   useEffect(() => {
     fetchAgreement();
@@ -124,16 +127,22 @@ const AgreementLandSelector = () => {
 
   console.log("Selected Land IDs:", selectedLandIds);
 
+  const AgreementId = formData?.agreementId;
+
       setFormData({
 
         ...formData,
         selectedLandIds: selectedLandIds,
+        AgreementId : AgreementId,
       });
 
   navigation.navigate("FetchInspection", {
     selectedLandIds, // array of selected agreementlandid
+    AgreementId,
   });
 };
+
+
 
   const renderLandCard = ({ item }: { item: SelectedLand }) => (
     <TouchableOpacity
@@ -159,7 +168,7 @@ const AgreementLandSelector = () => {
                   color="#666"
                 />
                 <Text style={styles.landNumber}>
-                  Plot: {item.number}
+                {item.number}
                   {item.subnumber ? `-${item.subnumber}` : ""}
                 </Text>
               </View>
@@ -397,11 +406,17 @@ const styles = StyleSheet.create({
 
   /* ------------------------------------- HEADER ------------------------------------- */
   header: {
-  flexDirection: "row",
+ flexDirection: "row",
     alignItems: "center",
-    padding: 16,
-    backgroundColor: "#4CAF50",
     justifyContent: "space-between",
+    height: 100,
+    backgroundColor: "#4CAF50",
+    paddingHorizontal: 16,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
 
   },
 

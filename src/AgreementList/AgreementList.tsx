@@ -313,6 +313,12 @@ const AgreementListScreen: React.FC = () => {
     navigation.navigate("AgreementLandSelector", {
       agreementId: agreement.id
     });
+
+
+   
+
+
+
   };
 
   return (

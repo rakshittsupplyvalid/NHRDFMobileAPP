@@ -40,6 +40,7 @@ export interface OfftypeData {
   naturetype: string;
   numberofplants: string;
   discription: string;
+   fieldCount: string;
 }
 
 export interface FormErrorsType {

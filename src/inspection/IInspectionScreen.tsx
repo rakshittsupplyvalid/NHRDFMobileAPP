@@ -36,14 +36,13 @@ const InspectionScreen = () => {
   const route = useRoute();
   const navigation: any = useNavigation();
 
-  const { agreementId, inspectionNo  } = route.params as {
+  const { agreementId, inspectionNo , landId } = route.params as {
     agreementId: string;
     inspectionNo : string;
+    landId: string;
   };
 
-
   
-    console.log("InspectionNo:", inspectionNo);
 
 
 
@@ -112,7 +111,7 @@ const InspectionScreen = () => {
   });
 
   const [offtypes, setOfftypes] = useState<OfftypeData[]>([
-    { naturetype: "", numberofplants: "", discription: "" }
+    { naturetype: "", numberofplants: "", discription: "", fieldCount: "" }
   ]);
 
   const [errors, setErrors] = useState<FormErrorsType>({});
@@ -120,7 +119,8 @@ const InspectionScreen = () => {
   const [offtypeErrors, setOfftypeErrors] = useState(
     Array.from({ length: 10 }, () => ({
       naturetype: "",
-      numberofplants: ""
+      numberofplants: "",
+      fieldCount: ""
     }))
   );
 
@@ -412,19 +412,19 @@ const InspectionScreen = () => {
 
     setOfftypes(prev => [
       ...prev,
-      { naturetype: "", numberofplants: "", discription: "" }
+      { naturetype: "", numberofplants: "", discription: "", fieldCount: "" }
     ]);
 
     setOfftypeErrors(prev => [
       ...prev,
-      { naturetype: "", numberofplants: "" }
+      { naturetype: "", numberofplants: "", fieldCount: "" }
     ]);
   };
 
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        navigation.navigate("Farmer Agreement");
+        navigation.navigate("FetchInspection");
         return true;
       };
 
@@ -545,6 +545,18 @@ const InspectionScreen = () => {
       }
     }
 
+    if (field === "fieldCount") {
+      if (!value || value.trim() === "") {
+        error = "This field is required";
+      } else if (isNaN(Number(value)) || Number(value) < 0) {
+        error = "Please enter a valid number";
+      } else if (Number(value) > 9999) {
+        error = "Maximum 9999 field count allowed";
+      } else if (Number(value) === 0) {
+        error = "Field count cannot be zero";
+      }
+    }
+
     const updatedErrors = [...offtypeErrors];
     updatedErrors[index] = {
       ...updatedErrors[index],
@@ -560,14 +572,14 @@ const InspectionScreen = () => {
     const requiredFields = [
       'StageofCrop',
       'PreviousCrop',
-      'SourceOfSeed',
+    
       'StageofSeedAtInspection',
-      'StageofGrowthContaminant',
+     
       'IsolationDistance',
       'CropCondition',
       'InspectedArea',
-      'FieldCount',
-      'EstimatedSeedYield',
+      
+  
       'GrowerRepresentative',
       'Remarks',
       'GeoImage',
@@ -633,12 +645,12 @@ const InspectionScreen = () => {
     const requiredFields = [
       'StageofCrop',
       'PreviousCrop',
-      'SourceOfSeed',
+   
       'StageofSeedAtInspection',
-      'StageofGrowthContaminant',
+    
       'IsolationDistance',
       'CropCondition',
-      'EstimatedSeedYield',
+   
       'GrowerRepresentative',
       'Remarks',
     ];
@@ -657,26 +669,22 @@ const InspectionScreen = () => {
       }
     });
 
-    if (!selectedSeason) {
-      newErrors.Year = "Year is required";
-      isValid = false;
-    }
+    // if (!selectedSeason) {
+    //   newErrors.Year = "Year is required";
+    //   isValid = false;
+    // }
 
-    if (!selectedSubSeason) {
-      newErrors.Season = "Season is required";
-      isValid = false;
-    }
+    // if (!selectedSubSeason) {
+    //   newErrors.Season = "Season is required";
+    //   isValid = false;
+    // }
 
     if (!formData.InspectedArea || formData.InspectedArea <= 0) {
       newErrors.InspectedArea = "Please enter a valid area";
       isValid = false;
     }
 
-    if (!formData.FieldCount || formData.FieldCount <= 0) {
-      newErrors.FieldCount = "Please enter a valid field count";
-      isValid = false;
-    }
-
+  
     if (!formData.DamagedArea || formData.DamagedArea < 0) {
       newErrors.DamagedArea = "Please enter a valid damaged area";
       isValid = false;
@@ -693,16 +701,17 @@ const InspectionScreen = () => {
     }
 
     const hasEmptyOfftypes = offtypes.some(offtype =>
-      !offtype.numberofplants || offtype.numberofplants.toString().trim() === ""
+      !offtype.numberofplants || offtype.numberofplants.toString().trim() === "" ||
+      !offtype.fieldCount || offtype.fieldCount.toString().trim() === ""
     );
 
     if (hasEmptyOfftypes) {
-      Alert.alert("Validation Error", "Please fill all 10 offtype entries with number of plants");
+      Alert.alert("Validation Error", "Please fill all 10 offtype entries with number of plants and field count");
       isValid = false;
     }
 
     const hasOfftypeErrors = offtypeErrors.some(error =>
-      error.numberofplants !== ""
+      error.numberofplants !== "" || error.fieldCount !== ""
     );
 
     if (hasOfftypeErrors) {
@@ -717,24 +726,11 @@ const InspectionScreen = () => {
     return isValid;
   };
 
-  // useEffect(() => {
-  //   if (InspectionNo) {
-  //     setFormData(prev => ({
-  //       ...prev,
-  //       InspectionNo: InspectionNo.toUpperCase(),
-  //     }));
-  //   }
-  // }, [InspectionNo]);
 
-const handleSubmit = async () => {
-  if (!validateForm()) {
-    return;
-  }
 
-  if (!agreementId) {
-    Alert.alert("Error", "Agreement ID is missing");
-    return;
-  }
+
+  const handleSubmit = async () => {
+  if (!validateForm()) return;
 
   try {
     setSubmitting(true);
@@ -742,60 +738,84 @@ const handleSubmit = async () => {
     const token = await retrieveToken();
     const requestData = new FormData();
 
-    // Add static dates for DurationFrom and DurationTo
-    const today = new Date();
-    const formattedDate = today.toISOString().split('T')[0]; // Format: YYYY-MM-DD
-    
-    // Add mandatory fields first
-    requestData.append("InspectionNo", formData.InspectionNo);
+    const today = new Date().toISOString().split("T")[0];
+
+    // ===============================
+    // 🔹 REQUIRED FIELDS
+    // ===============================
+    requestData.append("agreementlandid", landId);
+    requestData.append("InspectionNo", inspectionNo);
     requestData.append("VarietyId", agreementIds.VarietyId);
     requestData.append("CommodityId", agreementIds.CommodityId);
     requestData.append("FarmerId", agreementIds.FarmerId);
     requestData.append("FarmerDistributionId", agreementIds.FarmerDistributionId);
-    requestData.append("GrowerRepresentative", agreementIds.Authorizedname);
-    requestData.append("Latitude", formData.GeoLocation?.latitude.toFixed(6) || "0");
-    requestData.append("Longitude", formData.GeoLocation?.longitude.toFixed(6) || "0");
-    
-    // Add static dates for DurationFrom and DurationTo
-    requestData.append("DurationFrom", formattedDate); // Static: today's date
-    requestData.append("DurationTo", formattedDate);   // Static: today's date
-    
-    // Add InspectionDate if not already set
-    if (!formData.InspectionDate) {
-      requestData.append("InspectionDate", formattedDate);
+    requestData.append("SourceOfSeed", "test");
+
+    requestData.append("Latitude", formData.GeoLocation?.latitude?.toFixed(6) || "0");
+    requestData.append("Longitude", formData.GeoLocation?.longitude?.toFixed(6) || "0");
+
+    requestData.append("DurationFrom", today);
+    requestData.append("DurationTo", today);
+    requestData.append("InspectionDate", today);
+
+  
+    requestData.append(
+      "IsThisFinalReport",
+      formData.IsThisFinalReport ? "true" : "false"
+    );
+
+  
+    if (formData.StandardOfSeed) {
+      requestData.append("StandardOfSeed", formData.StandardOfSeed.toString());
     }
 
-    // Add other form fields
-    Object.keys(formData).forEach(key => {
-      // Skip DurationFrom and DurationTo since we already added them above
-      if (key === "DurationFrom" || key === "DurationTo") {
+ 
+    Object.entries(formData).forEach(([key, value]) => {
+      if (
+        value === null ||
+        value === undefined ||
+        value === "" ||
+        key === "IsThisFinalReport" ||
+        key === "StandardOfSeed" ||
+        key === "DurationFrom" ||
+        key === "DurationTo" ||
+        key === "InspectionDate" ||
+        key === "EstimatedSeedYield"
+      ) {
         return;
       }
-      
-      const value = formData[key as keyof FormDataType];
-      if (value !== null && value !== undefined) {
-        if (typeof value === 'boolean') {
-          requestData.append(key, value.toString());
-        } else if (value.toString().trim() !== "") { // Only append non-empty values
-          requestData.append(key, value.toString());
-        } else {
-          // For empty required fields, add a default if needed
-          const requiredFields = ['ShowingDate', 'HarvestingDate'];
-          if (requiredFields.includes(key)) {
-            requestData.append(key, formattedDate); // Add today's date as default
-          }
-        }
-      }
+
+      requestData.append(key, value.toString());
     });
 
-    const offtypesData = offtypes.map(o => ({
-      naturetype: null,
-      numberofplants: Number(o.numberofplants) || 0,
-      discription: null
-    }));
+    // ===============================
+    // 🔥 Estimated Seed Yield (ONLY IF FINAL)
+    // ===============================
+    if (formData.IsThisFinalReport && formData.EstimatedSeedYield) {
+      requestData.append(
+        "EstimatedSeedYield",
+        formData.EstimatedSeedYield.toString()
+      );
+    }
 
-    requestData.append("NatureOfOffTypes", JSON.stringify(offtypesData));
+    // ===============================
+    // 🔹 OFFTYPES
+    // ===============================
+    requestData.append(
+      "NatureOfOffTypes",
+      JSON.stringify(
+        offtypes.map(o => ({
+          naturetype: null,
+          numberofplants: Number(o.numberofplants) || 0,
+          fieldCount: Number(o.fieldCount) || 0,
+          discription: null,
+        }))
+      )
+    );
 
+    // ===============================
+    // 🔹 FILES
+    // ===============================
     if (formData.GeoImage) {
       requestData.append("GeoImage", {
         uri: formData.GeoImage,
@@ -805,27 +825,42 @@ const handleSubmit = async () => {
     }
 
     if (formData.GrowerSignature) {
-      const growerFile = await base64ToFile(formData.GrowerSignature, "grower_signature.png");
+      const growerFile = await base64ToFile(
+        formData.GrowerSignature,
+        "grower_signature.png"
+      );
       requestData.append("GrowerSignature", growerFile as any);
     }
 
     if (formData.OfficerSignature) {
-      const officerFile = await base64ToFile(formData.OfficerSignature, "officer_signature.png");
+      const officerFile = await base64ToFile(
+        formData.OfficerSignature,
+        "officer_signature.png"
+      );
       requestData.append("OfficerSignature", officerFile as any);
     }
 
     if (formData.CenterInchargeSignature) {
-      const inchargeFile = await base64ToFile(formData.CenterInchargeSignature, "center_incharge_signature.png");
+      const inchargeFile = await base64ToFile(
+        formData.CenterInchargeSignature,
+        "center_incharge_signature.png"
+      );
       requestData.append("CenterInchargeSignature", inchargeFile as any);
     }
 
-    // Log what we're sending
-    console.log("📤 Submitting form data...");
-    console.log("DurationFrom:", formattedDate);
-    console.log("DurationTo:", formattedDate);
+    // ===============================
+    // 🧪 DEBUG: LOG FINAL PAYLOAD
+    // ===============================
+    console.log("📤 SUBMITTED FORM DATA ↓↓↓");
+    requestData.forEach((value, key) => {
+      console.log(`${key} 👉`, value);
+    });
 
-    const response = await apiClient.post(
-      `/api/inspection/${agreementId}`,
+    // ===============================
+    // 🔹 API CALL
+    // ===============================
+    await apiClient.post(
+      `/api/inspection/${landId}`,
       requestData,
       {
         headers: {
@@ -835,33 +870,18 @@ const handleSubmit = async () => {
       }
     );
 
-    Alert.alert(
-      "Success",
-      "Inspection created successfully!",
-      [
-        {
-          text: "OK",
-          onPress: () => {
-            navigation.reset({
-              index: 0,
-              routes: [{ name: "Dashboard" }],
-            });
-          }
-        }
-      ]
-    );
+   Alert.alert( "Success", "Inspection created successfully!", [ { text: "OK", onPress: () => { navigation.reset({ index: 0, routes: [{ name: "Dashboard" }], }); } } ] );
+    
 
   } catch (error: any) {
-    console.error("❌ Error submitting inspection:", error);
-    console.error("❌ Error response:", error?.response?.data);
-    Alert.alert(
-      "Submission Failed",
-      error?.response?.data?.message || "Failed to submit inspection data. Please try again."
-    );
+    console.error("❌ Submit Error:", error?.response?.data || error);
+    Alert.alert("Error", "Failed to submit inspection");
   } finally {
     setSubmitting(false);
   }
 };
+
+
 
   const RadioGroup = ({ value, onValueChange, options, label, field }: any) => (
     <View style={styles.radioGroup}>
@@ -996,6 +1016,28 @@ const handleSubmit = async () => {
           {errors?.numberofplants ? (
             <HelperText type="error" visible={true}>
               {errors.numberofplants}
+            </HelperText>
+          ) : null}
+        </View>
+
+        <View style={styles.offtypeInputContainer}>
+          <Text style={styles.offtypeLabel}>Field Count *</Text>
+
+          <TextInput
+            placeholder="Enter field count (1-9999)"
+            value={offtype.fieldCount}
+            onChangeText={(text) => onChange(index, "fieldCount", text)}
+            keyboardType="numeric"
+            maxLength={4}
+            style={[
+              styles.offtypeInput,
+              errors?.fieldCount && styles.inputError
+            ]}
+          />
+
+          {errors?.fieldCount ? (
+            <HelperText type="error" visible={true}>
+              {errors.fieldCount}
             </HelperText>
           ) : null}
         </View>
@@ -1322,23 +1364,7 @@ const handleSubmit = async () => {
                   </HelperText>
                 </View>
 
-                <View style={styles.halfInput}>
-                  <Text style={styles.label}>Field Count No. *</Text>
-                  <TextInput
-                    placeholder="Enter field count"
-                    placeholderTextColor="#666"
-                    value={formData.FieldCount.toString()}
-                    autoCorrect={false}
-                    autoComplete="off"
-                    autoCapitalize="characters"
-                    onChangeText={(text) => handleChange("FieldCount", text)}
-                    keyboardType="numeric"
-                    style={[styles.input, errors.FieldCount && { borderColor: "red" }]}
-                  />
-                  <HelperText type="error" visible={!!errors.FieldCount}>
-                    {errors.FieldCount}
-                  </HelperText>
-                </View>
+              
               </View>
 
               <ImagePickerField
@@ -1359,7 +1385,7 @@ const handleSubmit = async () => {
 
             <Card.Content style={styles.content}>
               <Text style={styles.sectionDescription}>
-                Please fill in the number of plants for all 10 offtype entries (Numbers 1-10 only)
+                Please fill in the number of plants and field count for all 10 offtype entries
               </Text>
 
               {offtypes.map((offtype, index) => (
