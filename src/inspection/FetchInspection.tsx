@@ -168,7 +168,6 @@ const FetchInspection = () => {
           <Text>Duration From: {insp.durationfrom}</Text>
           <Text>Duration To: {insp.durationto}</Text>
           <Text>Source of Seed: {insp.sourceofseed}</Text>
-       
           <Text>Inspected Area: {insp.inspectedarea}</Text>
           <Text>Previous Crop: {insp.previouscrop}</Text>
         </View>

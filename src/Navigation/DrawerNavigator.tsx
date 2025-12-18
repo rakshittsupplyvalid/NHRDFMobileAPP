@@ -15,7 +15,11 @@ import InspectionList from '../inspection/InspectionList';
 import SealingTagging from '../SealingTagging/SealingTagging';
 import AgreementLandSelector from '../inspection/SelectedLandInspection';
 import FetchInspection from '../inspection/FetchInspection';
-
+import InspectionDetailScreen from '../inspection/InspectionDetails';
+import SealingTaggingList from '../SealingTagging/SealingTagginglist';
+import SealingTaggingDetails from '../SealingTagging/SealingTaggingDetails';
+import AddSeedLiftingScreen from '../SealingTagging/AddSeedLiftingScreen';
+import AgreementDetailsModal from '../SealingTagging/AgreementDetailsModal';
 
 const Drawer = createDrawerNavigator();
 
@@ -84,14 +88,14 @@ function CustomDrawerContent(props: any) {
         <DrawerItem
           label="Farmer Agreement"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
-            onPress={() => {
+          onPress={() => {
             props.navigation.reset({
               index: 0,
               routes: [{ name: 'Farmer Agreement' }],
             });
           }}
-          
-          
+
+
           labelStyle={styles.drawerLabel}
         />
 
@@ -100,14 +104,14 @@ function CustomDrawerContent(props: any) {
         <DrawerItem
           label="Inspection List"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
-           onPress={() => {
+          onPress={() => {
             props.navigation.reset({
               index: 0,
               routes: [{ name: 'Inspection List' }],
             });
           }}
-          
-       
+
+
           labelStyle={styles.drawerLabel}
         />
 
@@ -121,8 +125,48 @@ function CustomDrawerContent(props: any) {
         />
 
 
+        <DrawerItem
+          label="Agreement Details Modal"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('Agreement Details Modal')}
+          labelStyle={styles.drawerLabel}
+          style={{ display: 'none' }}
+        />
 
-           <DrawerItem
+
+        <DrawerItem
+          label="Sealing Tagging Details"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('Sealing Tagging Details')}
+          labelStyle={styles.drawerLabel}
+          style={{ display: 'none' }}
+        />
+
+
+        <DrawerItem
+          label="Add Seed Lifting"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('Add Seed Lifting ')}
+          labelStyle={styles.drawerLabel}
+          style={{ display: 'none' }}
+        />
+
+
+
+
+        <DrawerItem
+          label="Sealing Tagging List"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('Sealing Tagging List')}
+          labelStyle={styles.drawerLabel}
+
+        />
+
+
+
+
+
+        <DrawerItem
           label="FetchInspection"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
           onPress={() => props.navigation.navigate('FetchInspection')}
@@ -138,7 +182,7 @@ function CustomDrawerContent(props: any) {
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document" size={size} color={color} />}
           onPress={() => props.navigation.navigate('Inspection Screen')}
           style={{ display: 'none' }}
-      
+
         />
 
         {/* Hidden Screen */}
@@ -159,10 +203,20 @@ function CustomDrawerContent(props: any) {
         />
 
 
-           <DrawerItem
+        <DrawerItem
           label="AgreementLandSelector"
           icon={({ color, size }) => <MaterialCommunityIcons name="file-document-outline" size={size} color={color} />}
           onPress={() => props.navigation.navigate('AgreementLandSelector')}
+          style={{ display: 'none' }}
+
+        />
+
+
+
+        <DrawerItem
+          label="InspectionDetailScreen"
+          icon={({ color, size }) => <MaterialCommunityIcons name="file-document-outline" size={size} color={color} />}
+          onPress={() => props.navigation.navigate('InspectionDetailScreen')}
           style={{ display: 'none' }}
 
         />
@@ -239,12 +293,40 @@ export default function DrawerNavigator() {
           drawerItemStyle: { display: 'none' }, // hides from the drawer
         }} />
 
+
+      <Drawer.Screen name="Agreement Details Modal" component={AgreementDetailsModal}
+        options={{
+          drawerItemStyle: { display: 'none' }, // hides from the drawer
+             headerShown: false,
+        }} />
+
+
+
+      <Drawer.Screen name="Sealing Tagging Details" component={SealingTaggingDetails}
+        options={{
+          drawerItemStyle: { display: 'none' }, // hides from the drawer
+          headerShown: false,
+        }} />
+
+
+
+
+
+      <Drawer.Screen name="Sealing Tagging List" component={SealingTaggingList}
+      />
+
+
+
+
+
+
+
       <Drawer.Screen name="Dashboard" component={DashboardScreen} />
       <Drawer.Screen
         name="Inspection Screen"
         component={InspectionScreen}
-         options={{ drawerItemStyle: { display: 'none' } }}
-       
+        options={{ drawerItemStyle: { display: 'none' } }}
+
       />
 
       <Drawer.Screen name="Agreement" component={AgreementSecond}
@@ -252,16 +334,23 @@ export default function DrawerNavigator() {
       />
 
 
-       <Drawer.Screen name="FetchInspection" component={FetchInspection}
-        options={{ drawerItemStyle: { display: 'none' } , headerShown: false,}}
+      <Drawer.Screen name="FetchInspection" component={FetchInspection}
+        options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }}
       />
 
       <Drawer.Screen name="Agreementland" component={Agreementland} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
       <Drawer.Screen name="NomineeScreen" component={NomineeScreen} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
 
-   <Drawer.Screen name="AgreementLandSelector" component={AgreementLandSelector}
-        options={{ drawerItemStyle: { display: 'none' } , headerShown: false, }}
+      <Drawer.Screen name="AgreementLandSelector" component={AgreementLandSelector}
+        options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }}
       />
+
+      <Drawer.Screen name="InspectionDetailScreen" component={InspectionDetailScreen}
+        options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }}
+      />
+
+
+      <Drawer.Screen name="Add Seed Lifting" component={AddSeedLiftingScreen} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
 
       <Drawer.Screen name="WitnessScreen" component={WitnessScreen} options={{ drawerItemStyle: { display: 'none' }, headerShown: false, }} />
     </Drawer.Navigator>

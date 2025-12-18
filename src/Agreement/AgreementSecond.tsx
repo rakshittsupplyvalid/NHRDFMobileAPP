@@ -984,7 +984,7 @@ const AgreementSecond: React.FC = () => {
                 requestData.append(`NomiNee[${index}].nomineename`, nominee.nomineename || '');
                 requestData.append(`NomiNee[${index}].gender`, nominee.gender || 'NONE');
                 requestData.append(`NomiNee[${index}].mobileno`, nominee.mobileno || '');
-                    requestData.append(`NomiNee[${index}].aadharno`, nominee.aadharno || '');
+                requestData.append(`NomiNee[${index}].aadharno`, nominee.aadharno || '');
                 requestData.append(`NomiNee[${index}].email`, nominee.email || '');
                 requestData.append(`NomiNee[${index}].age`, String(nominee.age));
                 requestData.append(`NomiNee[${index}].year`, String(nominee.year || 0));
@@ -1090,7 +1090,7 @@ const AgreementSecond: React.FC = () => {
 
             if (response.status === 200 || response.status === 201) {
                 setIsSubmitting(false);
-                Alert.alert("✅ Success", "Agreement submitted successfully.", [
+                Alert.alert("Success", "Agreement submitted successfully.", [
                     {
                         text: "OK",
                         onPress: () => {

@@ -129,6 +129,11 @@ const Agreementland: React.FC = () => {
 
   const handleNext = () => {
 
+    if (selectedLandIds.length === 0) {
+    alert("Please select at least one land to proceed."); // Or use a nicer UI message
+    return;
+  }
+
     setFormData({
       ...formData,
       CodeNumber: inputValue,
@@ -147,7 +152,7 @@ const Agreementland: React.FC = () => {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={60}
     >
-      <View style={styles.container}>
+      <ScrollView style={styles.container}>
 
         {/* HEADER */}
         <View style={styles.header}>
@@ -296,7 +301,7 @@ const Agreementland: React.FC = () => {
           </View>
 
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };

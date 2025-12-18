@@ -7,7 +7,6 @@ export interface FormDataType {
   DurationTo: string;
   SourceOfSeed: string;
   StageofCrop : string;
-  
   InspectedArea: number;
   DamagedArea: number;
   PreviousCrop: string;

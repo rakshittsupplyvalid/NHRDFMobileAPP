@@ -300,6 +300,18 @@ const AgreementListScreen: React.FC = () => {
     navigation.navigate("WitnessScreen", { agreementId: item.id });
   };
 
+
+  const handleSealingTagging = (agreement: any) => {
+
+     setFormData({
+
+      ...formData,
+      agreementId: agreement.id,
+    });
+
+    navigation.navigate("Sealing Tagging");
+  };
+
   // Single Found Inspection button handler
   const handleFoundInspection = (agreement: any) => {
 
@@ -310,9 +322,7 @@ const AgreementListScreen: React.FC = () => {
       ...formData,
       agreementId: agreement.id,
     });
-    navigation.navigate("AgreementLandSelector", {
-      agreementId: agreement.id
-    });
+    navigation.navigate("AgreementLandSelector");
 
 
    
@@ -417,7 +427,8 @@ const AgreementListScreen: React.FC = () => {
                   mode="contained"
                   style={{ marginTop: 12, backgroundColor: "#4CAF50" }}
                   labelStyle={{ color: "#fff" }}
-                  onPress={() => navigation.navigate('Sealing Tagging')}
+                       onPress={() => handleSealingTagging(agreement)} 
+                
                 >
                   Sealing/Tagging of Unprocessed Seed
                 </Button>

@@ -55,7 +55,8 @@ const InspectionList = () => {
             setLoading(true);
             const response = await apiClient.get('/api/inspection?ApprovalStatus=PENDING&ApprovalStatus=APPROVED&ApprovalStatus=REJECTED');
             setInspections(response.data);
-            console.log('Fetched inspections:', response.data);
+
+            console.log('Fetched inspections:', response.data.id);
             
             Animated.timing(fadeAnim, {
                 toValue: 1,
@@ -195,20 +196,13 @@ const InspectionList = () => {
                                 </Text>
                             </View>
                         </View>
+
+                        
                     </View>
 
                     {/* Actions */}
                     <View style={styles.actionContainer}>
-                        {/* <Button 
-                            mode="outlined" 
-                            onPress={() => handleViewDetails(inspection)}
-                            style={styles.viewButton}
-                            labelStyle={styles.viewButtonLabel}
-                            icon="eye-outline"
-                        >
-                            Details
-                        </Button> */}
-                        
+                       
                         {inspection.approvalStatus === 'PENDING' && (
                             <View style={styles.pendingActions}>
                                 <Button 
@@ -232,6 +226,17 @@ const InspectionList = () => {
                             </View>
                         )}
                     </View>
+                     
+                    {/* View Button */}
+                    <Button 
+                        mode="outlined" 
+                        onPress={() => navigation.navigate('InspectionDetailScreen', { id: inspection.id })}
+                        style={styles.viewButton}
+                        labelStyle={styles.viewButtonLabel}
+                        icon="eye-outline"
+                    >
+                        View
+                    </Button>
                 </Card.Content>
             </Card>
         </Animated.View>
@@ -416,14 +421,14 @@ const styles = StyleSheet.create({
         marginTop: 16,
     },
     viewButton: {
-        borderColor: '#4F46E5',
+        borderColor: '#6ba94bff',
         borderRadius: 8,
         borderWidth: 1.5,
     },
     viewButtonLabel: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#4F46E5',
+        color: '#6ba94bff',
     },
     pendingActions: {
         flexDirection: 'row',
