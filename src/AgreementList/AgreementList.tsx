@@ -309,6 +309,9 @@ const AgreementListScreen: React.FC = () => {
       agreementId: agreement.id,
     });
 
+
+    
+
     navigation.navigate("Sealing Tagging");
   };
 

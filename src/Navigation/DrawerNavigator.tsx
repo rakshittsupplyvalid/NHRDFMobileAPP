@@ -291,6 +291,7 @@ export default function DrawerNavigator() {
       <Drawer.Screen name="Sealing Tagging" component={SealingTagging}
         options={{
           drawerItemStyle: { display: 'none' }, // hides from the drawer
+            headerShown: false,
         }} />
 
 

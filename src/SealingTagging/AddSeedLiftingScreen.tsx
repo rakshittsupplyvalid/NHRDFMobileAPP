@@ -279,7 +279,9 @@ export default function AddSeedLiftingScreen() {
         ]
       );
 
-    } catch (error: any) {
+
+    } catch (error: any) 
+    {
       console.error("Error submitting seed lifting:", error);
       console.error("Error response:", error.response?.data);
       
